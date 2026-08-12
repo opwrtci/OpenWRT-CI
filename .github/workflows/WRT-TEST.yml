@@ -24,11 +24,11 @@ on:
           - X86
           - TEST
       SOURCE:
-        default: 'VIKINGYFY/immortalwrt'
+        default: 'opwrtci/immortalwrt'
         required: true
         type: choice
         options:
-          - VIKINGYFY/immortalwrt
+          - opwrtci/immortalwrt
           - immortalwrt/immortalwrt
           - LiBwrt/openwrt-6.x
           - qosmio/openwrt-ipq
