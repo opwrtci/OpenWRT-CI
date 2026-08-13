@@ -77,7 +77,7 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix libfuse-dev
+          sudo -E apt -yqq install dos2unix libfuse-dev clang llvm lld
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
@@ -95,6 +95,7 @@ jobs:
           echo "WRT_WIFI=wifi-yes" >> $GITHUB_ENV
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
+          echo "GOPROXY=https://proxy.golang.org,direct" >> $GITHUB_ENV
 
       - name: Clone Code
         run: |
@@ -176,6 +177,20 @@ jobs:
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
+          echo "========================================================="
+          echo "📶 [Wi-Fi Package Selection Audit Log / 无线关键包勾选日志]"
+          grep -E '^#? ?CONFIG_PACKAGE_(kmod-ath|kmod-ath11k|wpad|iw|iwinfo|wireless-regdb|ath11k-firmware|ipq-wifi)' .config || echo "No explicit match in .config"
+          echo "========================================================="
+
+          # === 🔍 依赖反查诊断钩子：如果发现 DEBUG_INFO 被重新勾选，直接打印引用的罪魁祸首 Makefile ===
+          if grep -q "CONFIG_KERNEL_DEBUG_INFO=y" .config || grep -q "CONFIG_KERNEL_DEBUG_INFO_BTF=y" .config; then
+            echo "========================================================="
+            echo "🚨 [CONFIG WARNING] CONFIG_KERNEL_DEBUG_INFO / BTF is forced by package dependencies!"
+            echo "Searching for culprit packages that declare DEBUG_INFO dependency:"
+            grep -rn -E "KERNEL_DEBUG_INFO|BPF_DEPENDS" ./package/ ./feeds/ 2>/dev/null || true
+            echo "========================================================="
+          fi
+
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
@@ -186,9 +201,196 @@ jobs:
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
+          set -o pipefail
           cd ./wrt/
+          export GOPROXY=https://proxy.golang.org,direct
+          make -j$(nproc) || make -j1 V=s 2>&1 | tee /tmp/build_verbose.log
 
-          make -j$(nproc) || make -j1 V=s
+      - name: Collect Kernel Size Diagnostics
+        if: env.WRT_TEST != 'true'
+        run: |
+          set +e
+          DIAG_DIR="/tmp/kernel_diag"
+          mkdir -p "$DIAG_DIR"
+          DIAG_FILE="$DIAG_DIR/kernel_diag.txt"
+          {
+            echo "=== Kernel Size Diagnostic ==="
+            echo "Config: $WRT_CONFIG | Source: $WRT_SOURCE | Time: $(TZ=UTC-8 date '+%F %T')"
+            echo ""
+
+            KDIR=$(find ./wrt/build_dir -maxdepth 3 -type d -name "linux-qualcommax_ipq60xx" 2>/dev/null | head -1)
+            LINUX_DIR=$(ls -d "$KDIR"/linux-* 2>/dev/null | head -1)
+            echo "Kernel build dir : $KDIR"
+            echo "Kernel src dir   : $LINUX_DIR"
+            echo ""
+
+            echo "--- top .config: CONFIG_KERNEL_* ---"
+            grep -E '^#? ?CONFIG_KERNEL_' ./wrt/.config 2>/dev/null
+            cp ./wrt/.config "$DIAG_DIR/top_dot_config.txt" 2>/dev/null
+            echo ""
+
+            echo "--- 📶 Wi-Fi Key Package Selection Audit ---"
+            grep -E '^#? ?CONFIG_PACKAGE_(kmod-ath|kmod-ath11k|wpad|iw|iwinfo|wireless-regdb|ath11k-firmware|ipq-wifi)' ./wrt/.config 2>/dev/null || echo "No explicit match in .config"
+            echo ""
+
+            if [ -n "$LINUX_DIR" ] && [ -f "$LINUX_DIR/.config" ]; then
+              cp "$LINUX_DIR/.config" "$DIAG_DIR/kernel_dot_config.txt"
+              echo "--- key CONFIG states in kernel .config ---"
+              grep -E '^#? ?CONFIG_(DEBUG_INFO|DEBUG_INFO_BTF|DEBUG_INFO_REDUCED|DEBUG_FS|KALLSYMS|KALLSYMS_UNCOMPRESSED|FUNCTION_TRACER|FTRACE|KPROBES|UPROBES|BPF|BPF_EVENTS|BPF_JIT|XDP|XDP_SOCKETS|IKCONFIG|IKHEADERS|PERF_EVENTS|HW_PERF_EVENTS|PROFILING|CGROUP_BPF|SLAB|SLUB|CFG80211|MAC80211|ATH11K|IPV6|WIRELESS|NETFILTER|USB|ATA|NVME|MMC|FUSE|BTRFS)' "$LINUX_DIR/.config" 2>/dev/null
+              echo ""
+            fi
+
+            echo "--- artifact sizes (bytes) ---"
+            for F in "$KDIR/Image" "$KDIR/vmlinux" "$LINUX_DIR/vmlinux" "$LINUX_DIR/arch/arm64/boot/Image" "$KDIR"/*-uImage.itb "$KDIR"/*-uImage.itb.new "$KDIR"/*.dtb; do
+              [ -f "$F" ] && echo "$(stat -c '%s' "$F")  $F"
+            done
+            echo ""
+
+            if [ -n "$LINUX_DIR" ] && [ -f "$LINUX_DIR/vmlinux" ]; then
+              SZ=$(find ./wrt/staging_dir -path "*/bin/aarch64-openwrt-linux-musl-size" 2>/dev/null | head -1)
+              if [ -n "$SZ" ]; then
+                echo "--- size of kernel vmlinux (text/data/bss) ---"
+                "$SZ" "$LINUX_DIR/vmlinux"
+              fi
+            fi
+          } > "$DIAG_FILE" 2>&1
+          echo "diagnostics written to $DIAG_FILE"
+          cat "$DIAG_FILE"
+
+      - name: Upload Kernel Size Diagnostics
+        if: env.WRT_TEST != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-diag-${{ env.WRT_NAME }}-${{ env.WRT_DATE }}
+          path: /tmp/kernel_diag/
+
+      - name: Collect and Commit Build Failure Logs
+        if: failure()
+        run: |
+          echo "========================================================="
+          echo "=== BUILD FAILURE DETECTED: COLLECTING FAILURE LOGS ==="
+          echo "========================================================="
+          
+          LOG_DIR="$GITHUB_WORKSPACE/logs/build_failures"
+          FULL_LOG_DIR="/tmp/full_failure_logs"
+          mkdir -p "$LOG_DIR" "$FULL_LOG_DIR"
+          
+          TIMESTAMP=$(TZ=UTC-8 date +"%Y-%m-%d_%H-%M-%S")
+          LOG_FILE="$LOG_DIR/failure_${WRT_NAME:-BUILD}_${TIMESTAMP}.log"
+          FULL_LOG_FILE="$FULL_LOG_DIR/failure_${WRT_NAME:-BUILD}_${TIMESTAMP}_full.log"
+          
+          # === 精简版日志 (推送到 Git，快速排查) ===
+          echo "Build Failure Diagnostic Report - $TIMESTAMP" > "$LOG_FILE"
+          echo "Target Config: ${WRT_CONFIG:-UNKNOWN}" >> "$LOG_FILE"
+          echo "Commit SHA: $GITHUB_SHA" >> "$LOG_FILE"
+          echo "=========================================================" >> "$LOG_FILE"
+          
+          # === 🎯 罪魁祸首摘要区：直接提取致命错误，无需翻看几十万行日志 ===
+          echo "--- 🚨 CRITICAL ERROR SUMMARY (罪魁祸首摘要表) 🚨 ---" >> "$LOG_FILE"
+          if [ -f "/tmp/build_verbose.log" ]; then
+            grep -E "is too big|Error 1|Error 2|FAILED:|undefined reference|No such file or directory|No rule to make target|compilation terminated" /tmp/build_verbose.log | tail -n 25 >> "$LOG_FILE" 2>/dev/null || echo "No explicit build error matched in verbose log." >> "$LOG_FILE"
+          fi
+          echo "=========================================================" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          
+          if [ -f "/tmp/build_verbose.log" ]; then
+            echo "--- VERBOSE BUILD OUTPUT (LAST 500 LINES) ---" >> "$LOG_FILE"
+            tail -n 500 /tmp/build_verbose.log >> "$LOG_FILE" 2>/dev/null || true
+            echo "" >> "$LOG_FILE"
+          fi
+
+          if [ -d "./wrt/logs" ]; then
+            echo "--- OPENWRT BUILD LOGS ---" >> "$LOG_FILE"
+            find ./wrt/logs -type f -exec echo "=== Log: {} ===" \; -exec cat {} \; >> "$LOG_FILE" 2>/dev/null || true
+          fi
+
+          if [ -d "./wrt/build_dir" ]; then
+            echo "--- RECENT ERROR LOGS IN BUILD DIR ---" >> "$LOG_FILE"
+            find ./wrt/build_dir -type f \( -name "*.log" -o -name "compile.log" -o -name "configure.log" \) 2>/dev/null | tail -n 20 | while read -r F; do
+              echo "=== File: $F ===" >> "$LOG_FILE"
+              tail -n 100 "$F" >> "$LOG_FILE" 2>/dev/null || true
+            done
+          fi
+
+          # === 内核尺寸诊断 (来自 Collect Kernel Size Diagnostics 步骤) ===
+          if [ -f "/tmp/kernel_diag/kernel_diag.txt" ]; then
+            echo "--- KERNEL SIZE DIAGNOSTIC ---" >> "$LOG_FILE"
+            cat /tmp/kernel_diag/kernel_diag.txt >> "$LOG_FILE" 2>/dev/null || true
+            echo "" >> "$LOG_FILE"
+          fi
+          
+          # === 全量日志 (上传为 Artifact，深度排查) ===
+          echo "Build Failure FULL Diagnostic Report - $TIMESTAMP" > "$FULL_LOG_FILE"
+          echo "Target Config: ${WRT_CONFIG:-UNKNOWN}" >> "$FULL_LOG_FILE"
+          echo "Commit SHA: $GITHUB_SHA" >> "$FULL_LOG_FILE"
+          echo "=========================================================" >> "$FULL_LOG_FILE"
+          
+          # === 🎯 全量日志顶部同样添加罪魁祸首摘要表 ===
+          echo "--- 🚨 CRITICAL ERROR SUMMARY (罪魁祸首摘要表) 🚨 ---" >> "$FULL_LOG_FILE"
+          if [ -f "/tmp/build_verbose.log" ]; then
+            grep -E "is too big|Error 1|Error 2|FAILED:|undefined reference|No such file or directory|No rule to make target|compilation terminated" /tmp/build_verbose.log | tail -n 25 >> "$FULL_LOG_FILE" 2>/dev/null || echo "No explicit build error matched in verbose log." >> "$FULL_LOG_FILE"
+          fi
+          echo "=========================================================" >> "$FULL_LOG_FILE"
+          echo "" >> "$FULL_LOG_FILE"
+          
+          if [ -f "/tmp/build_verbose.log" ]; then
+            echo "--- FULL VERBOSE BUILD OUTPUT ---" >> "$FULL_LOG_FILE"
+            cat /tmp/build_verbose.log >> "$FULL_LOG_FILE" 2>/dev/null || true
+            echo "" >> "$FULL_LOG_FILE"
+          fi
+
+          if [ -d "./wrt/logs" ]; then
+            echo "--- OPENWRT BUILD LOGS ---" >> "$FULL_LOG_FILE"
+            find ./wrt/logs -type f -exec echo "=== Log: {} ===" \; -exec cat {} \; >> "$FULL_LOG_FILE" 2>/dev/null || true
+          fi
+
+          if [ -d "./wrt/build_dir" ]; then
+            echo "--- ALL ERROR LOGS IN BUILD DIR ---" >> "$FULL_LOG_FILE"
+            find ./wrt/build_dir -type f \( -name "*.log" -o -name "compile.log" -o -name "configure.log" \) 2>/dev/null | while read -r F; do
+              echo "=== File: $F ===" >> "$FULL_LOG_FILE"
+              cat "$F" >> "$FULL_LOG_FILE" 2>/dev/null || true
+            done
+          fi
+
+          # === 导出 .config 快照 (方便验证 defconfig 结果) ===
+          if [ -f "./wrt/.config" ]; then
+            echo "--- .config SNAPSHOT ---" >> "$FULL_LOG_FILE"
+            cat ./wrt/.config >> "$FULL_LOG_FILE" 2>/dev/null || true
+            cp ./wrt/.config "$FULL_LOG_DIR/dot_config_snapshot.txt" 2>/dev/null || true
+          fi
+
+          # === 导出内核诊断 + 内核实际生效 .config ===
+          if [ -f "/tmp/kernel_diag/kernel_diag.txt" ]; then
+            echo "--- KERNEL SIZE DIAGNOSTIC ---" >> "$FULL_LOG_FILE"
+            cat /tmp/kernel_diag/kernel_diag.txt >> "$FULL_LOG_FILE" 2>/dev/null || true
+          fi
+          KDIAG_CFG=$(find ./wrt/build_dir -maxdepth 4 -path "*linux-qualcommax*" -name ".config" 2>/dev/null | head -1)
+          if [ -n "$KDIAG_CFG" ]; then
+            echo "--- KERNEL .config ($KDIAG_CFG) ---" >> "$FULL_LOG_FILE"
+            cat "$KDIAG_CFG" >> "$FULL_LOG_FILE" 2>/dev/null || true
+            cp "$KDIAG_CFG" "$FULL_LOG_DIR/kernel_dot_config.txt" 2>/dev/null || true
+          fi
+          
+          echo "--> Cleaning up failure logs older than 7 days..."
+          find "$LOG_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+          
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f "$LOG_DIR"
+          git diff --quiet && git diff --staged --quiet || (
+            git commit -m "ci(logs): save build failure log for ${WRT_NAME:-BUILD} [$TIMESTAMP]" && \
+            git stash -u 2>/dev/null || true && \
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push origin main && break || sleep 2
+            done
+          )
+
+      - name: Upload Full Build Failure Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-failure-FULL-${{ env.WRT_NAME }}-${{ env.WRT_DATE }}
+          path: /tmp/full_failure_logs/
 
       - name: Machine Information
         run: |
