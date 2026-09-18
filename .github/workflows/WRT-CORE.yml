@@ -433,6 +433,13 @@ jobs:
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
             echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
 
+            # === 提取并发布独立 vmlinux-btf 安装包 (供未刷入内置固件的路由器免刷机单独安装) ===
+            echo "Searching for vmlinux-btf standalone package..."
+            for BTF_FILE in $(find ./bin/ -type f -iname "vmlinux-btf*.*" 2>/dev/null); do
+              echo "Found vmlinux-btf package: $BTF_FILE"
+              cp -f "$BTF_FILE" ./upload/
+            done
+
             find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
 
             for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
@@ -474,6 +481,8 @@ jobs:
 
             内核版本：${{env.WRT_KVER}}
             插件列表：${{env.WRT_LIST}}
+
+            💡 附件包含独立 vmlinux-btf 安装包（适用于已有固件免刷机就地启用 eBPF/BTF 支持）。
 
   cache-rollover:
     name: Roll cache generations
