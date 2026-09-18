@@ -132,6 +132,8 @@ CONFIG_KERNEL_BPF_EVENTS=y
 CONFIG_PACKAGE_kmod-sched-bpf=y
 CONFIG_PACKAGE_kmod-sched-core=y
 CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
+CONFIG_PACKAGE_vmlinux-btf=y
 CONFIG_PACKAGE_unzip=y
 CONFIG_PACKAGE_zoneinfo-asia=y
+
 
