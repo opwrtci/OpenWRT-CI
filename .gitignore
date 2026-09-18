@@ -1,0 +1,12 @@
+# Private helper & monitoring scripts (Rule 17: Local Helper Script Isolation)
+.scripts/
+.docs/
+.agents/
+logs/
+Logs/
+*.log
+__pycache__/
+.vscode/
+.idea/
+*.swp
+*~
