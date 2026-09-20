@@ -32,7 +32,8 @@ ATHENA_WIFI_DEF="./target/linux/qualcommax/base-files/etc/uci-defaults/993_set-a
 mkdir -p "$(dirname "$ATHENA_WIFI_DEF")"
 cat << 'EOF' > "$ATHENA_WIFI_DEF"
 #!/bin/sh
-case "$(board_name)" in
+. /lib/functions/system.sh 2>/dev/null
+case "$(cat /tmp/sysinfo/board_name 2>/dev/null || board_name 2>/dev/null)" in
 jdcloud,re-cs-02)
 	if [ "$(uci -q get wireless.radio0.channel)" = "100" ] || [ -z "$(uci -q get wireless.radio0.channel)" ]; then
 		uci -q set wireless.radio0.channel='149'
