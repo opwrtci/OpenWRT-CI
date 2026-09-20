@@ -23,13 +23,41 @@ elif [ -f "$WIFI_UC" ]; then
 	sed -i "s/ssid='.*'/ssid='$WRT_SSID'/g" $WIFI_UC
 	#修改WIFI密码
 	sed -i "s/key='.*'/key='$WRT_WORD'/g" $WIFI_UC
+	#修正高通等5G高频段初始信道100(DFS不可用)为原生支持的149
+	sed -i 's/let channel = rband.default_channel ?? "auto";/let channel = (rband.default_channel == 100 ? 149 : (rband.default_channel ?? "auto"));/g' $WIFI_UC
 fi
+
+#雅典娜三频射频信道校准脚本(保障radio0 5.8G高频电竞频段100%开机满血激活)
+ATHENA_WIFI_DEF="./target/linux/qualcommax/base-files/etc/uci-defaults/993_set-athena-wireless.sh"
+mkdir -p "$(dirname "$ATHENA_WIFI_DEF")"
+cat << 'EOF' > "$ATHENA_WIFI_DEF"
+#!/bin/sh
+case "$(board_name)" in
+jdcloud,re-cs-02)
+	if [ "$(uci -q get wireless.radio0.channel)" = "100" ] || [ -z "$(uci -q get wireless.radio0.channel)" ]; then
+		uci -q set wireless.radio0.channel='149'
+		uci -q commit wireless
+	fi
+	;;
+esac
+exit 0
+EOF
+chmod +x "$ATHENA_WIFI_DEF"
 
 CFG_FILE="./package/base-files/files/bin/config_generate"
 #修改默认IP地址
 sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
+#修改默认NTP服务器：移除存在DNS重绑定风险的cn.ntp.org.cn，增补微软及Cloudflare权威授时源
+sed -i "s/cn\.ntp\.org\.cn/time.windows.com/g" $CFG_FILE
+sed -i "/time\.windows\.com/a \\\t\\tadd_list system.ntp.server='time.cloudflare.com'" $CFG_FILE
+
+#预置docker用户组，消除dockerd启动时group docker not found警告
+GROUP_FILE="./package/base-files/files/etc/group"
+if [ -f "$GROUP_FILE" ]; then
+	grep -q "^docker:" "$GROUP_FILE" || echo "docker:x:1000:docker" >> "$GROUP_FILE"
+fi
 
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config

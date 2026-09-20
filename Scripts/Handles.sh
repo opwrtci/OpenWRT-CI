@@ -169,6 +169,14 @@ if [ -n "$HP_DIR" ]; then
 	else
 		echo "homeproxy resource preset completed with errors; continuing!"
 	fi
+	# 修复HomeProxy计划任务去重逻辑，防止重复添加更新定时任务
+	if [ -f "$HP_DIR/root/etc/init.d/homeproxy" ]; then
+		sed -i 's|sed "/\[\[:space:\]\]\${CRON_TAG}\[\[:space:\]\]\*\$/d"|sed "/\${CRON_TAG}/d"|g' "$HP_DIR/root/etc/init.d/homeproxy"
+	fi
+	# 优化HomeProxy节点延迟测试探针，避免Cloudflare Worker同域回环死锁误报超时
+	if [ -f "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy" ]; then
+		sed -i 's|cp.cloudflare.com%2Fgenerate_204|www.google.com%2Fgenerate_204|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
+	fi
 fi
 
 #修改argon主题字体和颜色
