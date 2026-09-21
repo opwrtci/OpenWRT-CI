@@ -173,9 +173,11 @@ if [ -n "$HP_DIR" ]; then
 	if [ -f "$HP_DIR/root/etc/init.d/homeproxy" ]; then
 		sed -i 's|sed "/\[\[:space:\]\]\${CRON_TAG}\[\[:space:\]\]\*\$/d"|sed "/\${CRON_TAG}/d"|g' "$HP_DIR/root/etc/init.d/homeproxy"
 	fi
-	# 优化HomeProxy节点延迟测试探针，避免Cloudflare Worker同域回环死锁误报超时
+	# 优化HomeProxy节点延迟测试探针，避免Cloudflare Worker同域回环死锁误报超时，并添加default_mark穿透TUN防回环
 	if [ -f "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy" ]; then
 		sed -i 's|cp.cloudflare.com%2Fgenerate_204|www.google.com%2Fgenerate_204|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
+		sed -i "/auto_detect_interface: true,/a \\\t\t\t\t\t\tdefault_mark: 8228," "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
+		sed -i 's|/usr/bin/curl -fsS|/usr/bin/curl -sS|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
 	fi
 fi
 
