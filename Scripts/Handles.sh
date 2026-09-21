@@ -169,16 +169,6 @@ if [ -n "$HP_DIR" ]; then
 	else
 		echo "homeproxy resource preset completed with errors; continuing!"
 	fi
-	# 修复HomeProxy计划任务去重逻辑，防止重复添加更新定时任务
-	if [ -f "$HP_DIR/root/etc/init.d/homeproxy" ]; then
-		sed -i 's|sed "/\[\[:space:\]\]\${CRON_TAG}\[\[:space:\]\]\*\$/d"|sed "/\${CRON_TAG}/d"|g' "$HP_DIR/root/etc/init.d/homeproxy"
-	fi
-	# 优化HomeProxy节点延迟测试探针，避免Cloudflare Worker同域回环死锁误报超时，并添加default_mark穿透TUN防回环
-	if [ -f "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy" ]; then
-		sed -i 's|cp.cloudflare.com%2Fgenerate_204|www.google.com%2Fgenerate_204|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
-		sed -i "/auto_detect_interface: true,/a \\\t\t\t\t\t\tdefault_mark: 8228," "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
-		sed -i 's|/usr/bin/curl -fsS|/usr/bin/curl -sS|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
-	fi
 fi
 
 #修改argon主题字体和颜色
@@ -237,4 +227,14 @@ if [ -f "$RUST_FILE" ]; then
 	else
 		echo "rust fix failed; continuing!"
 	fi
+fi
+
+# ==============================================================================
+# 引入项目特化修复（与上游物理隔离，未来合并上游时永不被覆盖）
+# ==============================================================================
+CUSTOM_PATCHES="$GITHUB_WORKSPACE/Scripts/Custom_Patches.sh"
+[ -f "$CUSTOM_PATCHES" ] || CUSTOM_PATCHES="$(dirname "$0")/Custom_Patches.sh"
+if [ -f "$CUSTOM_PATCHES" ]; then
+	chmod +x "$CUSTOM_PATCHES" 2>/dev/null || true
+	/bin/bash "$CUSTOM_PATCHES"
 fi
