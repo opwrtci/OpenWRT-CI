@@ -25,24 +25,82 @@ elif [ -f "$WIFI_UC" ]; then
 	sed -i "s/key='.*'/key='$WRT_WORD'/g" $WIFI_UC
 	#修正高通等5G高频段初始信道100(DFS不可用)为原生支持的149
 	sed -i 's/let channel = rband.default_channel ?? "auto";/let channel = (rband.default_channel == 100 ? 149 : (rband.default_channel ?? "auto"));/g' $WIFI_UC
+	#统一 fallback 国家码为 US，杜绝 ath11k_pci failed to perform regd update: -22 错误
+	sed -i "s/country || 'CN'/country || 'US'/g" $WIFI_UC
 fi
 
-#雅典娜三频射频信道校准脚本(保障radio0 5.8G高频电竞频段100%开机满血激活)
+#雅典娜三频射频信道校准与QCN9074稳定性物理规范脚本
 ATHENA_WIFI_DEF="./target/linux/qualcommax/base-files/etc/uci-defaults/993_set-athena-wireless.sh"
 mkdir -p "$(dirname "$ATHENA_WIFI_DEF")"
 cat << 'EOF' > "$ATHENA_WIFI_DEF"
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Qualcommax Wi-Fi Defaults & Athena Tri-Band / QCN9074 Fixes
+
+. /lib/functions.sh 2>/dev/null
 . /lib/functions/system.sh 2>/dev/null
+
+BASE_SSID='OWRT'
+BASE_WORD='12345678'
+
 case "$(cat /tmp/sysinfo/board_name 2>/dev/null || board_name 2>/dev/null)" in
 jdcloud,re-cs-02)
-	if [ "$(uci -q get wireless.radio0.channel)" = "100" ] || [ -z "$(uci -q get wireless.radio0.channel)" ]; then
-		uci -q set wireless.radio0.channel='149'
-		uci -q commit wireless
-	fi
+	# === JDCloud RE-CS-02 (Athena / 雅典娜) 三频独立优化与 QCN9074 物理规范对齐 ===
+	for dev in $(uci -q show wireless | grep -oE "wireless\.radio[0-9]+" | sort -u | cut -d. -f2); do
+		iface=$(uci -q show wireless | grep -E "\.device='$dev'" | head -n 1 | cut -d. -f2)
+		[ -z "$iface" ] && iface="default_$dev"
+		path=$(uci -q get wireless.$dev.path)
+		band=$(uci -q get wireless.$dev.band)
+
+		# 1. 2.4GHz 频段 (IPQ6000 2.4G)
+		if [ "$band" = "2g" ]; then
+			uci -q set wireless.$dev.country='US'
+			uci -q set wireless.$dev.channel='1'
+			uci -q set wireless.$dev.htmode='HE20'
+			uci -q set wireless.$iface.ssid="${BASE_SSID}_2.4G"
+			uci -q set wireless.$iface.encryption='psk2+ccmp'
+			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disabled='0'
+		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 功率 23dBm / 关闭 4x4 束波成型避免客户端死锁)
+		elif echo "$path" | grep -qi "pcie"; then
+			uci -q set wireless.$dev.country='US'
+			uci -q set wireless.$dev.channel='36'
+			uci -q set wireless.$dev.htmode='HE80'
+			uci -q set wireless.$dev.txpower='23'
+			uci -q set wireless.$dev.mu_beamformer='0'
+			uci -q set wireless.$dev.he_mu_beamformer='0'
+			uci -q set wireless.$dev.beamformer='0'
+			uci -q set wireless.$dev.he_su_beamformer='0'
+			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G_Game"
+			uci -q set wireless.$iface.encryption='psk2+ccmp'
+			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disabled='0'
+		# 3. 5GHz-1 频段 (IPQ6000 SOC 板载 5G - 高信道 149)
+		elif [ "$band" = "5g" ]; then
+			uci -q set wireless.$dev.country='US'
+			uci -q set wireless.$dev.channel='149'
+			uci -q set wireless.$dev.htmode='HE80'
+			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G"
+			uci -q set wireless.$iface.encryption='psk2+ccmp'
+			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disabled='0'
+		fi
+	done
+	uci -q commit wireless
+	;;
+*)
+	# 通用 qualcommax 设备的国家码规范统一为 US (避免 ath11k 固件 -22 错误)
+	for dev in $(uci -q show wireless | grep -oE "wireless\.radio[0-9]+" | sort -u | cut -d. -f2); do
+		[ "$(uci -q get wireless.$dev.country)" = "CN" ] && uci -q set wireless.$dev.country='US'
+	done
+	uci -q commit wireless
 	;;
 esac
+
 exit 0
 EOF
+sed -i "s/BASE_SSID='.*'/BASE_SSID='$WRT_SSID'/g" "$ATHENA_WIFI_DEF"
+sed -i "s/BASE_WORD='.*'/BASE_WORD='$WRT_WORD'/g" "$ATHENA_WIFI_DEF"
 chmod +x "$ATHENA_WIFI_DEF"
 
 CFG_FILE="./package/base-files/files/bin/config_generate"
