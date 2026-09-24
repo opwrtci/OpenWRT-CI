@@ -60,20 +60,28 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.ssid="${BASE_SSID}_2.4G"
 			uci -q set wireless.$iface.encryption='psk2+ccmp'
 			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disassoc_low_ack='0'
+			uci -q set wireless.$iface.uapsd='0'
 			uci -q set wireless.$iface.disabled='0'
-		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 功率 23dBm / 关闭 4x4 束波成型避免客户端死锁)
+		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 功率 23dBm / 关闭 4x4 束波成型与 TWT/UAPSD 杜绝 Intel 网卡死锁)
 		elif echo "$path" | grep -qi "pcie"; then
 			uci -q set wireless.$dev.country='US'
 			uci -q set wireless.$dev.channel='36'
 			uci -q set wireless.$dev.htmode='HE80'
 			uci -q set wireless.$dev.txpower='23'
+			uci -q set wireless.$dev.su_beamformer='0'
 			uci -q set wireless.$dev.mu_beamformer='0'
-			uci -q set wireless.$dev.he_mu_beamformer='0'
-			uci -q set wireless.$dev.beamformer='0'
 			uci -q set wireless.$dev.he_su_beamformer='0'
+			uci -q set wireless.$dev.he_mu_beamformer='0'
+			uci -q set wireless.$dev.su_beamformee='0'
+			uci -q set wireless.$dev.he_su_beamformee='0'
+			uci -q set wireless.$dev.he_twt_responder='0'
+			uci -q set wireless.$dev.he_twt_required='0'
 			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G_Game"
 			uci -q set wireless.$iface.encryption='psk2+ccmp'
 			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disassoc_low_ack='0'
+			uci -q set wireless.$iface.uapsd='0'
 			uci -q set wireless.$iface.disabled='0'
 		# 3. 5GHz-1 频段 (IPQ6000 SOC 板载 5G - 高信道 149)
 		elif [ "$band" = "5g" ]; then
@@ -83,6 +91,8 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G"
 			uci -q set wireless.$iface.encryption='psk2+ccmp'
 			uci -q set wireless.$iface.key="${BASE_WORD}"
+			uci -q set wireless.$iface.disassoc_low_ack='0'
+			uci -q set wireless.$iface.uapsd='0'
 			uci -q set wireless.$iface.disabled='0'
 		fi
 	done
@@ -136,6 +146,22 @@ uci -q commit system
 exit 0
 EOF
 chmod +x "$SYS_NTP_DEF"
+
+#预置Clashoo默认开启QUIC阻断，杜绝浏览器在透明代理下因QUIC丢包引发协议错误或降级等待卡顿
+CLASHOO_DEF="./package/base-files/files/etc/uci-defaults/995_set-clashoo.sh"
+mkdir -p "$(dirname "$CLASHOO_DEF")"
+cat << 'EOF' > "$CLASHOO_DEF"
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# 默认开启 Clashoo 的 block_quic，防止浏览器在透明代理下报网络协议错误或降级超时卡顿
+
+if [ -f /etc/config/clashoo ]; then
+	uci -q set clashoo.config.block_quic='1'
+	uci -q commit clashoo
+fi
+exit 0
+EOF
+chmod +x "$CLASHOO_DEF"
 
 #预置docker用户组，消除dockerd启动时group docker not found警告
 GROUP_FILE="./package/base-files/files/etc/group"
