@@ -112,6 +112,31 @@ sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
 sed -i "s/cn\.ntp\.org\.cn/time.windows.com/g" $CFG_FILE
 sed -i "/time\.windows\.com/a \\\t\\tadd_list system.ntp.server='time.cloudflare.com'" $CFG_FILE
 
+#增补UCI自愈升级脚本，确保保留配置升级时自动清理旧版残留的cn.ntp.org.cn
+SYS_NTP_DEF="./package/base-files/files/etc/uci-defaults/994_set-system-ntp.sh"
+mkdir -p "$(dirname "$SYS_NTP_DEF")"
+cat << 'EOF' > "$SYS_NTP_DEF"
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# 自动净化升级或保留配置中残留的污染授时源，对齐微软及Cloudflare权威授时阵列
+
+if uci -q get system.ntp.server | grep -q "cn.ntp.org.cn"; then
+	uci -q del_list system.ntp.server="cn.ntp.org.cn"
+fi
+
+if ! uci -q get system.ntp.server | grep -q "time.windows.com"; then
+	uci -q add_list system.ntp.server="time.windows.com"
+fi
+
+if ! uci -q get system.ntp.server | grep -q "time.cloudflare.com"; then
+	uci -q add_list system.ntp.server="time.cloudflare.com"
+fi
+
+uci -q commit system
+exit 0
+EOF
+chmod +x "$SYS_NTP_DEF"
+
 #预置docker用户组，消除dockerd启动时group docker not found警告
 GROUP_FILE="./package/base-files/files/etc/group"
 if [ -f "$GROUP_FILE" ]; then
