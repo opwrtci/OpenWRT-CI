@@ -1,0 +1,1315 @@
+Build Failure Diagnostic Report - 2026-09-25_09-13-54
+Target Config: IPQ807X-WIFI-NO
+Commit SHA: 143da45ae3ce6223d37e60326c72ca3e3c7d4083
+=========================================================
+--- 🚨 CRITICAL ERROR SUMMARY (罪魁祸首摘要表) 🚨 ---
+grep: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/base-files/ipkg-aarch64_cortex-a53/base-files/CONTROL/conffiles: No such file or directory
+grep: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/base-files/.pkgdir/base-files/CONTROL/conffiles: No such file or directory
+make[3]: *** [Makefile:181: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8/.prepared_d15b80dac4a3c1672c3f3ce0420d22bc_6664517399ebbbc92a37c5bb081b5c53] Error 1
+make[2]: *** [package/Makefile:198: package/packages/sing-box/compile] Error 1
+make[1]: *** [package/Makefile:192: /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.package_compile] Error 2
+make: *** [/mnt/build_wrt/include/toplevel.mk:233: world] Error 2
+=========================================================
+
+--- VERBOSE BUILD OUTPUT (LAST 500 LINES) ---
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c buildreq.c  -fPIC -DPIC -o .libs/libradiusclient_la-buildreq.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-config.lo `test -f 'config.c' || echo './'`config.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c config.c  -fPIC -DPIC -o .libs/libradiusclient_la-config.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-dict.lo `test -f 'dict.c' || echo './'`dict.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c dict.c  -fPIC -DPIC -o .libs/libradiusclient_la-dict.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-ip_util.lo `test -f 'ip_util.c' || echo './'`ip_util.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c ip_util.c  -fPIC -DPIC -o .libs/libradiusclient_la-ip_util.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-clientid.lo `test -f 'clientid.c' || echo './'`clientid.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c clientid.c  -fPIC -DPIC -o .libs/libradiusclient_la-clientid.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-sendserver.lo `test -f 'sendserver.c' || echo './'`sendserver.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c sendserver.c  -fPIC -DPIC -o .libs/libradiusclient_la-sendserver.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-lock.lo `test -f 'lock.c' || echo './'`lock.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c lock.c  -fPIC -DPIC -o .libs/libradiusclient_la-lock.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-util.lo `test -f 'util.c' || echo './'`util.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c util.c  -fPIC -DPIC -o .libs/libradiusclient_la-util.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o libradiusclient_la-md5.lo `test -f 'md5.c' || echo './'`md5.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -DSYSCONFDIR=\"/etc\" -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c md5.c  -fPIC -DPIC -o .libs/libradiusclient_la-md5.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o libradiusclient.la  libradiusclient_la-avpair.lo libradiusclient_la-buildreq.lo libradiusclient_la-config.lo libradiusclient_la-dict.lo libradiusclient_la-ip_util.lo libradiusclient_la-clientid.lo libradiusclient_la-sendserver.lo libradiusclient_la-lock.lo libradiusclient_la-util.lo libradiusclient_la-md5.lo  
+OpenWrt-libtool: link: aarch64-openwrt-linux-musl-gcc-ar cr .libs/libradiusclient.a .libs/libradiusclient_la-avpair.o .libs/libradiusclient_la-buildreq.o .libs/libradiusclient_la-config.o .libs/libradiusclient_la-dict.o .libs/libradiusclient_la-ip_util.o .libs/libradiusclient_la-clientid.o .libs/libradiusclient_la-sendserver.o .libs/libradiusclient_la-lock.o .libs/libradiusclient_la-util.o .libs/libradiusclient_la-md5.o 
+OpenWrt-libtool: link: aarch64-openwrt-linux-musl-gcc-ranlib .libs/libradiusclient.a
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "libradiusclient.la" && ln -s "../libradiusclient.la" "libradiusclient.la" )
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o radius_la-radius.lo `test -f 'radius.c' || echo './'`radius.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c radius.c  -fPIC -DPIC -o .libs/radius_la-radius.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o radius.la -rpath /usr/lib/pppd/2.5.3 radius_la-radius.lo libradiusclient.la 
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/radius_la-radius.o  -Wl,--whole-archive ./.libs/libradiusclient.a -Wl,--no-whole-archive  -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,radius.so -o .libs/radius.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "radius.la" && ln -s "../radius.la" "radius.la" )
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o radattr_la-radattr.lo `test -f 'radattr.c' || echo './'`radattr.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c radattr.c  -fPIC -DPIC -o .libs/radattr_la-radattr.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o radattr.la -rpath /usr/lib/pppd/2.5.3 radattr_la-radattr.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/radattr_la-radattr.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,radattr.so -o .libs/radattr.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "radattr.la" && ln -s "../radattr.la" "radattr.la" )
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o radrealms_la-radrealms.lo `test -f 'radrealms.c' || echo './'`radrealms.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DRC_LOG_FACILITY=LOG_DAEMON -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c radrealms.c  -fPIC -DPIC -o .libs/radrealms_la-radrealms.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o radrealms.la -rpath /usr/lib/pppd/2.5.3 radrealms_la-radrealms.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/radrealms_la-radrealms.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,radrealms.so -o .libs/radrealms.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "radrealms.la" && ln -s "../radrealms.la" "radrealms.la" )
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/radius'
+Making all in dhcpv6relay
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o dhcpv6relay_la-dhcpv6relay.lo `test -f 'dhcpv6relay.c' || echo './'`dhcpv6relay.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c dhcpv6relay.c  -fPIC -DPIC -o .libs/dhcpv6relay_la-dhcpv6relay.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o dhcpv6relay.la -rpath /usr/lib/pppd/2.5.3 dhcpv6relay_la-dhcpv6relay.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/dhcpv6relay_la-dhcpv6relay.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,dhcpv6relay.so -o .libs/dhcpv6relay.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "dhcpv6relay.la" && ln -s "../dhcpv6relay.la" "dhcpv6relay.la" )
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+Making all in pptp
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-dirutil.lo `test -f 'dirutil.c' || echo './'`dirutil.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c dirutil.c  -fPIC -DPIC -o .libs/pptp_la-dirutil.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-orckit_quirks.lo `test -f 'orckit_quirks.c' || echo './'`orckit_quirks.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c orckit_quirks.c  -fPIC -DPIC -o .libs/pptp_la-orckit_quirks.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-pptp.lo `test -f 'pptp.c' || echo './'`pptp.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c pptp.c  -fPIC -DPIC -o .libs/pptp_la-pptp.o
+pptp.c: In function 'pptp_start_client':
+pptp.c:185:60: warning: taking address of packed member of 'struct sockaddr_pppox' may result in an unaligned pointer value [-Waddress-of-packed-member]
+  185 |     } while (get_call_id(callmgr_sock, getpid(), getpid(), &dst_addr.sa_addr.pptp.call_id) < 0);
+      |                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-pptp_callmgr.lo `test -f 'pptp_callmgr.c' || echo './'`pptp_callmgr.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c pptp_callmgr.c  -fPIC -DPIC -o .libs/pptp_la-pptp_callmgr.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-pptp_ctrl.lo `test -f 'pptp_ctrl.c' || echo './'`pptp_ctrl.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c pptp_ctrl.c  -fPIC -DPIC -o .libs/pptp_la-pptp_ctrl.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-pptp_quirks.lo `test -f 'pptp_quirks.c' || echo './'`pptp_quirks.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c pptp_quirks.c  -fPIC -DPIC -o .libs/pptp_la-pptp_quirks.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-util.lo `test -f 'util.c' || echo './'`util.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c util.c  -fPIC -DPIC -o .libs/pptp_la-util.o
+/bin/bash ../../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe  -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o pptp_la-vector.lo `test -f 'vector.c' || echo './'`vector.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../../pppd -I../../../pppd/plugins/pppoe -I../../.. -DSYSCONFDIR=\"/etc\" -DPLUGIN -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c vector.c  -fPIC -DPIC -o .libs/pptp_la-vector.o
+/bin/bash ../../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -fPIC -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o pptp.la -rpath /usr/lib/pppd/2.5.3 pptp_la-dirutil.lo pptp_la-orckit_quirks.lo pptp_la-pptp.lo pptp_la-pptp_callmgr.lo pptp_la-pptp_ctrl.lo pptp_la-pptp_quirks.lo pptp_la-util.lo pptp_la-vector.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/pptp_la-dirutil.o .libs/pptp_la-orckit_quirks.o .libs/pptp_la-pptp.o .libs/pptp_la-pptp_callmgr.o .libs/pptp_la-pptp_ctrl.o .libs/pptp_la-pptp_quirks.o .libs/pptp_la-util.o .libs/pptp_la-vector.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,pptp.so -o .libs/pptp.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "pptp.la" && ln -s "../pptp.la" "pptp.la" )
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+/bin/bash ../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe  -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o minconn_la-minconn.lo `test -f 'minconn.c' || echo './'`minconn.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c minconn.c  -fPIC -DPIC -o .libs/minconn_la-minconn.o
+/bin/bash ../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o minconn.la -rpath /usr/lib/pppd/2.5.3 minconn_la-minconn.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/minconn_la-minconn.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,minconn.so -o .libs/minconn.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "minconn.la" && ln -s "../minconn.la" "minconn.la" )
+/bin/bash ../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe  -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o passwordfd_la-passwordfd.lo `test -f 'passwordfd.c' || echo './'`passwordfd.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c passwordfd.c  -fPIC -DPIC -o .libs/passwordfd_la-passwordfd.o
+/bin/bash ../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o passwordfd.la -rpath /usr/lib/pppd/2.5.3 passwordfd_la-passwordfd.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/passwordfd_la-passwordfd.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,passwordfd.so -o .libs/passwordfd.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "passwordfd.la" && ln -s "../passwordfd.la" "passwordfd.la" )
+/bin/bash ../../libtool  --tag=CC   --mode=compile ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe  -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify   -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -c -o winbind_la-winbind.lo `test -f 'winbind.c' || echo './'`winbind.c
+OpenWrt-libtool: compile:  ccache aarch64-openwrt-linux-musl-gcc -DHAVE_CONFIG_H -I. -I../../pppd -I../../pppd/plugins/pppoe -I../.. -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -c winbind.c  -fPIC -DPIC -o .libs/winbind_la-winbind.o
+/bin/bash ../../libtool  --tag=CC   --mode=link ccache aarch64-openwrt-linux-musl-gcc  -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -module -avoid-version -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs  -o winbind.la -rpath /usr/lib/pppd/2.5.3 winbind_la-winbind.lo  
+OpenWrt-libtool: link: ccache aarch64-openwrt-linux-musl-gcc -std=gnu23 -shared  -fPIC -DPIC  .libs/winbind_la-winbind.o   -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib  -Os -mcpu=cortex-a53 -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -flto=auto -Wl,-z -Wl,max-page-size=4096 -Werror=format-security -fstack-protector -Wl,-z -Wl,now -Wl,-z -Wl,relro -Wl,-z -Wl,pack-relative-relocs -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -specs=/mnt/build_wrt/include/hardened-ld-pie.specs   -Wl,-soname -Wl,winbind.so -o .libs/winbind.so
+OpenWrt-libtool: link: ( cd ".libs" && rm -f "winbind.la" && ln -s "../winbind.la" "winbind.la" )
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[5]: Nothing to be done for 'all-am'.
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[4]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+CFLAGS="-Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs  -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify " CXXFLAGS="-Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects  -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include -I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify " LDFLAGS="-L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -Wl,--gc-sections -flto=auto -fuse-linker-plugin -zmax-page-size=4096 -DPIC -fPIC -specs=/mnt/build_wrt/include/hardened-ld-pie.specs -znow -zrelro -zpack-relative-relocs " make -C /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/. AR="aarch64-openwrt-linux-musl-gcc-ar" AS="ccache aarch64-openwrt-linux-musl-gcc -c -Os -pipe -mcpu=cortex-a53 -fno-caller-saves -fno-plt -fhonour-copts -fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3=ppp-2.5.3 -ffunction-sections -fdata-sections -flto=auto -fno-fat-lto-objects -Wl,-z,max-page-size=4096 -Wformat -Werror=format-security -DPIC -fPIC -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro -Wl,-z,pack-relative-relocs" LD="aarch64-openwrt-linux-musl-ld.bfd" NM="aarch64-openwrt-linux-musl-gcc-nm" CC="ccache aarch64-openwrt-linux-musl-gcc" GCC="ccache aarch64-openwrt-linux-musl-gcc" CXX="ccache aarch64-openwrt-linux-musl-g++" RANLIB="aarch64-openwrt-linux-musl-gcc-ranlib" STRIP=aarch64-openwrt-linux-musl-strip OBJCOPY=aarch64-openwrt-linux-musl-objcopy OBJDUMP=aarch64-openwrt-linux-musl-objdump SIZE=aarch64-openwrt-linux-musl-size CROSS="aarch64-openwrt-linux-musl-" ARCH="aarch64" DESTDIR="/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install"   install;
+make[4]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+Making install in chat
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/chat'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/chat'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+  /bin/bash ../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c chat '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c chat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/chat
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 chat.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/chat'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/chat'
+Making install in pppd
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+  /bin/bash ../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c pppd '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c pppd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppd
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppd.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/include/pppd'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppdconf.h '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/include/pppd'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pkgconfig'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppd.pc '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pkgconfig'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/include/pppd'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 cbcp.h ccp.h chap.h chap_ms.h crypto.h crypto_ms.h eap.h ecp.h eui64.h fsm.h ipcp.h ipv6cp.h lcp.h magic.h mppe.h multilink.h pppd.h options.h session.h upap.h pcap_pcc.h '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/include/pppd'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd'
+Making install in pppstats
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppstats'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppstats'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+  /bin/bash ../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c pppstats '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c pppstats /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppstats
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppstats.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppstats'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppstats'
+Making install in pppdump
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppdump'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppdump'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+  /bin/bash ../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c pppdump '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c pppdump /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppdump
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppdump.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppdump'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppdump'
+Making install in pppd/plugins
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+Making install in pppoe
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoe'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoe'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+  /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c pppoe-discovery '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c pppoe-discovery /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppoe-discovery
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppoe-discovery.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   pppoe.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppoe.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoe.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppoe.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoe.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoe'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoe'
+Making install in pppoatm
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoatm'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoatm'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   pppoatm.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppoatm.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoatm.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppoatm.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoatm.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoatm'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppoatm'
+Making install in pppol2tp
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppol2tp'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppol2tp'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   pppol2tp.la openl2tp.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppol2tp.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppol2tp.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pppol2tp.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppol2tp.la
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/openl2tp.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/openl2tp.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/openl2tp.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/openl2tp.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppol2tp'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pppol2tp'
+Making install in radius
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/radius'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/radius'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 pppd-radius.8 pppd-radattr.8 '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/man/man8'
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   radius.la radattr.la radrealms.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radius.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radius.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radius.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radius.la
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radattr.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radattr.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radattr.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radattr.la
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radrealms.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radrealms.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/radrealms.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/radrealms.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/radius'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/radius'
+Making install in dhcpv6relay
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   dhcpv6relay.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/dhcpv6relay.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/dhcpv6relay.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/dhcpv6relay.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/dhcpv6relay.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/dhcpv6relay'
+Making install in pptp
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   pptp.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pptp.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pptp.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/pptp.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pptp.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins/pptp'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[7]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+ /bin/bash ../../libtool   --mode=install /mnt/build_wrt/staging_dir/host/bin/install -c   minconn.la passwordfd.la winbind.la '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3'
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/minconn.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/minconn.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/minconn.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/minconn.la
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/passwordfd.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/passwordfd.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/passwordfd.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/passwordfd.la
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/winbind.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/winbind.so
+OpenWrt-libtool: install: /mnt/build_wrt/staging_dir/host/bin/install -c .libs/winbind.lai /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/winbind.la
+libtool: warning: remember to run 'libtool --finish /usr/lib/pppd/2.5.3'
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/pppd/plugins'
+make[5]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[6]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[6]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/etc/ppp'
+ /mnt/build_wrt/staging_dir/host/bin/install -c -m 644 etc.ppp/options.example etc.ppp/chap-secrets.example etc.ppp/pap-secrets.example etc.ppp/eaptls-server.example etc.ppp/eaptls-client.example etc.ppp/openssl.cnf.example '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/etc/ppp'
+make  install-data-hook
+make[7]: Entering directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install//etc/ppp ; \
+ chmod 600 chap-secrets.example pap-secrets.example \
+ eaptls-server.example eaptls-client.example)
+make[7]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[6]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[5]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+make[4]: Leaving directory '/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq807x/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/usr/lib/pppd/2.5.3
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/usr/sbin
+install -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/usr/sbin/
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/etc/ppp
+install -m0600 ./files/etc/ppp/chap-secrets /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/etc/ppp/
+install -m0644 ./files/etc/ppp/filter /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/etc/ppp/
+install -m0644 ./files/etc/ppp/options /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/etc/ppp/
+ln -sf /tmp/resolv.conf.ppp /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/etc/ppp/resolv.conf
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/netifd/proto
+install -m0755 ./files/ppp.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/netifd/proto/
+install -m0755 ./files/lib/netifd/ppp-up /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/netifd/
+install -m0755 ./files/lib/netifd/ppp6-up /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/netifd/
+install -m0755 ./files/lib/netifd/ppp-down /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/netifd/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp
+rstrip.sh: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/usr/sbin/pppd: executable
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp; echo "$V_Package_ppp_conffiles" > conffiles; )
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="ppp"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="ppp"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/ppp.list && mv /mnt/build_wrt/tmp/ppp.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL/conffiles ]; then echo $(IDIR_ppp)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/lib/apk/packages/ppp.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:ppp" --info "version:2.5.3-r2" --info "tags:openwrt:section=net openwrt:cpe=cpe:/a:point-to-point_protocol_project:point-to-point_protocol" --info "description:This package contains the PPP (Point-to-Point Protocol) daemon." --info "arch:aarch64_cortex-a53" --info "license:BSD-4-Clause" --info "origin:feeds/base/network/services/ppp" --info "url:https://ppp.samba.org/" --info "maintainer:Felix Fietkau <nbd@nbd.name>" --info "provides:ppp-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp/pre-deinstall" --info "depends:libc kmod-ppp shellsync kmod-mppe" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/ppp-2.5.3-r2.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq807x/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/usr/lib/pppd/2.5.3
+install -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoe.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/usr/lib/pppd/2.5.3/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe
+rstrip.sh: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/usr/lib/pppd/2.5.3/pppoe.so: shared object
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe; )
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="ppp-mod-pppoe"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="ppp-mod-pppoe"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/ppp-mod-pppoe.list && mv /mnt/build_wrt/tmp/ppp-mod-pppoe.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL/conffiles ]; then echo $(IDIR_ppp-mod-pppoe)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/lib/apk/packages/ppp-mod-pppoe.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:ppp-mod-pppoe" --info "version:2.5.3-r2" --info "tags:openwrt:section=net openwrt:cpe=cpe:/a:point-to-point_protocol_project:point-to-point_protocol" --info "description:This package contains a PPPoE (PPP over Ethernet) plugin for ppp." --info "arch:aarch64_cortex-a53" --info "license:BSD-4-Clause" --info "origin:feeds/base/network/services/ppp" --info "url:https://ppp.samba.org/" --info "maintainer:Felix Fietkau <nbd@nbd.name>" --info "provides:ppp-mod-pppoe-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/apk-aarch64_cortex-a53/ppp-mod-pppoe/pre-deinstall" --info "depends:libc kmod-pppoe" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-aarch64_cortex-a53/ppp-mod-pppoe" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/ppp-mod-pppoe-2.5.3-r2.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/usr/lib/pppd/2.5.3
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/usr/sbin
+install -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/sbin/pppd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/usr/sbin/
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/etc/ppp
+install -m0600 ./files/etc/ppp/chap-secrets /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/etc/ppp/
+install -m0644 ./files/etc/ppp/filter /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/etc/ppp/
+install -m0644 ./files/etc/ppp/options /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/etc/ppp/
+ln -sf /tmp/resolv.conf.ppp /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/etc/ppp/resolv.conf
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/lib/netifd/proto
+install -m0755 ./files/ppp.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/lib/netifd/proto/
+install -m0755 ./files/lib/netifd/ppp-up /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/lib/netifd/
+install -m0755 ./files/lib/netifd/ppp6-up /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/lib/netifd/
+install -m0755 ./files/lib/netifd/ppp-down /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/lib/netifd/
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.ppp_installed
+echo "ppp" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/ppp.default.install
+rm -rf /mnt/build_wrt/tmp/stage-ppp
+mkdir -p /mnt/build_wrt/tmp/stage-ppp/host /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/packages
+install -d -m0755 /mnt/build_wrt/tmp/stage-ppp/usr/include
+cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/include/pppd /mnt/build_wrt/tmp/stage-ppp/usr/include/
+install -d -m0755 /mnt/build_wrt/tmp/stage-ppp/usr/lib/pkgconfig
+cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pkgconfig/*.pc /mnt/build_wrt/tmp/stage-ppp/usr/lib/pkgconfig
+find /mnt/build_wrt/tmp/stage-ppp -name '*.la' | xargs -r rm -f; 
+if [ -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/packages/ppp.default.list ]; then /mnt/build_wrt/scripts/clean-package.sh "/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/packages/ppp.default.list" "/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl"; fi
+if [ -d /mnt/build_wrt/tmp/stage-ppp ]; then (cd /mnt/build_wrt/tmp/stage-ppp; find ./ > /mnt/build_wrt/tmp/stage-ppp.files); 	SHELL= flock /mnt/build_wrt/tmp/.staging-dir.flock -c ' mv /mnt/build_wrt/tmp/stage-ppp.files /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/packages/ppp.default.list && cp -fpR /mnt/build_wrt/tmp/stage-ppp/* /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/; '; fi
+rm -rf /mnt/build_wrt/tmp/stage-ppp
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.ppp.default_installed
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe/usr/lib/pppd/2.5.3
+install -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/ipkg-install/usr/lib/pppd/2.5.3/pppoe.so /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe/usr/lib/pppd/2.5.3/
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/ppp-default/ppp-2.5.3/.pkgdir/ppp-mod-pppoe/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.ppp-mod-pppoe_installed
+echo "ppp-mod-pppoe" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/ppp.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/network/services/ppp'
+time: package/network/services/ppp/default/compile#27.69#5.14#28.50
+make[3]: Entering directory '/mnt/build_wrt/package/network/utils/ethtool'
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/ethtool-tiny/ethtool-7.1/.pkgdir/ethtool/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.ethtool_installed
+echo "ethtool" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/ethtool.tiny.install
+make[3]: Leaving directory '/mnt/build_wrt/package/network/utils/ethtool'
+time: package/network/utils/ethtool/tiny/compile#0.09#0.12#0.19
+make[3]: Entering directory '/mnt/build_wrt/package/network/utils/iproute2'
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/iproute2-ipfull/iproute2-6.18.0/.pkgdir/ip-full/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.ip-full_installed
+echo "ip-full" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/iproute2.ipfull.install
+make[3]: Leaving directory '/mnt/build_wrt/package/network/utils/iproute2'
+time: package/network/utils/iproute2/ipfull/compile#0.13#0.14#0.25
+make[3]: Entering directory '/mnt/build_wrt/package/packages/gecoosac'
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/gecoosac-2.2.20251015/.pkgdir/gecoosac/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.gecoosac_installed
+echo "gecoosac" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/gecoosac.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/packages/gecoosac'
+time: package/packages/gecoosac/compile#0.15#0.12#0.26
+make[3]: Entering directory '/mnt/build_wrt/package/packages/luci-app-gecoosac'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.prepared_dd885ebcb4b95410486ec8d36745c309_6664517399ebbbc92a37c5bb081b5c53_check
+for d in luasrc ucode htdocs root src; do if [ -d ./$d ]; then mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/$d; cp -fpR ./$d/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/$d/; fi; done
+true
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.prepared_dd885ebcb4b95410486ec8d36745c309_6664517399ebbbc92a37c5bb081b5c53
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.configured_*
+rm -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.luci-app-gecoosac_installed
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.configured_98715a68001fc082a2454d67bd205c32
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.built
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.built_check
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq807x/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac; echo "$V_Package_luci_app_gecoosac_conffiles" > conffiles;  echo "$V_Package_luci_app_gecoosac_postinst" > postinst-pkg; chmod 0755 postinst-pkg;)
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-gecoosac"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-gecoosac"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-app-gecoosac.list && mv /mnt/build_wrt/tmp/luci-app-gecoosac.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL/conffiles ]; then echo $(IDIR_luci-app-gecoosac)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/lib/apk/packages/luci-app-gecoosac.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-app-gecoosac" --info "version:20260812-r4" --info "tags:openwrt:section=luci" --info "description:LuCI Support for gecoosac" --info "arch:noarch" --info "license:" --info "origin:feeds/base/packages/luci-app-gecoosac" --info "url:https://github.com/openwrt/luci" --info "maintainer:OpenWrt LuCI community" --info "provides:luci-app-gecoosac-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-app-gecoosac/pre-deinstall" --info "depends:libc luci-base gecoosac" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-app-gecoosac" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-gecoosac-20260812-r4.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq807x/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/etc/uci-defaults/luci-i18n-gecoosac-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/package/packages/luci-app-gecoosac/po/zh_Hans/gecoosac.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/usr/lib/lua/luci/i18n/gecoosac.zh-cn.lmo;
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn; )
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-gecoosac-zh-cn"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-gecoosac-zh-cn"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-i18n-gecoosac-zh-cn.list && mv /mnt/build_wrt/tmp/luci-i18n-gecoosac-zh-cn.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL/conffiles ]; then echo $(IDIR_luci-i18n-gecoosac-zh-cn)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/lib/apk/packages/luci-i18n-gecoosac-zh-cn.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-i18n-gecoosac-zh-cn" --info "version:20260812-r4" --info "tags:openwrt:section=luci" --info "description:Translation for luci-app-gecoosac - 简体中文 (Simplified Chinese)" --info "arch:noarch" --info "license:" --info "origin:feeds/base/packages/luci-app-gecoosac" --info "url:" --info "maintainer:" --info "provides:luci-i18n-gecoosac-zh-cn-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/apk-all/luci-i18n-gecoosac-zh-cn/pre-deinstall" --info "depends:libc luci-app-gecoosac" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/ipkg-all/luci-i18n-gecoosac-zh-cn" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-gecoosac-zh-cn-20260812-r4.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-app-gecoosac/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-app-gecoosac_installed
+echo "luci-app-gecoosac" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-gecoosac.default.install
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn/etc/uci-defaults/luci-i18n-gecoosac-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/package/packages/luci-app-gecoosac/po/zh_Hans/gecoosac.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn/usr/lib/lua/luci/i18n/gecoosac.zh-cn.lmo;
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-gecoosac/.pkgdir/luci-i18n-gecoosac-zh-cn/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-i18n-gecoosac-zh-cn_installed
+echo "luci-i18n-gecoosac-zh-cn" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-gecoosac.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/packages/luci-app-gecoosac'
+time: package/packages/luci-app-gecoosac/compile#0.21#0.42#0.58
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/golang/golang-bootstrap'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/golang/golang-bootstrap'
+time: package/feeds/packages/golang-bootstrap/host-compile#0.36#0.72#0.81
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/golang/golang1.27'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/golang/golang1.27'
+time: package/feeds/packages/golang1.27/host-compile#0.27#0.31#0.49
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/golang/golang'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/golang/golang'
+time: package/feeds/packages/golang/host-compile#0.08#0.06#0.13
+make[3]: Entering directory '/mnt/build_wrt/package/packages/sing-box'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8/.prepared_d15b80dac4a3c1672c3f3ce0420d22bc_6664517399ebbbc92a37c5bb081b5c53_check
+. /mnt/build_wrt/include/shell.sh; /mnt/build_wrt/staging_dir/host/bin/libdeflate-gzip -dc /mnt/build_wrt/dl/sing-box-1.15.0-alpha.8.tar.gz | tar -C /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8/.. -xf -
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8 -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8
+
+Applying /mnt/build_wrt/package/packages/sing-box/patches/100-fix-dns-tcp-close.patch using plaintext: 
+patching file route/dns.go
+Hunk #2 FAILED at 18.
+1 out of 2 hunks FAILED -- saving rejects to file route/dns.go.rej
+patching file protocol/dns/handle.go
+patching file protocol/dns/outbound.go
+patching file service/resolved/service.go
+Patch failed!  Please fix /mnt/build_wrt/package/packages/sing-box/patches/100-fix-dns-tcp-close.patch!
+make[3]: *** [Makefile:181: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/sing-box-1.15.0-alpha.8/.prepared_d15b80dac4a3c1672c3f3ce0420d22bc_6664517399ebbbc92a37c5bb081b5c53] Error 1
+make[3]: Leaving directory '/mnt/build_wrt/package/packages/sing-box'
+time: package/packages/sing-box/full/compile#0.12#0.23#0.39
+    ERROR: package/packages/sing-box failed to build (build variant: full).
+make[2]: *** [package/Makefile:198: package/packages/sing-box/compile] Error 1
+make[2]: Leaving directory '/mnt/build_wrt'
+make[1]: *** [package/Makefile:192: /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.package_compile] Error 2
+make[1]: Leaving directory '/mnt/build_wrt'
+make: *** [/mnt/build_wrt/include/toplevel.mk:233: world] Error 2
+
+--- RECENT ERROR LOGS IN BUILD DIR ---
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_parse_subtest_header.log ===
+KTAP version 1
+1..1
+  KTAP version 1
+  # Subtest: suite
+  1..1
+  ok 1 test
+ok 1 suite=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_is_test_passed-no_tests_run_no_header.log ===
+Core dump limits :
+	soft - 0
+	hard - NONE
+Checking environment variables for a tempdir...none found
+Checking if /dev/shm is on tmpfs...OK
+Checking PROT_EXEC mmap in /dev/shm...OK
+Adding 24743936 bytes to physical memory to account for exec-shield gap
+Linux version 4.12.0-rc3-00010-g7319eb35f493-dirty (brendanhiggins@mactruck.svl.corp.google.com) (gcc version 7.3.0 (Debian 7.3.0-5) ) #29 Thu Mar 15 14:57:19 PDT 2018
+Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 14038
+Kernel command line: root=98:0
+PID hash table entries: 256 (order: -1, 2048 bytes)
+Dentry cache hash table entries: 8192 (order: 4, 65536 bytes)
+Inode-cache hash table entries: 4096 (order: 3, 32768 bytes)
+Memory: 27868K/56932K available (1681K kernel code, 480K rwdata, 400K rodata, 89K init, 205K bss, 29064K reserved, 0K cma-reserved)
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+NR_IRQS:15
+clocksource: timer: mask: 0xffffffffffffffff max_cycles: 0x1cd42e205, max_idle_ns: 881590404426 ns
+Calibrating delay loop... 7384.26 BogoMIPS (lpj=36921344)
+pid_max: default: 32768 minimum: 301
+Mount-cache hash table entries: 512 (order: 0, 4096 bytes)
+Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes)
+Checking that host ptys support output SIGIO...Yes
+Checking that host ptys support SIGIO on close...No, enabling workaround
+Using 2.6 host AIO
+clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+futex hash table entries: 256 (order: 0, 6144 bytes)
+clocksource: Switched to clocksource timer
+console [stderr0] disabled
+mconsole (version 2) initialized on /usr/local/google/home/brendanhiggins/.uml/6Ijecl/mconsole
+Checking host MADV_REMOVE support...OK
+workingset: timestamp_bits=62 max_order=13 bucket_order=0
+Block layer SCSI generic (bsg) driver version 0.4 loaded (major 254)
+io scheduler noop registered
+io scheduler deadline registered
+io scheduler cfq registered (default)
+io scheduler mq-deadline registered
+io scheduler kyber registered
+Initialized stdio console driver
+Using a channel type which is configured out of UML
+setup_one_line failed for device 1 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 2 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 3 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 4 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 5 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 6 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 7 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 8 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 9 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 10 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 11 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 12 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 13 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 14 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 15 : Configuration failed
+Console initialized on /dev/tty0
+console [tty0] enabled
+console [mc-1] enabled
+List of all partitions:
+No filesystem could mount root, tried:
+
+Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_is_test_passed-all_passed_nested.log ===
+TAP version 14
+1..2
+	# Subtest: sysctl_test
+	1..4
+	# sysctl_test_dointvec_null_tbl_data: sysctl_test_dointvec_null_tbl_data passed
+	ok 1 - sysctl_test_dointvec_null_tbl_data
+		# Subtest: example
+		1..2
+	init_suite
+		# example_simple_test: initializing
+		# example_simple_test: example_simple_test passed
+		ok 1 - example_simple_test
+		# example_mock_test: initializing
+		# example_mock_test: example_mock_test passed
+		ok 2 - example_mock_test
+	kunit example: all tests passed
+	ok 2 - example
+	# sysctl_test_dointvec_table_len_is_zero: sysctl_test_dointvec_table_len_is_zero passed
+	ok 3 - sysctl_test_dointvec_table_len_is_zero
+	# sysctl_test_dointvec_table_read_but_position_set: sysctl_test_dointvec_table_read_but_position_set passed
+	ok 4 - sysctl_test_dointvec_table_read_but_position_set
+kunit sysctl_test: all tests passed
+ok 1 - sysctl_test
+	# Subtest: example
+	1..2
+init_suite
+	# example_simple_test: initializing
+	# example_simple_test: example_simple_test passed
+	ok 1 - example_simple_test
+	# example_mock_test: initializing
+	# example_mock_test: example_mock_test passed
+	ok 2 - example_mock_test
+kunit example: all tests passed
+ok 2 - example
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_kernel_panic_interrupt.log ===
+[    0.060000] printk: console [mc-1] enabled
+[    0.060000] random: get_random_bytes called from init_oops_id+0x35/0x40 with crng_init=0
+[    0.060000] TAP version 14
+[    0.060000] 1..3
+[    0.060000] 	# Subtest: kunit-resource-test
+[    0.060000] 	1..5
+[    0.060000] 	ok 1 - kunit_resource_test_init_resources
+[    0.060000] 	ok 2 - kunit_resource_test_alloc_resource
+[    0.060000] 	ok 3 - kunit_resource_test_destroy_resource
+[    0.060000] 	ok 4 - kunit_resource_test_cleanup_resources
+[    0.060000] 	ok 5 - kunit_resource_test_proper_free_ordering
+[    0.060000] ok 1 - kunit-resource-test
+[    0.060000] 	# Subtest: kunit-try-catch-test
+[    0.060000] 	1..2
+[    0.060000] 	ok 1 - kunit_test_try_catch_successful_try_no_catch
+[    0.060000] 	ok 2 - kunit_test_try_catch_unsuccessful_try_does_catch
+[    0.060000] ok 2 - kunit-try-catch-test
+[    0.060000] 	# Subtest: string-stream-test
+[    0.060000] 	1..3
+[    0.060000] 	ok 1 - string_stream_test_empty_on_creation
+[    0.060000] 	Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+[    0.060000] CPU: 0 PID: 1 Comm: swapper Not tainted 5.4.0-rc1-gea2dd7c0875e-dirty #2
+[    0.060000] Stack:
+[    0.060000]  602086f8 601bc260 705c0000 705c0000
+[    0.060000]  602086f8 6005fcec 705c0000 6002c6ab
+[    0.060000]  6005fcec 601bc260 705c0000 3000000010
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_skip_all_tests.log ===
+TAP version 14
+1..2
+    # Subtest: string-stream-test
+    1..3
+    ok 1 - string_stream_test_empty_on_creation # SKIP all tests skipped
+    ok 2 - string_stream_test_not_empty_after_add # SKIP all tests skipped
+    ok 3 - string_stream_test_get_string # SKIP all tests skipped
+ok 1 - string-stream-test # SKIP
+    # Subtest: example
+    1..2
+    # example_simple_test: initializing
+    ok 1 - example_simple_test # SKIP all tests skipped
+    # example_skip_test: initializing
+    ok 2 - example_skip_test # SKIP this test should be skipped
+ok 2 - example # SKIP
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_parse_ktap_output.log ===
+KTAP version 1
+1..1
+  KTAP version 1
+  1..3
+  ok 1 case_1
+  ok 2 case_2
+  ok 3 case_3
+ok 1 suite
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_output_with_prefix_isolated_correctly.log ===
+[    0.060000] printk: console [mc-1] enabled
+[    0.060000] random: get_random_bytes called from init_oops_id+0x35/0x40 with crng_init=0
+[    0.060000] TAP version 14
+[    0.060000] 	# Subtest: kunit-resource-test
+[    0.060000] 	1..5
+[    0.060000] 	ok 1 - kunit_resource_test_init_resources
+[    0.060000] 	ok 2 - kunit_resource_test_alloc_resource
+[    0.060000] 	ok 3 - kunit_resource_test_destroy_resource
+[    0.060000]  foo bar 	#
+[    0.060000] 	ok 4 - kunit_resource_test_cleanup_resources
+[    0.060000] 	ok 5 - kunit_resource_test_proper_free_ordering
+[    0.060000] ok 1 - kunit-resource-test
+[    0.060000]  foo bar 	# non-kunit output
+[    0.060000] 	# Subtest: kunit-try-catch-test
+[    0.060000] 	1..2
+[    0.060000] 	ok 1 - kunit_test_try_catch_successful_try_no_catch
+[    0.060000] 	ok 2 - kunit_test_try_catch_unsuccessful_try_does_catch
+[    0.060000] ok 2 - kunit-try-catch-test
+[    0.060000] 	# Subtest: string-stream-test
+[    0.060000] 	1..3
+[    0.060000] 	ok 1 - string_stream_test_empty_on_creation
+[    0.060000] 	ok 2 - string_stream_test_not_empty_after_add
+[    0.060000] 	ok 3 - string_stream_test_get_string
+[    0.060000] ok 3 - string-stream-test
+[    0.060000] List of all partitions:
+[    0.060000] No filesystem could mount root, tried:
+[    0.060000]
+[    0.060000] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+[    0.060000] CPU: 0 PID: 1 Comm: swapper Not tainted 5.4.0-rc1-gea2dd7c0875e-dirty #2
+[    0.060000] Stack:
+[    0.060000]  602086f8 601bc260 705c0000 705c0000
+[    0.060000]  602086f8 6005fcec 705c0000 6002c6ab
+[    0.060000]  6005fcec 601bc260 705c0000 3000000010=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_interrupted_tap_output.log ===
+[    0.060000] printk: console [mc-1] enabled
+[    0.060000] random: get_random_bytes called from init_oops_id+0x35/0x40 with crng_init=0
+[    0.060000] TAP version 14
+[    0.060000] 1..3
+[    0.060000] 	# Subtest: kunit-resource-test
+[    0.060000] 	1..5
+[    0.060000] 	ok 1 - kunit_resource_test_init_resources
+[    0.060000] 	ok 2 - kunit_resource_test_alloc_resource
+[    0.060000] 	ok 3 - kunit_resource_test_destroy_resource
+[    0.060000] kAFS: Red Hat AFS client v0.1 registering.
+[    0.060000] FS-Cache: Netfs 'afs' registered for caching
+[    0.060000] *** VALIDATE kAFS ***
+[    0.060000] Btrfs loaded, crc32c=crc32c-generic, debug=on, assert=on, integrity-checker=on, ref-verify=on
+[    0.060000] BTRFS: selftest: sectorsize: 4096  nodesize: 4096
+[    0.060000] BTRFS: selftest: running btrfs free space cache tests
+[    0.060000] 	ok 4 - kunit_resource_test_cleanup_resources
+[    0.060000] 	ok 5 - kunit_resource_test_proper_free_ordering
+[    0.060000] ok 1 - kunit-resource-test
+[    0.060000] 	# Subtest: kunit-try-catch-test
+[    0.060000] 	1..2
+[    0.060000] 	ok 1 - kunit_test_try_catch_successful_try_no_catch
+[    0.060000] 	ok 2 - kunit_test_try_catch_unsuccessful_try_does_catch
+[    0.060000] ok 2 - kunit-try-catch-test
+[    0.060000] 	# Subtest: string-stream-test
+[    0.060000] 	1..3
+[    0.060000] 	ok 1 - string_stream_test_empty_on_creation
+[    0.060000] 	ok 2 - string_stream_test_not_empty_after_add
+[    0.060000] 	ok 3 - string_stream_test_get_string
+[    0.060000] ok 3 - string-stream-test
+[    0.060000] List of all partitions:
+[    0.060000] No filesystem could mount root, tried:
+[    0.060000]
+[    0.060000] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+[    0.060000] CPU: 0 PID: 1 Comm: swapper Not tainted 5.4.0-rc1-gea2dd7c0875e-dirty #2
+[    0.060000] Stack:
+[    0.060000]  602086f8 601bc260 705c0000 705c0000
+[    0.060000]  602086f8 6005fcec 705c0000 6002c6ab
+[    0.060000]  6005fcec 601bc260 705c0000 3000000010
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_pound_sign.log ===
+[    0.060000] printk: console [mc-1] enabled
+[    0.060000] random: get_random_bytes called from init_oops_id+0x35/0x40 with crng_init=0
+[    0.060000] TAP version 14
+[    0.060000] 1..3
+[    0.060000] 	# Subtest: kunit-resource-test
+[    0.060000] 	1..5
+[    0.060000] 	ok 1 - kunit_resource_test_init_resources
+[    0.060000] 	ok 2 - kunit_resource_test_alloc_resource
+[    0.060000] 	ok 3 - kunit_resource_test_destroy_resource
+[    0.060000]  foo bar 	#
+[    0.060000] 	ok 4 - kunit_resource_test_cleanup_resources
+[    0.060000] 	ok 5 - kunit_resource_test_proper_free_ordering
+[    0.060000] ok 1 - kunit-resource-test
+[    0.060000]  foo bar 	# non-kunit output
+[    0.060000] 	# Subtest: kunit-try-catch-test
+[    0.060000] 	1..2
+[    0.060000] 	ok 1 - kunit_test_try_catch_successful_try_no_catch
+[    0.060000] 	ok 2 - kunit_test_try_catch_unsuccessful_try_does_catch
+[    0.060000] ok 2 - kunit-try-catch-test
+[    0.060000] 	# Subtest: string-stream-test
+[    0.060000] 	1..3
+[    0.060000] 	ok 1 - string_stream_test_empty_on_creation
+[    0.060000] 	ok 2 - string_stream_test_not_empty_after_add
+[    0.060000] 	ok 3 - string_stream_test_get_string
+[    0.060000] ok 3 - string-stream-test
+[    0.060000] List of all partitions:
+[    0.060000] No filesystem could mount root, tried:
+[    0.060000]
+[    0.060000] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+[    0.060000] CPU: 0 PID: 1 Comm: swapper Not tainted 5.4.0-rc1-gea2dd7c0875e-dirty #2
+[    0.060000] Stack:
+[    0.060000]  602086f8 601bc260 705c0000 705c0000
+[    0.060000]  602086f8 6005fcec 705c0000 6002c6ab
+[    0.060000]  6005fcec 601bc260 705c0000 3000000010
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_is_test_passed-kselftest.log ===
+TAP version 13
+1..3
+# selftests: membarrier: membarrier_test_single_thread
+# TAP version 13
+# 1..2
+# ok 1 sys_membarrier available
+# ok 2 sys membarrier invalid command test: command = -1, flags = 0, errno = 22. Failed as expected
+ok 1 selftests: membarrier: membarrier_test_single_thread
+# selftests: membarrier: membarrier_test_multi_thread
+# TAP version 13
+# 1..2
+# ok 1 sys_membarrier available
+# ok 2 sys membarrier invalid command test: command = -1, flags = 0, errno = 22. Failed as expected
+ok 2 selftests: membarrier: membarrier_test_multi_thread
+ok 3 # SKIP selftests: membarrier: membarrier_test_multi_thread
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_output_isolated_correctly.log ===
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+NR_IRQS: 15
+clocksource: timer: mask: 0xffffffffffffffff max_cycles: 0x1cd42e205, max_idle_ns: 881590404426 ns
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 0 at kernel/time/clockevents.c:458 clockevents_register_device+0x143/0x160
+posix-timer cpumask == cpu_all_mask, using cpu_possible_mask instead
+CPU: 0 PID: 0 Comm: swapper Not tainted 5.1.0-rc7-00061-g04652f1cb4aa0 #163
+Stack:
+ 6005cc00 60233e18 60233e60 60233e18
+ 60233e60 00000009 00000000 6002a1b4
+ 1ca00000000 60071c23 60233e78 100000000000062
+Call Trace:
+ [<600214c5>] ? os_is_signal_stack+0x15/0x30
+ [<6005c5ec>] ? printk+0x0/0x9b
+ [<6001597e>] ? show_stack+0xbe/0x1c0
+ [<6005cc00>] ? __printk_safe_exit+0x0/0x40
+ [<6002a1b4>] ? __warn+0x144/0x170
+ [<60071c23>] ? clockevents_register_device+0x143/0x160
+ [<60021440>] ? get_signals+0x0/0x10
+ [<6005c5ec>] ? printk+0x0/0x9b
+ [<6002a27b>] ? warn_slowpath_fmt+0x9b/0xb0
+ [<6005c5ec>] ? printk+0x0/0x9b
+ [<6002a1e0>] ? warn_slowpath_fmt+0x0/0xb0
+ [<6005c5ec>] ? printk+0x0/0x9b
+ [<60021440>] ? get_signals+0x0/0x10
+ [<600213f0>] ? block_signals+0x0/0x20
+ [<60071c23>] ? clockevents_register_device+0x143/0x160
+ [<60021440>] ? get_signals+0x0/0x10
+ [<600213f0>] ? block_signals+0x0/0x20
+ [<6005c5ec>] ? printk+0x0/0x9b
+ [<60001bc8>] ? start_kernel+0x477/0x56a
+ [<600036f1>] ? start_kernel_proc+0x46/0x4d
+ [<60014442>] ? new_thread_handler+0x82/0xc0
+
+random: get_random_bytes called from print_oops_end_marker+0x4c/0x60 with crng_init=0
+---[ end trace c83434852b3702d3 ]---
+Calibrating delay loop... 6958.28 BogoMIPS (lpj=34791424)
+pid_max: default: 32768 minimum: 301
+Mount-cache hash table entries: 1024 (order: 1, 8192 bytes)
+Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes)
+*** VALIDATE proc ***
+Checking that host ptys support output SIGIO...Yes
+Checking that host ptys support SIGIO on close...No, enabling workaround
+clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+futex hash table entries: 256 (order: 0, 6144 bytes)
+clocksource: Switched to clocksource timer
+printk: console [stderr0] disabled
+mconsole (version 2) initialized on /usr/local/google/home/brendanhiggins/.uml/VZ2qMm/mconsole
+Checking host MADV_REMOVE support...OK
+workingset: timestamp_bits=62 max_order=16 bucket_order=0
+Block layer SCSI generic (bsg) driver version 0.4 loaded (major 254)
+io scheduler mq-deadline registered
+io scheduler kyber registered
+Initialized stdio console driver
+Using a channel type which is configured out of UML
+setup_one_line failed for device 1 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 2 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 3 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 4 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 5 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 6 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 7 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 8 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 9 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 10 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 11 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 12 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 13 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 14 : Configuration failed
+Using a channel type which is configured out of UML
+setup_one_line failed for device 15 : Configuration failed
+Console initialized on /dev/tty0
+printk: console [tty0] enabled
+printk: console [mc-1] enabled
+TAP version 14
+	# Subtest: example
+	1..2
+init_suite
+	# example_simple_test: initializing
+	# example_simple_test: example_simple_test passed
+	ok 1 - example_simple_test
+	# example_mock_test: initializing
+	# example_mock_test: example_mock_test passed
+	ok 2 - example_mock_test
+kunit example: all tests passed
+ok 1 - example
+List of all partitions:
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_insufficient_memory.log ===
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_pound_no_prefix.log ===
+ printk: console [mc-1] enabled
+ random: get_random_bytes called from init_oops_id+0x35/0x40 with crng_init=0
+ TAP version 14
+ 1..3
+ 	# Subtest: kunit-resource-test
+ 	1..5
+ 	ok 1 - kunit_resource_test_init_resources
+ 	ok 2 - kunit_resource_test_alloc_resource
+ 	ok 3 - kunit_resource_test_destroy_resource
+  foo bar 	#
+ 	ok 4 - kunit_resource_test_cleanup_resources
+ 	ok 5 - kunit_resource_test_proper_free_ordering
+ ok 1 - kunit-resource-test
+  foo bar 	# non-kunit output
+ 	# Subtest: kunit-try-catch-test
+ 	1..2
+ 	ok 1 - kunit_test_try_catch_successful_try_no_catch
+ 	ok 2 - kunit_test_try_catch_unsuccessful_try_does_catch
+ ok 2 - kunit-try-catch-test
+ 	# Subtest: string-stream-test
+ 	1..3
+ 	ok 1 - string_stream_test_empty_on_creation
+ 	ok 2 - string_stream_test_not_empty_after_add
+ 	ok 3 - string_stream_test_get_string
+ ok 3 - string-stream-test
+ List of all partitions:
+ No filesystem could mount root, tried:
+
+ Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(98,0)
+ CPU: 0 PID: 1 Comm: swapper Not tainted 5.4.0-rc1-gea2dd7c0875e-dirty #2
+ Stack:
+  602086f8 601bc260 705c0000 705c0000
+  602086f8 6005fcec 705c0000 6002c6ab
+  6005fcec 601bc260 705c0000 3000000010
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_strip_hyphen.log ===
+KTAP version 1
+1..2
+	# Subtest: sysctl_test
+	1..1
+	# sysctl_test_dointvec_null_tbl_data: sysctl_test_dointvec_null_tbl_data passed
+	ok 1 - sysctl_test_dointvec_null_tbl_data
+kunit sysctl_test: all tests passed
+ok 1 - sysctl_test
+	# Subtest: example
+	1..1
+init_suite
+	# example_simple_test: initializing
+	# example_simple_test: example_simple_test passed
+	ok 1 example_simple_test
+kunit example: all tests passed
+ok 2 example
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_is_test_passed-no_tests_no_plan.log ===
+TAP version 14
+1..1
+  # Subtest: suite
+  1..1
+    # Subtest: case
+  ok 1 - case
+ok 1 - suite
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_is_test_passed-missing_plan.log ===
+KTAP version 1
+	# Subtest: sysctl_test
+	# sysctl_test_dointvec_null_tbl_data: sysctl_test_dointvec_null_tbl_data passed
+	ok 1 - sysctl_test_dointvec_null_tbl_data
+	# sysctl_test_dointvec_table_maxlen_unset: sysctl_test_dointvec_table_maxlen_unset passed
+	ok 2 - sysctl_test_dointvec_table_maxlen_unset
+	# sysctl_test_dointvec_table_len_is_zero: sysctl_test_dointvec_table_len_is_zero passed
+	ok 3 - sysctl_test_dointvec_table_len_is_zero
+	# sysctl_test_dointvec_table_read_but_position_set: sysctl_test_dointvec_table_read_but_position_set passed
+	ok 4 - sysctl_test_dointvec_table_read_but_position_set
+	# sysctl_test_dointvec_happy_single_positive: sysctl_test_dointvec_happy_single_positive passed
+	ok 5 - sysctl_test_dointvec_happy_single_positive
+	# sysctl_test_dointvec_happy_single_negative: sysctl_test_dointvec_happy_single_negative passed
+	ok 6 - sysctl_test_dointvec_happy_single_negative
+	# sysctl_test_dointvec_single_less_int_min: sysctl_test_dointvec_single_less_int_min passed
+	ok 7 - sysctl_test_dointvec_single_less_int_min
+	# sysctl_test_dointvec_single_greater_int_max: sysctl_test_dointvec_single_greater_int_max passed
+	ok 8 - sysctl_test_dointvec_single_greater_int_max
+kunit sysctl_test: all tests passed
+ok 1 - sysctl_test
+	# Subtest: example
+	1..2
+init_suite
+	# example_simple_test: initializing
+	# example_simple_test: example_simple_test passed
+	ok 1 - example_simple_test
+	# example_mock_test: initializing
+	# example_mock_test: example_mock_test passed
+	ok 2 - example_mock_test
+kunit example: all tests passed
+ok 2 - example
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/linux-6.18.44/tools/testing/kunit/test_data/test_parse_attributes.log ===
+KTAP version 1
+1..1
+  KTAP version 1
+  # Subtest: suite
+  # module: example
+  1..1
+  # test.speed: slow
+  ok 1 test
+ok 1 suite=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libtatsu-1.0.5/config.log ===
+PACKAGE_TARNAME='libtatsu'
+PACKAGE_URL='https://github.com/libimobiledevice/libtatsu'
+PACKAGE_VERSION='1.0.5'
+PATH_SEPARATOR=':'
+PKG_CONFIG='/mnt/build_wrt/staging_dir/host/bin/pkg-config'
+PKG_CONFIG_LIBDIR='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+PKG_CONFIG_PATH='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.0.5'
+WIN32_FALSE=''
+WIN32_TRUE='#'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libtatsu-1.0.5/install-sh'
+libcurl_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libcurl_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lcurl'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+libplist_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libplist_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lplist-2.0'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libtatsu"
+#define PACKAGE_TARNAME "libtatsu"
+#define PACKAGE_VERSION "1.0.5"
+#define PACKAGE_STRING "libtatsu 1.0.5"
+#define PACKAGE_BUGREPORT "https://github.com/libimobiledevice/libtatsu/issues"
+#define PACKAGE_URL "https://github.com/libimobiledevice/libtatsu"
+#define PACKAGE "libtatsu"
+#define VERSION "1.0.5"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/musl-fts-1.2.7/config.log ===
+PATH_SEPARATOR=':'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.2.7'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/musl-fts-1.2.7/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+pkgconfigdir='${libdir}/pkgconfig'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "fts"
+#define PACKAGE_TARNAME "fts"
+#define PACKAGE_VERSION "1.2.7"
+#define PACKAGE_STRING "fts 1.2.7"
+#define PACKAGE_BUGREPORT "pullmoll@t-online.de"
+#define PACKAGE_URL ""
+#define PACKAGE "fts"
+#define VERSION "1.2.7"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_ASSERT_H 1
+#define HAVE_DIRENT_H 1
+#define HAVE_ERRNO_H 1
+#define HAVE_FCNTL_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_DECL_MAX 1
+#define HAVE_DECL_UINTMAX_MAX 0
+#define HAVE_DIRFD 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/mtd-utils-2.3.1/config.log ===
+WITH_SELINUX_FALSE='#'
+WITH_SELINUX_TRUE=''
+WITH_UBIHEALTHD_FALSE='#'
+WITH_UBIHEALTHD_TRUE=''
+WITH_XATTR_FALSE=''
+WITH_XATTR_TRUE='#'
+WITH_ZLIB_FALSE=''
+WITH_ZLIB_TRUE='#'
+WITH_ZSTD_FALSE=''
+WITH_ZSTD_TRUE='#'
+ZLIB_CFLAGS=''
+ZLIB_LIBS=''
+ZSTD_CFLAGS=''
+ZSTD_LIBS=''
+ac_ct_CC=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+ax_pthread_config=''
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/mtd-utils-2.3.1/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "mtd-utils"
+#define PACKAGE_TARNAME "mtd-utils"
+#define PACKAGE_VERSION "2.3.1"
+#define PACKAGE_STRING "mtd-utils 2.3.1"
+#define PACKAGE_BUGREPORT "linux-mtd@lists.infradead.org"
+#define PACKAGE_URL ""
+#define PACKAGE "mtd-utils"
+#define VERSION "2.3.1"
+#define TESTBINDIR "/usr/lib/mtd-utils"
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_SELINUX_SELINUX_H 1
+#define HAVE_SELINUX_LABEL_H 1
+#define HAVE_SYS_RANDOM_H 1
+#define SIZEOF_OFF_T 8
+#define SIZEOF_LOFF_T 0
+
+configure: exit 0
