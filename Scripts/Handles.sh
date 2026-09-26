@@ -3,6 +3,7 @@
 # Copyright (C) 2026 VIKINGYFY
 
 [ -n "$PKG_PATH" ] || PKG_PATH="$GITHUB_WORKSPACE/wrt/package"
+[ -d "$PKG_PATH" ] || PKG_PATH="$(pwd)/package"
 [ -d "$PKG_PATH" ] || PKG_PATH="$(pwd)"
 
 #预置HomeProxy数据，隔离临时变量和清理信号，避免影响后续修复

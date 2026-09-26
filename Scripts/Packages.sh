@@ -2,6 +2,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
+# 智能适配工作目录：无论在 ./wrt 还是 ./wrt/package 都能准确对齐 ./package 和 ./feeds
+if [ ! -d "./package" ] && [ -d "../package" ] && [ -d "../feeds" ]; then
+	cd ..
+fi
+
 #安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
@@ -38,6 +43,8 @@ UPDATE_PACKAGE() {
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
 		find $REPO_PATH/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./package \;
 		rm -rf $REPO_PATH
+	elif [[ "$PKG_SPECIAL" == "name" ]]; then
+		mv -f "$REPO_PATH" "./package/$PKG_NAME"
 	fi
 }
 
@@ -45,7 +52,7 @@ UPDATE_PACKAGE() {
 # UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "" "custom_name1 custom_name2"
 # UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
 
-# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg，可选，从大杂烩中单独提取包名插件"
+# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 UPDATE_PACKAGE "aurora" "eamonxg/luci-theme-aurora" "master"
 UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
