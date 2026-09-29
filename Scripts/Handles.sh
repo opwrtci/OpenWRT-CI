@@ -170,6 +170,18 @@ if [ -n "$HP_DIR" ]; then
 	else
 		echo "homeproxy resource preset completed with errors; continuing!"
 	fi
+
+	HP_SCRIPTS_DIR="$(find "$HP_DIR" -type d -path '*/etc/homeproxy/scripts' -print -quit 2>/dev/null)"
+	if [ -d "$HP_SCRIPTS_DIR" ]; then
+		# 修复 Hysteria2 节点带有 obfs=none 时导致 sing-box 1.15 配置校验失败崩溃的问题
+		sed -i "s/node.hysteria_obfs_type)/node.hysteria_obfs_type \&\& node.hysteria_obfs_type !== 'none')/" \
+			"$HP_SCRIPTS_DIR/homeproxy.uc" 2>/dev/null || true
+		sed -i "s/hysteria_obfs_type: proxy.obfs,/hysteria_obfs_type: (proxy.obfs \&\& proxy.obfs !== 'none') ? proxy.obfs : null,/" \
+			"$HP_SCRIPTS_DIR/update_subscriptions.uc" 2>/dev/null || true
+		sed -i "s/hysteria_obfs_type: params.obfs,/hysteria_obfs_type: (params.obfs \&\& params.obfs !== 'none') ? params.obfs : null,/" \
+			"$HP_SCRIPTS_DIR/update_subscriptions.uc" 2>/dev/null || true
+		echo "homeproxy hysteria2 obfs fix applied!"
+	fi
 fi
 
 #修改argon主题字体和颜色
