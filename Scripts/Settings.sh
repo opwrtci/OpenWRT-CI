@@ -118,6 +118,26 @@ CFG_FILE="./package/base-files/files/bin/config_generate"
 sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
+
+#固化 TCP 长连接与保活超时配置 (系统级 sysctl.conf)
+SYSCTL_FILE="./package/base-files/files/etc/sysctl.conf"
+mkdir -p "$(dirname "$SYSCTL_FILE")"
+touch "$SYSCTL_FILE"
+cat << 'EOF' >> "$SYSCTL_FILE"
+
+# ==========================================
+# Optimized TCP Keepalive & Long Connections
+# ==========================================
+net.ipv4.tcp_keepalive_time=120
+net.ipv4.tcp_keepalive_intvl=15
+net.ipv4.tcp_keepalive_probes=4
+net.ipv4.tcp_fin_timeout=30
+net.netfilter.nf_conntrack_tcp_timeout_established=7200
+net.netfilter.nf_conntrack_tcp_timeout_close_wait=60
+net.netfilter.nf_conntrack_tcp_timeout_fin_wait=30
+net.netfilter.nf_conntrack_tcp_timeout_time_wait=30
+EOF
+
 #修改默认NTP服务器：移除存在DNS重绑定风险的cn.ntp.org.cn，增补微软及Cloudflare权威授时源
 sed -i "s/cn\.ntp\.org\.cn/time.windows.com/g" $CFG_FILE
 sed -i "/time\.windows\.com/a \\\t\\tadd_list system.ntp.server='time.cloudflare.com'" $CFG_FILE

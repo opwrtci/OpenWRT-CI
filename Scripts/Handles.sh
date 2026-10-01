@@ -181,6 +181,89 @@ if [ -n "$HP_DIR" ]; then
 		sed -i "s/hysteria_obfs_type: params.obfs,/hysteria_obfs_type: (params.obfs \&\& params.obfs !== 'none') ? params.obfs : null,/" \
 			"$HP_SCRIPTS_DIR/update_subscriptions.uc" 2>/dev/null || true
 		echo "homeproxy hysteria2 obfs fix applied!"
+
+		# 预置 HomeProxy 针对 Muse 等专有 AI 的 UDP 443 (QUIC) 阻断规则，杜绝运营商 QoS 丢包与流式超时
+		HP_ROOT="$(find "$HP_DIR" -type d -path '*/etc/homeproxy' -not -path '*/etc/homeproxy/*' -print -quit 2>/dev/null)"
+		if [ -d "$HP_ROOT" ]; then
+			cat << 'EOF' > "$HP_ROOT/custom_route_rules.json"
+[
+  {
+    "domain_suffix": [
+      "metaaivm.com",
+      "meta.ai"
+    ],
+    "port": [
+      443
+    ],
+    "network": "udp",
+    "action": "reject",
+    "method": "default"
+  },
+  {
+    "domain": [
+      "genai-hatch-realtime.facebook.com",
+      "genai-kepler-realtime.facebook.com",
+      "genai-graph.facebook.com",
+      "genai-graph.instagram.com"
+    ],
+    "port": [
+      443
+    ],
+    "network": "udp",
+    "action": "reject",
+    "method": "default"
+  },
+  {
+    "domain_keyword": [
+      "metaaivm",
+      "genai-hatch",
+      "genai-kepler",
+      "metaclaw"
+    ],
+    "port": [
+      443
+    ],
+    "network": "udp",
+    "action": "reject",
+    "method": "default"
+  },
+  {
+    "ip_cidr": [
+      "57.144.204.0/23"
+    ],
+    "port": [
+      443
+    ],
+    "network": "udp",
+    "action": "reject",
+    "method": "default"
+  }
+]
+EOF
+			echo "homeproxy custom_route_rules.json preset applied!"
+		fi
+
+		# 为 generate_client.uc 注入自定义路由规则加载逻辑
+		GEN_UC="$HP_SCRIPTS_DIR/generate_client.uc"
+		if [ -f "$GEN_UC" ] && ! grep -q "custom_route_rules.json" "$GEN_UC"; then
+			awk '{
+				print
+				if ($0 ~ /push\(config\.route\.rules, \{ action: .sniff. \}\);/) {
+					print ""
+					print "\t/* Custom route rules start */"
+					print "\tconst custom_rules_content = readfile(HP_DIR + \x27/custom_route_rules.json\x27);"
+					print "\tif (!isEmpty(custom_rules_content)) {"
+					print "\t\tconst custom_rules = json(custom_rules_content);"
+					print "\t\tif (length(custom_rules)) {"
+					print "\t\t\tfor (let r in custom_rules)"
+					print "\t\t\t\tpush(config.route.rules, r);"
+					print "\t\t}"
+					print "\t}"
+					print "\t/* Custom route rules end */"
+				}
+			}' "$GEN_UC" > "$GEN_UC.tmp" && mv -f "$GEN_UC.tmp" "$GEN_UC"
+			echo "homeproxy generate_client.uc custom rules loader patched!"
+		fi
 	fi
 fi
 
