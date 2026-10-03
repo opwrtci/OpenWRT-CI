@@ -63,18 +63,19 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.disassoc_low_ack='0'
 			uci -q set wireless.$iface.uapsd='0'
 			uci -q set wireless.$iface.disabled='0'
-		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 功率 23dBm / 关闭 4x4 束波成型与 TWT/UAPSD 杜绝 Intel 网卡死锁)
+		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 发射功率 28dBm / 开启 4x4 MU-MIMO 与 SU/HE 波束成形增强穿墙与物理层覆盖)
 		elif echo "$path" | grep -qi "pcie"; then
 			uci -q set wireless.$dev.country='US'
 			uci -q set wireless.$dev.channel='36'
 			uci -q set wireless.$dev.htmode='HE80'
-			uci -q set wireless.$dev.txpower='23'
-			uci -q set wireless.$dev.su_beamformer='0'
-			uci -q set wireless.$dev.mu_beamformer='0'
-			uci -q set wireless.$dev.he_su_beamformer='0'
-			uci -q set wireless.$dev.he_mu_beamformer='0'
-			uci -q set wireless.$dev.su_beamformee='0'
-			uci -q set wireless.$dev.he_su_beamformee='0'
+			uci -q set wireless.$dev.txpower='28'
+			uci -q set wireless.$dev.beamformer='1'
+			uci -q set wireless.$dev.su_beamformer='1'
+			uci -q set wireless.$dev.mu_beamformer='1'
+			uci -q set wireless.$dev.he_su_beamformer='1'
+			uci -q set wireless.$dev.he_mu_beamformer='1'
+			uci -q set wireless.$dev.su_beamformee='1'
+			uci -q set wireless.$dev.he_su_beamformee='1'
 			uci -q set wireless.$dev.he_twt_responder='0'
 			uci -q set wireless.$dev.he_twt_required='0'
 			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G_Game"
