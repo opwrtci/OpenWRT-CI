@@ -84,11 +84,21 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.disassoc_low_ack='0'
 			uci -q set wireless.$iface.uapsd='0'
 			uci -q set wireless.$iface.disabled='0'
-		# 3. 5GHz-1 频段 (IPQ6000 SOC 板载 5G - 高信道 149)
+		# 3. 5GHz-1 频段 (IPQ6000 SOC 板载 5G - 高信道 149 / 发射功率 28dBm / 开启 SU/MU 波束成形与弱信号防踢)
 		elif [ "$band" = "5g" ]; then
 			uci -q set wireless.$dev.country='US'
 			uci -q set wireless.$dev.channel='149'
 			uci -q set wireless.$dev.htmode='HE80'
+			uci -q set wireless.$dev.txpower='28'
+			uci -q set wireless.$dev.beamformer='1'
+			uci -q set wireless.$dev.su_beamformer='1'
+			uci -q set wireless.$dev.mu_beamformer='1'
+			uci -q set wireless.$dev.he_su_beamformer='1'
+			uci -q set wireless.$dev.he_mu_beamformer='1'
+			uci -q set wireless.$dev.su_beamformee='1'
+			uci -q set wireless.$dev.he_su_beamformee='1'
+			uci -q set wireless.$dev.he_twt_responder='0'
+			uci -q set wireless.$dev.he_twt_required='0'
 			uci -q set wireless.$iface.ssid="${BASE_SSID}_5G"
 			uci -q set wireless.$iface.encryption='psk2+ccmp'
 			uci -q set wireless.$iface.key="${BASE_WORD}"
@@ -98,6 +108,8 @@ jdcloud,re-cs-02)
 		fi
 	done
 	uci -q commit wireless
+	uci -q set dhcp.@dnsmasq[0].cachesize='1024'
+	uci -q commit dhcp
 	;;
 *)
 	# 通用 qualcommax 设备的国家码规范统一为 US (避免 ath11k 固件 -22 错误)
@@ -105,6 +117,8 @@ jdcloud,re-cs-02)
 		[ "$(uci -q get wireless.$dev.country)" = "CN" ] && uci -q set wireless.$dev.country='US'
 	done
 	uci -q commit wireless
+	uci -q set dhcp.@dnsmasq[0].cachesize='1024'
+	uci -q commit dhcp
 	;;
 esac
 
