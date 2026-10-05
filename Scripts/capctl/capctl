@@ -592,11 +592,21 @@ do_analyze() {
 			local slow_dns="$(awk '
 				/dns: exchanged/ && $6 ~ /ms\]/ && $10 ~ /NOERROR|NXDOMAIN/ {
 					ms = $6; gsub(/[^0-9]/, "", ms); ms = ms + 0;
-					if (ms >= 150) print ms "ms\t" $9 " (" $10 ")";
-				}' $log_files 2>/dev/null | sort -k1,1nr | uniq | head -n 5)"
+					dom = $9;
+					if (ms >= 150) {
+						if (!(dom in max_ms) || ms > max_ms[dom]) {
+							max_ms[dom] = ms;
+							status[dom] = $10;
+						}
+					}
+				}
+				END {
+					for (d in max_ms) print max_ms[d] "ms\t" d " (" status[d] ")";
+				}' $log_files 2>/dev/null | sort -k1,1nr | head -n 5)"
 			if [ -n "$slow_dns" ]; then
 				echo "  ⏱️ 耗时较高 DNS 请求 (>= 150ms):"
 				echo "$slow_dns" | awk '{print "    - 耗时 " $1 " : " $2}'
+				echo "  💡 提示: 针对慢解析的国内/运营商认证域名，可在 HomeProxy 客户端分流控制中加入“直连域名列表”秒级提速。"
 			fi
 		fi
 
@@ -622,12 +632,51 @@ do_analyze() {
 					}
 					return ep;
 				}
+				function get_port(ep) {
+					n = split(ep, parts, ".");
+					return parts[n];
+				}
+				function get_ip(ep) {
+					sub(/:$/, "", ep);
+					sub(/\.[0-9]+$/, "", ep);
+					return ep;
+				}
 				{
 					for(i=1;i<=NF;i++) {
 						if($i ~ />/) {
-							src = format_ep($(i-1));
-							dst = format_ep($(i+1));
-							counts[src " -> " dst]++;
+							raw_src = $(i-1);
+							raw_dst = $(i+1);
+							sub(/:$/, "", raw_dst);
+							seq = "";
+							for(j=i+1; j<=NF; j++) {
+								if($j == "seq") { seq = $(j+1); sub(/,$/, "", seq); break; }
+							}
+							
+							src_port = get_port(raw_src);
+							dst_ip = get_ip(raw_dst);
+							dst_port = get_port(raw_dst);
+							
+							# Cross-interface and cross-NAT deduplication
+							dedup_key = dst_ip "_" src_port "_" dst_port "_" seq;
+							if (seen_pkt[dedup_key]++) next;
+							
+							# Associate WAN NAT IP back to LAN device if known
+							if (raw_src ~ /^192\.168\.31\./ && src_port in lan_src_map) {
+								raw_src = lan_src_map[src_port];
+							} else if (raw_src ~ /^192\.168\.(1|10)\./) {
+								lan_src_map[src_port] = raw_src;
+							}
+							
+							src_fmt = format_ep(raw_src);
+							dst_fmt = format_ep(raw_dst);
+							
+							# Classify client-side socket teardown vs server rejection
+							if (raw_dst ~ /\.(443|80|8080|8443)$/) {
+								type = "[📱 终端主动断开/会话销毁]";
+							} else {
+								type = "[🌐 服务端拒绝/异常复位]";
+							}
+							counts[type " " src_fmt " -> " dst_fmt]++;
 						}
 					}
 				}
@@ -635,8 +684,9 @@ do_analyze() {
 					for (p in counts) print counts[p] "\t" p;
 				}' | sort -nr | head -n 5 | awk -F'\t' '{print "    - 频次 " $1 " : " $2}')"
 			if [ -n "$rst_targets" ]; then
-				echo "  ⚠️ 检测到 TCP RST 连接被主动拒绝/重置 (最频繁的前 5 个对端):"
+				echo "  ⚠️ 检测到 TCP RST 复位报文 (已自动跨网卡/NAT去重 | 最频繁前 5 对端):"
 				echo "$rst_targets"
+				echo "  💡 提示: [📱 终端主动断开] 多为手机端 App (微信/QQ/抖音/流媒体) 切换视频时的快速套接字销毁 (SO_LINGER 0)，属正常业务行为。"
 			else
 				echo "  ✅ 未检测到集中的 TCP RST 复位拒绝报文"
 			fi
