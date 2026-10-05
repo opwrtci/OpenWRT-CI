@@ -217,13 +217,22 @@ do_analyze_wifi() {
 		local txp="$(echo "$info" | grep "Tx-Power:" | awk '{print $2, $3}')"
 		[ -z "$ssid" ] && ssid="$iface"
 
+		local survey_stat="$(iw dev $iface survey dump 2>/dev/null | awk '
+			/\[in use\]/ { in_use = 1; }
+			in_use && /noise:/ { noise = $2; }
+			in_use && /channel active time:/ { act = $4; }
+			in_use && /channel busy time:/ { busy = $4; in_use = 0; }
+			END {
+				if (act > 0) printf("空口占用: %.1f%% | 底噪: %s dBm", (busy * 100.0 / act), noise);
+			}')"
+
 		local stations="$(iw dev $iface station dump 2>/dev/null)"
 		local sta_cnt="$(echo "$stations" | grep -c "^Station " 2>/dev/null)"
 		[ -z "$sta_cnt" ] && sta_cnt=0
 		total_stas=$((total_stas + sta_cnt))
 		band_stas="$band_stas $iface:$sta_cnt"
 
-		echo "  📡 射频接口: $iface (SSID: \"$ssid\" | 信道: ${chan:-未知} | 功率: ${txp:-未知})"
+		echo "  📡 射频接口: $iface (SSID: \"$ssid\" | 信道: ${chan:-未知} | 功率: ${txp:-未知}${survey_stat:+ | $survey_stat})"
 		if [ "$sta_cnt" -eq 0 ]; then
 			echo "     (当前无连接终端)"
 			continue
@@ -329,6 +338,119 @@ do_analyze_wifi() {
 	else
 		echo "  ✅ 底层无线驱动与固件稳定运行无报错。"
 	fi
+}
+
+do_doctor() {
+	echo "============================================================"
+	echo "       🩺 CapCtl 全链路极速健康巡检 (Doctor Check)           "
+	echo "============================================================"
+	echo "⏰ 巡检时间 : $(date '+%Y-%m-%d %H:%M:%S') | 运行负载: $(uptime | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//')"
+
+	# 1. WAN & 网关连通性
+	echo "------------------------------------------------------------"
+	echo "[1. WAN 上行与外网连通性]"
+	local wan_gw="$(ip route show default 2>/dev/null | awk '{print $3}' | head -n 1)"
+	if [ -n "$wan_gw" ]; then
+		local gw_ping="$(ping -c 2 -W 1 "$wan_gw" 2>/dev/null | grep -E 'rtt|round-trip' | awk -F'=' '{print $2}' | awk -F'/' '{print $2}')"
+		if [ -n "$gw_ping" ]; then
+			echo "  ✅ 物理网关: $wan_gw (往返时延: ${gw_ping}ms)"
+		else
+			echo "  ⚠️ 物理网关: $wan_gw (ICMP 无响应或超时)"
+		fi
+	else
+		echo "  ❌ 未检测到默认网关！"
+	fi
+
+	# 2. 国内主流直连与 DNS
+	echo "------------------------------------------------------------"
+	echo "[2. 国内分流与 DNS 解析 (直连质量)]"
+	local dns_t0="$(date +%s%3N)"
+	local tb_ip="$(nslookup www.taobao.com 127.0.0.1 2>/dev/null | awk '/Address:/ {print $2}' | grep -v ':' | head -n 1)"
+	local dns_t1="$(date +%s%3N)"
+	if [ -n "$tb_ip" ]; then
+		echo "  ✅ 核心 DNS: www.taobao.com -> $tb_ip ($((dns_t1 - dns_t0))ms)"
+	else
+		echo "  ⚠️ 核心 DNS 解析异常"
+	fi
+
+	local tb_http="$(curl -o /dev/null -s -w '%{http_code} %{time_connect}s %{time_total}s' --connect-timeout 2 -m 3 https://www.taobao.com 2>/dev/null)"
+	if [ -n "$tb_http" ]; then
+		echo "  ✅ 淘宝直连: HTTP $(echo "$tb_http" | awk '{print $1}') (TCP建连: $(echo "$tb_http" | awk '{print $2}') | 总耗时: $(echo "$tb_http" | awk '{print $3}'))"
+	else
+		echo "  ⚠️ 淘宝直连探测超时"
+	fi
+
+	# 阿里 Anycast / AMDC 专检
+	local amdc_resp="$(curl -s -m 2 'http://139.95.0.151/amdc/mobileDispatch' 2>/dev/null | head -c 24)"
+	if echo "$amdc_resp" | grep -q 'code'; then
+		echo "  ✅ 阿里 AMDC 移动调度 (139.95.0.151): 秒级直连响应 (无跨洋代理)"
+	elif [ -n "$amdc_resp" ]; then
+		echo "  ✅ 阿里 AMDC 移动调度 (139.95.0.151): 正常直连响应"
+	else
+		echo "  ⚠️ 阿里 AMDC (139.95.0.151) 探测超时"
+	fi
+
+	# 3. Sing-Box 与海外代理通道
+	echo "------------------------------------------------------------"
+	echo "[3. Sing-Box 代理内核与海外加速通道]"
+	local sb_pid="$(pgrep -f 'sing-box run' 2>/dev/null | head -n 1)"
+	if [ -n "$sb_pid" ]; then
+		local sb_mem="$(awk '/VmRSS:/ {print $2 $3}' /proc/$sb_pid/status 2>/dev/null)"
+		echo "  ✅ Sing-Box 进程: 运行中 [PID: $sb_pid | 内存: ${sb_mem:-未知}]"
+	else
+		echo "  ❌ Sing-Box 核心进程未运行！"
+	fi
+
+	local gg_http="$(curl -o /dev/null -s -w '%{http_code} %{time_connect}s %{time_total}s' --connect-timeout 3 -m 5 https://www.google.com 2>/dev/null)"
+	if [ -n "$gg_http" ]; then
+		echo "  ✅ 境外节点: Google HTTP $(echo "$gg_http" | awk '{print $1}') (代理建连: $(echo "$gg_http" | awk '{print $2}') | 页面就绪: $(echo "$gg_http" | awk '{print $3}'))"
+	else
+		echo "  ⚠️ 境外代理节点握手超时，请检查节点健康度"
+	fi
+
+	# 4. 高通 NSS 硬件加速
+	echo "------------------------------------------------------------"
+	echo "[4. 高通 NSS 硬件加速子系统]"
+	if [ -d /sys/kernel/debug/ecm ]; then
+		local stop4="$(cat /sys/kernel/debug/ecm/front_end_ipv4_stop 2>/dev/null || echo 0)"
+		local conn_count="$(cat /sys/kernel/debug/ecm/ecm_db/connection_count 2>/dev/null || echo 0)"
+		if [ "$stop4" = "0" ]; then
+			echo "  ⚡ 高通 NSS ECM: 满血硬件加速中 (当前加速直连流: $conn_count 个)"
+		else
+			echo "  ⚠️ 高通 NSS ECM: 处于调试旁路状态 (front_end_ipv4_stop=1)"
+		fi
+	else
+		echo "  ℹ️ 未检测到 NSS ECM 调试模块"
+	fi
+
+	# 5. Wi-Fi 射频与空口健康
+	echo "------------------------------------------------------------"
+	echo "[5. Wi-Fi 射频空口与信道质量]"
+	local ifaces="$(iw dev 2>/dev/null | grep Interface | awk '{print $2}')"
+	for iface in $ifaces; do
+		local info="$(iwinfo $iface info 2>/dev/null)"
+		local ssid="$(echo "$info" | grep "ESSID:" | awk -F\" '{print $2}')"
+		local chan="$(echo "$info" | grep "Channel:" | sed -E 's/.*Channel:[[:space:]]*//; s/[[:space:]]*HT Mode:.*//')"
+		local sta_cnt="$(iw dev $iface station dump 2>/dev/null | grep -c '^Station ' 2>/dev/null)"
+		local survey="$(iw dev $iface survey dump 2>/dev/null | awk '
+			/\[in use\]/ { in_use = 1; }
+			in_use && /noise:/ { noise = $2; }
+			in_use && /channel active time:/ { act = $4; }
+			in_use && /channel busy time:/ { busy = $4; in_use = 0; }
+			END {
+				if (act > 0) printf("空口占用: %.1f%% | 底噪: %s dBm", (busy * 100.0 / act), noise);
+			}')"
+		echo "  📡 $iface (\"${ssid:-$iface}\"): 信道 ${chan:-未知} | 挂载: ${sta_cnt:-0} 台终端 | ${survey:-空口洁净}"
+	done
+
+	# 6. 系统底核异常检测
+	local k_errs="$(dmesg 2>/dev/null | grep -iE 'crash|kernel panic|oom-killer|out of memory|fatal error' | tail -n 2)"
+	if [ -n "$k_errs" ]; then
+		echo "------------------------------------------------------------"
+		echo "  ⚠️ [内核警告]:"
+		echo "$k_errs" | sed 's/^/    /'
+	fi
+	echo "============================================================"
 }
 
 do_analyze() {
@@ -1067,10 +1189,11 @@ EOF_HELP
 
 INVOKED_CMD="$(basename "$0")"
 case "$INVOKED_CMD" in
-	stop-cap)    ACTION="stop" ;;
-	start-cap)   ACTION="start" ;;
-	status-cap)  ACTION="status" ;;
-	analyze-cap) ACTION="analyze" ;;
+	stop-cap)              ACTION="stop" ;;
+	start-cap)             ACTION="start" ;;
+	status-cap)            ACTION="status" ;;
+	analyze-cap)           ACTION="analyze" ;;
+	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
 		ACTION="${1:-status}"
 		shift 2>/dev/null
@@ -1102,6 +1225,7 @@ case "$ACTION" in
 			*) do_analyze "$@" ;;
 		esac
 		;;
+	doctor|check) do_doctor "$@" ;;
 	wifi) do_analyze_wifi "$@" ;;
 	cleanup) do_cleanup "$@" ;;
 	-h|--help|help) show_help ;;

@@ -243,6 +243,8 @@ if [ -d "$CAPCTL_SRC_DIR" ]; then
 	ln -sf capctl ./package/base-files/files/usr/bin/stop-cap
 	ln -sf capctl ./package/base-files/files/usr/bin/status-cap
 	ln -sf capctl ./package/base-files/files/usr/bin/analyze-cap
+	ln -sf capctl ./package/base-files/files/usr/bin/check-cap
+	ln -sf capctl ./package/base-files/files/usr/bin/doctor-cap
 	echo "   [OK] CapCtl suite deployed successfully."
 fi
 
