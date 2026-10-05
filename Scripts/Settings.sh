@@ -198,21 +198,17 @@ exit 0
 EOF
 chmod +x "$CLASHOO_DEF"
 
-#预置HomeProxy国内阿里系/Anycast直连段，彻底杜绝淘宝/天猫CDN跨洋死锁与丢包
-HP_CIDR_DEF="./package/base-files/files/etc/uci-defaults/996_set-homeproxy-cidrs.sh"
+#预置HomeProxy规则源为OpWrtCI（原生集成阿里Anycast/AMDC直连，无需在UI中维护长列表）
+HP_CIDR_DEF="./package/base-files/files/etc/uci-defaults/996_set-homeproxy-ruleset.sh"
 mkdir -p "$(dirname "$HP_CIDR_DEF")"
 cat << 'EOF' > "$HP_CIDR_DEF"
 #!/bin/sh
 # SPDX-License-Identifier: MIT
-# 预置国内阿里系/Anycast直连段，彻底杜绝淘宝/天猫跨洋死锁
+# 预置规则源为 opwrtci，原生集成 Anycast 直连，保持 LuCI 界面整洁
 
 if [ -f /etc/config/homeproxy ]; then
-	uci -q set homeproxy.control=homeproxy
-	for cidr in 155.102.0.0/16 163.181.0.0/16 139.95.0.0/16 47.88.0.0/16 47.89.0.0/16 47.90.0.0/16 47.91.0.0/16 47.246.0.0/16 198.11.128.0/18 205.204.96.0/19 43.109.0.0/16; do
-		if ! uci -q get homeproxy.control.wan_direct_ipv4_ips | grep -q "$cidr"; then
-			uci -q add_list homeproxy.control.wan_direct_ipv4_ips="$cidr"
-		fi
-	done
+	uci -q set homeproxy.config=homeproxy
+	uci -q set homeproxy.config.ruleset_provider='opwrtci'
 	uci -q commit homeproxy
 fi
 exit 0

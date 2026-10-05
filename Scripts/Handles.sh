@@ -12,10 +12,10 @@ hp_preset_resources() (
 	RESOURCES_DIR="$HP_DIR/root/etc/homeproxy/resources"
 	DASHBOARD_DIR="$HP_DIR/root/etc/homeproxy/dashboard"
 
-	GEOIP_SOURCE="${GEOIP_SOURCE:-https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs}"
-	GEOIP_VERSION_URL="${GEOIP_VERSION_URL:-https://github.com/MetaCubeX/meta-rules-dat/commits/sing.atom}"
-	GEOSITE_SOURCE="${GEOSITE_SOURCE:-https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs}"
-	GEOSITE_VERSION_URL="${GEOSITE_VERSION_URL:-https://github.com/MetaCubeX/meta-rules-dat/commits/sing.atom}"
+	GEOIP_SOURCE="${GEOIP_SOURCE:-https://cdn.jsdelivr.net/gh/opwrtci/meta-rules-dat@sing/geo/geoip/cn.srs}"
+	GEOIP_VERSION_URL="${GEOIP_VERSION_URL:-https://github.com/opwrtci/meta-rules-dat/commits/sing.atom}"
+	GEOSITE_SOURCE="${GEOSITE_SOURCE:-https://cdn.jsdelivr.net/gh/opwrtci/meta-rules-dat@sing/geo/geosite/cn.srs}"
+	GEOSITE_VERSION_URL="${GEOSITE_VERSION_URL:-https://github.com/opwrtci/meta-rules-dat/commits/sing.atom}"
 	DASHBOARD_SOURCE="${DASHBOARD_SOURCE:-https://codeload.github.com/SagerNet/sing-box-dashboard/zip/refs/heads/gh-pages}"
 	DASHBOARD_VERSION_URL="${DASHBOARD_VERSION_URL:-https://github.com/SagerNet/sing-box-dashboard/commits/gh-pages.atom}"
 	USER_AGENT="${USER_AGENT:-HomeProxy resource preset}"
@@ -102,7 +102,7 @@ hp_preset_resources() (
 		mkdir -p "$stage_dir" &&
 			cp "$source_file" "$stage_dir/$resource.srs" &&
 			printf '%s\n' "$version" > "$stage_dir/$resource.ver" &&
-			printf 'metacubex\n' > "$stage_dir/.ruleset_provider" &&
+			printf 'opwrtci\n' > "$stage_dir/.ruleset_provider" &&
 			chmod 0644 "$stage_dir/$resource.srs" "$stage_dir/$resource.ver" "$stage_dir/.ruleset_provider" &&
 			mv -f "$stage_dir/$resource.srs" "$RESOURCES_DIR/$resource.srs" &&
 			mv -f "$stage_dir/$resource.ver" "$RESOURCES_DIR/$resource.ver" &&
