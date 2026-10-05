@@ -340,6 +340,121 @@ do_analyze_wifi() {
 	fi
 }
 
+do_audit() {
+	local arg1="$1"
+	local target_dir=""
+	if [ -n "$arg1" ] && [ -d "$arg1" ]; then
+		target_dir="$arg1"
+	else
+		local target_mnt="$(get_largest_mount)"
+		local base_dir="$target_mnt/pcap_vault"
+		target_dir="$base_dir/captures_$(date +%Y-%m-%d)"
+		if [ ! -d "$target_dir" ]; then
+			target_dir="$(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -name "captures_*" 2>/dev/null | sort | tail -n 1)"
+		fi
+	fi
+
+	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
+		echo "❌ 未找到抓包取证目录，请先运行 start-cap 开始抓包。"
+		return 1
+	fi
+
+	local log_files="$(find "$target_dir" -type f \( -name "singbox_*.log" -o -name ".recording_singbox.log" \) 2>/dev/null | sort)"
+	if [ -z "$log_files" ]; then
+		echo "❌ 目录下未发现 Sing-Box 决策流日志，无法进行分流审计。"
+		return 1
+	fi
+
+	echo "============================================================"
+	echo "   🎯 CapCtl 分流漏网与规则库缺失专项审计报告 (Rule Audit)   "
+	echo "============================================================"
+	echo "📁 审计日志 : $target_dir"
+	echo "⏰ 审计时间 : $(date '+%Y-%m-%d %H:%M:%S')"
+	echo "------------------------------------------------------------"
+
+	awk '
+	BEGIN {
+		while ((getline < "/tmp/dhcp.leases") > 0) {
+			if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+		}
+	}
+	function format_dev(ip) {
+		if (ip in hosts) return ip " (" hosts[ip] ")";
+		return ip;
+	}
+	/inbound\/tun.*inbound redirect connection from/ {
+		match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+		for(i=1;i<=NF;i++) if ($i == "from") { src = $(i+1); sub(/:[0-9]+$/, "", src); conn_src[id] = format_dev(src); }
+	}
+	/router: (sniffed protocol: .*, domain:|found reserve mapped domain:)/ {
+		match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+		match($0, /domain: ([^[:space:]]+)/, arr_dom);
+		if (arr_dom[1] != "" && !(id in conn_dom)) conn_dom[id] = arr_dom[1];
+	}
+	/outbound\/[^d].*: outbound connection to/ {
+		match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+		match($0, /to ([^[:space:]]+)/, arr_dst); dst = arr_dst[1];
+		dom = conn_dom[id]; src = conn_src[id];
+		if (src == "") src = "局域网终端";
+		if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com)/) {
+			leaked_dom[dom " [触发终端: " src "]"]++;
+			suggest_dom[dom] = 1;
+		}
+		if (dst ~ /^(155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)/) {
+			leaked_anycast[dst " [触发终端: " src "]"]++;
+			suggest_ip[dst] = 1;
+		}
+	}
+	/dns: exchanged/ && $6 ~ /ms\]/ && $10 ~ /NOERROR|NXDOMAIN/ {
+		ms = $6; gsub(/[^0-9]/, "", ms); ms = ms + 0;
+		dom = $9;
+		if (ms >= 150 && dom ~ /(\.cn$|\.lan$|cmpassport|gdtimg|tanx|mmstat|snssdk)/) {
+			if (!(dom in slow_dns_map) || ms > slow_dns_map[dom]) slow_dns_map[dom] = ms;
+		}
+	}
+	END {
+		print "【1. 疑似国内高频域名走海外代理漏网 (Domestic Domains Leaked)】"
+		has_dom = 0;
+		for (d in leaked_dom) {
+			print "  ⚠️ 漏网域名: " d " (错误走代理频次: " leaked_dom[d] ")";
+			has_dom = 1;
+		}
+		if (!has_dom) print "  ✅ 未发现任何已知境内域名被错误代理出站 (所有境内已知域名均已成功直连)";
+		
+		print "\n【2. 阿里/国内 Anycast 调度段漏网 (Domestic Anycast Leaked)】"
+		has_any = 0;
+		for (a in leaked_anycast) {
+			print "  ⚠️ 异常出站 IP: " a " (错误走代理频次: " leaked_anycast[a] ")";
+			has_any = 1;
+		}
+		if (!has_any) print "  ✅ 阿里/AMDC 国内 Anycast 段当前 100% 成功直连 (0 次异常出站)";
+
+		print "\n【3. 域名越洋慢解析漏网 (DNS Resolves via Proxy >= 150ms)】"
+		has_slow = 0;
+		for (s in slow_dns_map) {
+			print "  ⏱️ 慢解析域名: " s " (耗时: " slow_dns_map[s] "ms)";
+			has_slow = 1;
+		}
+		if (!has_slow) print "  ✅ 未发现境内域名越洋慢解析异常";
+
+		print "\n【4. 智能自愈与规则建议 (Actionable Recommendations)】"
+		if (has_dom || has_any) {
+			print "  💡 检测到分流未收录条目，推荐处理方式:"
+			if (has_dom) {
+				print "     • 可直接在 OpenWrt Web 界面【HomeProxy 客户端配置】->【分流控制】->【直连域名列表 (Direct List)】中添加以下漏网域名:"
+				for (sd in suggest_dom) print "         + " sd;
+			}
+			if (has_any) {
+				print "     • 漏网 IP 段建议补入 meta-rules-dat custom-rules 或 wan_direct_ipv4_ips 列表中。";
+			}
+		} else {
+			print "  🎉 当前分流规则覆盖完美，未检测到任何境内业务泄漏至海外代理！";
+		}
+	}
+	' $log_files
+	echo "============================================================"
+}
+
 do_doctor() {
 	echo "============================================================"
 	echo "       🩺 CapCtl 全链路极速健康巡检 (Doctor Check)           "
@@ -563,14 +678,61 @@ do_analyze() {
 				echo "$sniff_domains" | awk '{print "      • " $2 " (" $1 " 次访问)"}'
 			fi
 
-			# 阿里 Anycast / AMDC 调度合规审计
-			local anycast_leaks="$(grep -E 'outbound/[^d].*outbound connection to (155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)' $log_files 2>/dev/null | head -n 3)"
+			# 分流规则漏网与异常出站合规审计
+			local leak_audit="$(awk '
+			BEGIN {
+				while ((getline < "/tmp/dhcp.leases") > 0) {
+					if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+				}
+			}
+			function format_dev(ip) {
+				if (ip in hosts) return ip " (" hosts[ip] ")";
+				return ip;
+			}
+			/inbound\/tun.*inbound redirect connection from/ {
+				match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+				for(i=1;i<=NF;i++) if ($i == "from") { src = $(i+1); sub(/:[0-9]+$/, "", src); conn_src[id] = format_dev(src); }
+			}
+			/router: (sniffed protocol: .*, domain:|found reserve mapped domain:)/ {
+				match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+				match($0, /domain: ([^[:space:]]+)/, arr_dom);
+				if (arr_dom[1] != "" && !(id in conn_dom)) conn_dom[id] = arr_dom[1];
+			}
+			/outbound\/[^d].*: outbound connection to/ {
+				match($0, /\[([0-9]+)[[:space:]]/, arr); id = arr[1];
+				match($0, /to ([^[:space:]]+)/, arr_dst); dst = arr_dst[1];
+				dom = conn_dom[id]; src = conn_src[id];
+				if (src == "") src = "局域网终端";
+				if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com)/) {
+					leaked_dom[dom " [终端: " src "]"]++;
+				}
+				if (dst ~ /^(155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)/) {
+					leaked_anycast[dst " [终端: " src "]"]++;
+				}
+			}
+			END {
+				for (d in leaked_dom) print "DOM\t" d "\t" leaked_dom[d];
+				for (a in leaked_anycast) print "ANY\t" a "\t" leaked_anycast[a];
+			}
+			' $log_files 2>/dev/null)"
+
+			local dom_leaks="$(echo "$leak_audit" | grep '^DOM' | head -n 3)"
+			local any_leaks="$(echo "$leak_audit" | grep '^ANY' | head -n 3)"
 			local anycast_directs="$(grep -E 'outbound/direct.*outbound connection to (155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)' $log_files 2>/dev/null | wc -l)"
-			if [ -n "$anycast_leaks" ]; then
+
+			if [ -n "$dom_leaks" ]; then
+				echo "  ⚠️ [分流漏网告警] 发现疑似境内服务被错误送往代理出站:"
+				echo "$dom_leaks" | awk -F'\t' '{print "      • 域名: " $2 " (频次: " $3 ")"}'
+				echo "      💡 建议: 可在 HomeProxy「分流控制 -> 直连域名列表」中补齐该域名。"
+			fi
+
+			if [ -n "$any_leaks" ]; then
 				echo "  ⚠️ [Anycast 分流告警] 发现阿里/AMDC 国内段被错误代理出站:"
-				echo "$anycast_leaks" | awk '{print "      • " $0}'
+				echo "$any_leaks" | awk -F'\t' '{print "      • 对端: " $2 " (频次: " $3 ")"}'
 			elif [ "$anycast_directs" -gt 0 ]; then
 				echo "  ✅ 阿里 Anycast / AMDC 国内段分流: 100% 成功直连 ($anycast_directs 次出站)"
+			elif [ -z "$dom_leaks" ]; then
+				echo "  ✅ 境内业务分流合规审计: 100% 直连 (未发现已知境内域名/Anycast 泄漏)"
 			fi
 		else
 			echo "  (暂无 Sing-Box 日志)"
@@ -1164,8 +1326,10 @@ show_help() {
   2. 停止抓包 : stop-cap
   3. 运行状态 : status-cap
   4. 故障诊断 : analyze-cap [检索关键词]
-  5. 无线体检 : analyze-cap wifi (或 capctl wifi)
-  6. 历史清理 : capctl cleanup
+  5. 规则审计 : audit-cap (或 capctl audit)
+  6. 极速巡检 : check-cap (或 doctor-cap / capctl doctor)
+  7. 无线体检 : analyze-cap wifi (或 capctl wifi)
+  8. 历史清理 : capctl cleanup
 
 --------------------------------------------------------------------------------
 【参数与工作模式详解】
@@ -1186,6 +1350,11 @@ show_help() {
 
   ★ analyze-cap
       无论当前抓包是否已停止，随时提取最新的《网络故障快速诊断摘要》。
+
+  ★ audit-cap (或 capctl audit)
+      针对长时间挂机运行专门设计的“分流规则漏网与规则库缺失专项审计”。
+      自动揪出走代理的国内域名、国内 Anycast 调度段及 DNS 越洋慢解析，
+      并输出一键加入 HomeProxy「直连域名列表」的修复建议。
 
   ★ analyze-cap <keyword> (如: analyze-cap google 或 analyze-cap 192.168.10.176)
       精准靶向追踪特定域名、对端 IP 或局域网设备的 DNS、出站流及异常。
@@ -1243,6 +1412,7 @@ case "$INVOKED_CMD" in
 	start-cap)             ACTION="start" ;;
 	status-cap)            ACTION="status" ;;
 	analyze-cap)           ACTION="analyze" ;;
+	audit-cap)             ACTION="audit" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
 		ACTION="${1:-status}"
@@ -1273,6 +1443,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_analyze "$@" ;;
+		esac
+		;;
+	audit)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_audit "$@" ;;
 		esac
 		;;
 	doctor|check) do_doctor "$@" ;;
