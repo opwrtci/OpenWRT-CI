@@ -456,7 +456,21 @@ do_audit() {
 }
 
 do_extract() {
-	local target_dir="$1"
+	local arg1="$1"
+	local arg2="$2"
+	local target_dir=""
+	local is_silent=0
+
+	if [ "$arg1" = "silent" ]; then
+		is_silent=1
+		target_dir=""
+	elif [ "$arg2" = "silent" ]; then
+		is_silent=1
+		target_dir="$arg1"
+	else
+		target_dir="$arg1"
+	fi
+
 	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
 		local target_mnt="$(get_largest_mount)"
 		local base_dir="$target_mnt/pcap_vault"
@@ -467,13 +481,13 @@ do_extract() {
 	fi
 
 	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
-		echo "❌ 未找到抓包取证目录，请先运行 capctl start 开始抓包。"
+		[ $is_silent -eq 0 ] && echo "❌ 未找到抓包取证目录，请先运行 capctl start 开始抓包。"
 		return 1
 	fi
 
 	local log_files="$(find "$target_dir" -type f \( -name "singbox_*.log" -o -name ".recording_singbox.log" \) 2>/dev/null | sort)"
 	if [ -z "$log_files" ]; then
-		echo "❌ 目录下未发现 Sing-Box 决策流日志，无法进行数据包规则提取。"
+		[ $is_silent -eq 0 ] && echo "❌ 目录下未发现 Sing-Box 决策流日志，无法进行数据包规则提取。"
 		return 1
 	fi
 
@@ -481,15 +495,17 @@ do_extract() {
 	local out_txt="$target_dir/candidate_rules_${now_ts}.txt"
 	local out_json="$target_dir/candidate_rules_${now_ts}.json"
 
-	echo "============================================================"
-	echo "   ⛏️  CapCtl 智能规则数据提取与候选挖掘 (Rule Extract)      "
-	echo "============================================================"
-	echo "📁 数据目录 : $target_dir"
-	echo "⏰ 提取时间 : $(date '+%Y-%m-%d %H:%M:%S')"
-	echo "🛡️  安全隔离 : 仅分析提取候选数据 | [🔒 不写本地路由] [🔒 不推远程仓库]"
-	echo "------------------------------------------------------------"
+	if [ $is_silent -eq 0 ]; then
+		echo "============================================================"
+		echo "   ⛏️  CapCtl 智能规则数据提取与候选挖掘 (Rule Extract)      "
+		echo "============================================================"
+		echo "📁 数据目录 : $target_dir"
+		echo "⏰ 提取时间 : $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "🛡️  安全隔离 : 仅分析提取候选数据 | [🔒 不写本地路由] [🔒 不推远程仓库]"
+		echo "------------------------------------------------------------"
+	fi
 
-	awk -v out_txt="$out_txt" -v out_json="$out_json" -v now_ts="$now_ts" '
+	awk -v out_txt="$out_txt" -v out_json="$out_json" -v now_ts="$now_ts" -v is_silent="$is_silent" '
 	BEGIN {
 		# 1. 加载 DHCP 设备映射
 		while ((getline < "/tmp/dhcp.leases") > 0) {
@@ -615,12 +631,12 @@ do_extract() {
 		print header_txt > out_txt;
 
 		json_dom_list = "";
-		print "【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】";
+		if (!is_silent) print "【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】";
 		print "\n【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】" >> out_txt;
 		for (r in candidate_hits) {
 			has_candidates = 1;
 			line = sprintf("  ✨ 候选根域名 : %s (出现 %d 次)\n     • 判定依据 : %s\n     • 关联子域名 : %s", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
-			print line;
+			if (!is_silent) print line;
 			print line >> out_txt;
 			
 			entry_json = sprintf("{\"domain\":\"%s\",\"hits\":%d,\"reason\":\"%s\",\"samples\":\"%s\"}", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
@@ -628,40 +644,46 @@ do_extract() {
 		}
 		if (!has_candidates) {
 			msg = "  ✅ 当前未发现任何未收录的国内域名（现有规则库或直连列表已完全覆盖）。";
-			print msg;
+			if (!is_silent) print msg;
 			print msg >> out_txt;
 		}
 
-		print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】";
+		if (!is_silent) print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】";
 		print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】" >> out_txt;
 		has_anycast = 0;
 		json_any_list = "";
 		for (a in anycast_hits) {
 			has_anycast = 1;
 			line = sprintf("  🌐 候选 Anycast IP : %s (触发频次: %d 次) -> 建议段: %s.0/24", a, anycast_hits[a], a);
-			print line;
+			if (!is_silent) print line;
 			print line >> out_txt;
 			entry_json = sprintf("{\"ip\":\"%s\",\"hits\":%d}", a, anycast_hits[a]);
 			json_any_list = (json_any_list == "" ? "" : json_any_list ",") entry_json;
 		}
 		if (!has_anycast) {
 			msg = "  ✅ 当前未发现任何未收录的国内 Anycast 异常出站 IP。";
-			print msg;
+			if (!is_silent) print msg;
 			print msg >> out_txt;
 		}
 
-		print "\n【3. 安全隔离与数据存盘报告 (Safety Status)】";
+		if (!is_silent) print "\n【3. 安全隔离与数据存盘报告 (Safety Status)】";
 		status_msg = sprintf("  🔒 本地路由热写入 : [已跳过 / 保持原样]\n" \
 		                     "  🔒 远程 Git 自动提交 : [已跳过 / 隔离未推送]\n" \
 		                     "  💾 结构化分析文本已保存至 : %s\n" \
 		                     "  💾 自动化待审 JSON 已保存至 : %s", out_txt, out_json);
-		print status_msg;
+		if (!is_silent) print status_msg;
 		print "\n【3. 安全隔离与数据存盘报告】\n" status_msg >> out_txt;
 
 		printf "{\"timestamp\":\"%s\",\"status\":\"isolated_extracted\",\"candidates\":[%s],\"anycast\":[%s]}\n", now_ts, json_dom_list, json_any_list > out_json;
 	}
 	' $log_files
-	echo "============================================================"
+
+	cp -f "$out_txt" "$target_dir/candidate_rules_latest.txt" 2>/dev/null
+	cp -f "$out_json" "$target_dir/candidate_rules_latest.json" 2>/dev/null
+	if [ $is_silent -eq 0 ]; then
+		echo "============================================================"
+	fi
+	return 0
 }
 
 do_doctor() {
@@ -1283,8 +1305,9 @@ EOF_ALERT
 	local sb_pid=$!
 	echo "$sb_pid" > "$SB_PID_FILE"
 
-	# 6. Launch continuous 60s watchdog loop for 50% disk usage safeguard
+	# 6. Launch continuous 60s watchdog loop for 50% disk usage safeguard and 10-min silent extraction
 	(
+		local loop_cnt=0
 		while true; do
 			sleep 60
 			[ -f "$PID_FILE" ] || [ -f "$SB_PID_FILE" ] || break
@@ -1306,6 +1329,12 @@ EOF_ALERT
 				/usr/bin/capctl stop emergency
 				break
 			fi
+
+			loop_cnt=$((loop_cnt + 1))
+			# 每 10 分钟在后台静默挖掘候选规则数据集 (安全隔离：不改本地路由/不推远程)
+			if [ $((loop_cnt % 10)) -eq 0 ]; then
+				/usr/bin/capctl extract "$dest_dir" silent >/dev/null 2>&1
+			fi
 		done
 	) >/dev/null 2>&1 &
 	echo $! > "$WATCHDOG_PID_FILE"
@@ -1320,6 +1349,7 @@ EOF_ALERT
 	echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包 .pcap 与 Sing-Box .log 均 100MB 自动分卷)"
 	echo "🔄 环形缓冲 : 自动保留最新 ${MAX_SLICES} 卷切片 (FIFO 滚动置换)"
 	echo "📋 环境指纹 : 已自动生成 $dest_dir/env_snapshot.txt"
+	echo "⛏️  规则挖掘 : 模式三 (后台每 10 分钟静默挖掘更新 candidate_rules_latest.txt/.json)"
 	echo "🛡️  安全熔断 : 磁盘占用达 50% 时毫秒级紧急刹车"
 	echo "⏳ 自动清理 : 超过 3 天的历史数据包与日志将自动清空"
 	echo "💽 分区余量 : $free_human 可用 (当前占用率: ${usage_pct}%)"
@@ -1465,6 +1495,14 @@ do_stop() {
 
 	# 9. Run automated Triage Diagnostic Summary
 	do_analyze "$dest_dir"
+
+	# 10. 静默刷新最新候选规则数据集 (保持终端清爽，不冗长打印)
+	do_extract "$dest_dir" silent >/dev/null 2>&1
+	if [ -f "$dest_dir/candidate_rules_latest.txt" ]; then
+		echo ""
+		echo "💡 候选规则最新挖掘数据集已自动刷新存盘: $dest_dir/candidate_rules_latest.txt"
+		echo "   (随时运行 cap extract 可查看完整报告，安全隔离：未写入本地路由/未推送远程)"
+	fi
 
 	rm -rf "$STATE_DIR" 2>/dev/null
 }
