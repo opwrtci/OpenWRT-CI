@@ -396,7 +396,7 @@ do_audit() {
 		match($0, /to ([^[:space:]]+)/, arr_dst); dst = arr_dst[1];
 		dom = conn_dom[id]; src = conn_src[id];
 		if (src == "") src = "局域网终端";
-		if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com)/) {
+		if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com|aliapp\.org|effirst\.com|id6\.me|easytomessage\.com|anythinktech\.com|appier)/) {
 			leaked_dom[dom " [触发终端: " src "]"]++;
 			suggest_dom[dom] = 1;
 		}
@@ -703,7 +703,7 @@ do_analyze() {
 				match($0, /to ([^[:space:]]+)/, arr_dst); dst = arr_dst[1];
 				dom = conn_dom[id]; src = conn_src[id];
 				if (src == "") src = "局域网终端";
-				if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com)/) {
+				if (dom ~ /(\.cn$|taobao|tmall|alipay|alicdn|alibaba|aliyun|tencent|qq\.com|weixin|wechat|qpic|gtimg|gdtimg|cmpassport|10086|10010|189\.cn|jd\.com|360buy|pinduoduo|pddpic|douyin|bytedance|snssdk|bilibili|hdslb|xiaohongshu|xhscdn|kuaishou|meituan|dianping|xiaomi|mi\.com|heytap|oppo|vivo|huawei|honor|unionpay|cmbchina|icbc|12306|tanx\.com|mmstat\.com|gepush\.com|igexin\.com|talkingdata\.com|aliapp\.org|effirst\.com|id6\.me|easytomessage\.com|anythinktech\.com|appier)/) {
 					leaked_dom[dom " [终端: " src "]"]++;
 				}
 				if (dst ~ /^(155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)/) {
