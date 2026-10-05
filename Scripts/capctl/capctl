@@ -121,7 +121,7 @@ setup_nss_acceleration() {
 		echo "⚡ 已临时旁路高通 NSS ECM 硬件加速 (确保抓包捕获 100% 底层穿透报文)"
 	elif [ -d /sys/kernel/debug/ecm ]; then
 		local conn_count="$(cat /sys/kernel/debug/ecm/ecm_db/connection_count 2>/dev/null || echo "0")"
-		echo "⚡ 高通 NSS 硬件加速: 运行中 (当前加速流: $conn_count，如需排查硬件旁路丢包可使用: start-cap nonss)"
+		echo "⚡ 高通 NSS 硬件加速: 运行中 (当前加速流: $conn_count，如需排查硬件旁路丢包可使用: capctl start nonss)"
 	fi
 }
 
@@ -355,7 +355,7 @@ do_audit() {
 	fi
 
 	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
-		echo "❌ 未找到抓包取证目录，请先运行 start-cap 开始抓包。"
+		echo "❌ 未找到抓包取证目录，请先运行 capctl start 开始抓包。"
 		return 1
 	fi
 
@@ -976,7 +976,7 @@ do_start() {
 		local dest="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
 		echo "⚠️  抓包与日志采集任务已经在运行中 (网络抓包 PID: $pid)"
 		echo "📁 当前保存目录: $dest"
-		echo "💡 如需停止，请运行: stop-cap"
+		echo "💡 如需停止，请运行: capctl stop"
 		return 0
 	fi
 
@@ -1058,12 +1058,19 @@ EOF_ALERT
 	# 4. Launch tcpdump in background (100MB per slice)
 	local active_pcap="$dest_dir/.recording.pcap"
 	rm -f "$dest_dir"/.recording* 2>/dev/null
-	nohup /usr/bin/tcpdump -i any -B 8192 -s "$snaplen" -nn -C "$CHUNK_SIZE_MB" -z /usr/bin/capctl-rotate -w "$active_pcap" $bpf_expr >/dev/null 2>&1 &
+	local lib_dir="/usr/lib/capctl"
+	[ -d "$lib_dir" ] || lib_dir="/usr/bin"
+	local rotator_bin="$lib_dir/capctl-rotate"
+	[ -x "$rotator_bin" ] || rotator_bin="/usr/bin/capctl-rotate"
+	local singbox_bin="$lib_dir/capctl-singbox"
+	[ -x "$singbox_bin" ] || singbox_bin="/usr/bin/capctl-singbox"
+
+	nohup /usr/bin/tcpdump -i any -B 8192 -s "$snaplen" -nn -C "$CHUNK_SIZE_MB" -z "$rotator_bin" -w "$active_pcap" $bpf_expr >/dev/null 2>&1 &
 	local tcp_pid=$!
 	echo "$tcp_pid" > "$PID_FILE"
 
 	# 5. Launch Sing-Box real-time log collector (100MB per slice)
-	nohup /usr/bin/capctl-singbox "$dest_dir" "$STATE_DIR" "$CHUNK_SIZE_MB" >/dev/null 2>&1 &
+	nohup "$singbox_bin" "$dest_dir" "$STATE_DIR" "$CHUNK_SIZE_MB" >/dev/null 2>&1 &
 	local sb_pid=$!
 	echo "$sb_pid" > "$SB_PID_FILE"
 
@@ -1108,7 +1115,7 @@ EOF_ALERT
 	echo "⏳ 自动清理 : 超过 3 天的历史数据包与日志将自动清空"
 	echo "💽 分区余量 : $free_human 可用 (当前占用率: ${usage_pct}%)"
 	echo "------------------------------------------------------------"
-	echo "🛑 停止方式 : 输入 stop-cap 回车即可一键停止并打印诊断摘要"
+	echo "🛑 停止方式 : 输入 capctl stop 回车即可一键停止并打印诊断摘要"
 	echo "============================================================"
 }
 
@@ -1285,17 +1292,17 @@ do_status() {
 		echo "💽 分区剩余 : $free_human (当前占用率: ${cur_pct}%，阈值: 50%)"
 		echo "🔍 日志级别 : 当前 $cur_hp_level (启动前原级别: $orig_hp_level，停止时自动还原)"
 		echo "------------------------------------------------------------"
-		echo "🛑 如需停止 : 输入 stop-cap 回车"
-		echo "📊 诊断摘要 : 输入 analyze-cap 回车随时提取实时故障摘要"
+		echo "🛑 如需停止 : 输入 capctl stop 回车"
+		echo "📊 诊断摘要 : 输入 capctl analyze (或 capctl audit) 随时提取诊断摘要"
 		echo "============================================================"
 	else
-		echo "⚪ 抓包看门狗当前未运行。输入 start-cap 可开启抓包。"
+		echo "⚪ 抓包看门狗当前未运行。输入 capctl start 可开启抓包 (或直接输入 capctl 进入控制台菜单)。"
 		local target_mnt="$(get_largest_mount)"
 		local base_dir="$target_mnt/pcap_vault"
 		local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
 		if [ -n "$latest_dir" ] && [ -d "$latest_dir" ]; then
 			echo "📁 最近一次抓包数据存放在: $latest_dir"
-			echo "💡 可运行 analyze-cap 查看最近一次抓包的故障诊断摘要。"
+			echo "💡 可运行 capctl analyze 查看诊断摘要，或运行 capctl audit 审计分流漏网。"
 		fi
 	fi
 }
@@ -1314,52 +1321,53 @@ show_help() {
   📡 CapCtl - OpenWrt 全量抓包与 Sing-Box 实时决策流排障取证系统
 ================================================================================
 
-【定位与架构】
-  CapCtl 是专为 OpenWrt (软路由/硬路由) 设计的现代化排障与抓包取证工具。
-  它将底层网络报文 (tcpdump) 与应用层代理决策流 (Sing-Box) 完美融合，
-  并具备“轻量抓包、防自激、环境快照、设备识别、丢包重传估算与配置自愈”能力。
+【定位与使用】
+  CapCtl 是专为 OpenWrt (软路由/硬路由) 设计的一体化网络诊断与分流排障系统。
+  所有网络抓包、分流审计、Wi-Fi 体检与链路排障功能已全部整合进单一工具中！
+
+  快捷交互: 直接输入 capctl (或超短别名 cap) 回车，进入全中文交互式菜单。
+  命令行模式: capctl <子命令> [参数]
 
 --------------------------------------------------------------------------------
-【快捷命令速查】
+【子命令速查】
 --------------------------------------------------------------------------------
-  1. 开启抓包 : start-cap [full] [nonss] [BPF过滤规则]
-  2. 停止抓包 : stop-cap
-  3. 运行状态 : status-cap
-  4. 故障诊断 : analyze-cap [检索关键词]
-  5. 规则审计 : audit-cap (或 capctl audit)
-  6. 极速巡检 : check-cap (或 doctor-cap / capctl doctor)
-  7. 无线体检 : analyze-cap wifi (或 capctl wifi)
-  8. 历史清理 : capctl cleanup
+  • capctl start [full] [nonss] [BPF]  : 开启抓包 (默认轻量防爆模式)
+  • capctl stop                       : 停止抓包并恢复加速与日志级别
+  • capctl status                     : 查看当前抓包状态、数据切片与存储余量
+  • capctl analyze [关键词/设备IP]     : 综合故障诊断、DNS 慢解析与链路重传
+  • capctl audit                      : 分流漏网专项审计 (自动揪出走代理的国内应用)
+  • capctl wifi                       : Wi-Fi 射频、终端信号 RSSI 与协商速率体检
+  • capctl check                      : 全链路极速健康巡检 (doctor)
+  • capctl cleanup                    : 一键清理历史数据包与日志归档释放空间
+  • capctl menu                       : 进入交互控制台菜单
+  • capctl help                       : 显示本使用手册
 
 --------------------------------------------------------------------------------
-【参数与工作模式详解】
+【子命令与工作模式详解】
 --------------------------------------------------------------------------------
-  ★ start-cap
+  ★ capctl start
       默认轻量报头模式 (-s 128)。仅截取 IP/TCP/UDP 首部与 TLS ClientHello/DNS，
       节省 90% 存储与 CPU，完全杜绝 4K 视频测速刷爆硬盘。
 
-  ★ start-cap full (或 -f)
+  ★ capctl start full (或 -f)
       全载荷深度模式 (-s 0)。捕获完整明文数据载荷，用于 HTTP/ICMP/DHCP 深度取证。
 
-  ★ start-cap nonss
+  ★ capctl start nonss
       临时旁路高通 NSS ECM 硬件加速。避免高通芯片 DMA 硬件快速转发导致
       tcpdump 遗漏中间数据包，停止时 100% 自动恢复加速。
 
-  ★ start-cap "host 192.168.10.154"
-      针对特定设备 IP 或协议过滤（内部依然会自动剔除 SSH 端口 22）。
+  ★ capctl start "host 192.168.10.154"
+      针对特定设备 IP 或协议过滤（内部依然会自动剔除 SSH 端口 22 防自激）。
 
-  ★ analyze-cap
-      无论当前抓包是否已停止，随时提取最新的《网络故障快速诊断摘要》。
+  ★ capctl analyze [keyword] (如: capctl analyze taobao 或 capctl analyze 192.168.10.176)
+      随时提取《网络故障快速诊断摘要》，支持精准靶向追踪特定域名、对端 IP 或终端。
 
-  ★ audit-cap (或 capctl audit)
+  ★ capctl audit
       针对长时间挂机运行专门设计的“分流规则漏网与规则库缺失专项审计”。
       自动揪出走代理的国内域名、国内 Anycast 调度段及 DNS 越洋慢解析，
       并输出一键加入 HomeProxy「直连域名列表」的修复建议。
 
-  ★ analyze-cap <keyword> (如: analyze-cap google 或 analyze-cap 192.168.10.176)
-      精准靶向追踪特定域名、对端 IP 或局域网设备的 DNS、出站流及异常。
-
-  ★ analyze-cap wifi (或 capctl wifi)
+  ★ capctl wifi
       深度体检 OpenWrt Wi-Fi 射频、终端信号(RSSI)、调制协商(MCS)、空口丢帧(tx failed)与多频负载均衡。
 
 --------------------------------------------------------------------------------
@@ -1378,32 +1386,80 @@ show_help() {
 【常见网络故障排障 SOP】
 --------------------------------------------------------------------------------
   【场景一：网页或 App 打不开 / 疑似被拦截】
-    1. 输入 start-cap 回车开启轻量抓包；
+    1. 输入 capctl start 回车开启轻量抓包；
     2. 在手机或电脑上复现打不开的网页（如访问 google 或某个 App）；
-    3. 在终端执行: analyze-cap <域名关键词> (如 analyze-cap google)；
+    3. 在终端执行: capctl analyze <域名关键词> (如 capctl analyze google)；
     4. 观察：
        - DNS 结果是 NOERROR 还是 NXDOMAIN？耗时是否超长？
        - Sing-Box 是走 main-out 代理还是直连 bypass？有没有 connection refused 报错？
-    5. 复现完成后执行 stop-cap。
+    5. 复现完成后执行 capctl stop。
 
-  【场景二：网络偶发丢包 / 游戏卡顿跳 ping】
-    1. 执行 start-cap nonss (穿透高通硬件加速)；
+  【场景二：长时间挂机，揪出走代理的国内应用/未收录规则】
+    1. 执行 capctl start 开启挂机；
+    2. 手机电脑日常使用数小时或数天；
+    3. 执行 capctl audit，查看国内域名漏网清单与 HomeProxy 直连域名添加建议。
+
+  【场景三：网络偶发丢包 / 游戏卡顿跳 ping】
+    1. 执行 capctl start nonss (穿透高通硬件加速)；
     2. 跑几分钟网络测速或游戏对战；
-    3. 执行 analyze-cap；
+    3. 执行 capctl analyze；
     4. 查看【TCP 链路重传与丢包率估算】：
        - 若重传率 >= 3%，报告会直接标出产生高频重传的局域网设备与对端 IP！
-    5. 执行 stop-cap。
-
-  【场景三：将数据包提供给 AI 或 Wireshark 深度分析】
-    1. 抓包目录位置固定在: /mnt/mmcblk0p27/pcap_vault/captures_YYYY-MM-DD/；
-    2. 目录内置文件:
-       - cap_*.pcap        : 原始网络报文 (Wireshark 格式)
-       - singbox_*.log     : Sing-Box 实时决策流日志
-       - env_snapshot.txt  : 抓包时刻的 WAN/路由/节点/DNS 环境瞬态快照
-       - triage_summary.txt: 诊断分析摘要
-    3. 用 SCP/WinSCP 下载该目录即可进行离线分析。
+    5. 执行 capctl stop。
 ================================================================================
 EOF_HELP
+}
+
+do_menu() {
+	echo "============================================================"
+	echo "      📡 CapCtl - OpenWrt 网络排障与分流诊断中心            "
+	echo "============================================================"
+	if is_running; then
+		local pid="$(cat "$PID_FILE" 2>/dev/null)"
+		local mode="$(cat "$STATE_DIR/capture_mode" 2>/dev/null || echo "轻量模式")"
+		echo " 🟢 抓包状态: [正在运行 (PID: $pid)] | 模式: $mode"
+	else
+		echo " ⚪ 抓包状态: [待机中 / 未运行]"
+	fi
+	local target_mnt="$(get_largest_mount)"
+	local usage_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+	local free_human="$(df -h "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
+	echo " 💽 存储空间: $target_mnt (剩余: $free_human | 占用率: ${usage_pct}%)"
+	echo "------------------------------------------------------------"
+	echo " 请选择操作编号 (直接输入数字后回车):"
+	echo "   1) 开启抓包 (start)         - 轻量报头模式，长期挂机安全无感"
+	echo "   2) 开启全载荷抓包 (full)     - 捕获明文全数据 (Wireshark 深度排障)"
+	echo "   3) 穿透加速抓包 (nonss)      - 临时旁路高通 NSS 加速排查丢包"
+	echo "   4) 停止抓包 (stop)          - 停止抓包并自动还原硬件加速/日志"
+	echo "   5) 综合故障诊断 (analyze)    - 全链路网络健康、DNS、TCP RST与丢包"
+	echo "   6) 分流漏网审计 (audit)      - 智能检测走代理的国内应用与规则建议"
+	echo "   7) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
+	echo "   8) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
+	echo "   9) 查看详细状态 (status)    - 查看当前抓包切片与配置详情"
+	echo "  10) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
+	echo "   0) 退出"
+	echo "============================================================"
+	printf " 请输入选项编号 [0-10]: "
+	read -r choice
+	echo ""
+	case "$choice" in
+		1) do_start ;;
+		2) do_start full ;;
+		3) do_start nonss ;;
+		4) do_stop ;;
+		5)
+			printf " 可选: 请输入要靶向追踪的域名或 IP (直接回车进行全量分析): "
+			read -r kw
+			do_analyze $kw
+			;;
+		6) do_audit ;;
+		7) do_analyze_wifi ;;
+		8) do_doctor ;;
+		9) do_status ;;
+		10) do_cleanup ;;
+		0|"") echo "已退出。"; exit 0 ;;
+		*) echo "❌ 无效选项: $choice"; exit 1 ;;
+	esac
 }
 
 INVOKED_CMD="$(basename "$0")"
@@ -1415,8 +1471,17 @@ case "$INVOKED_CMD" in
 	audit-cap)             ACTION="audit" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
-		ACTION="${1:-status}"
-		shift 2>/dev/null
+		if [ $# -eq 0 ]; then
+			if [ -t 0 ]; then
+				do_menu
+				exit 0
+			else
+				ACTION="status"
+			fi
+		else
+			ACTION="$1"
+			shift
+		fi
 		;;
 esac
 
@@ -1439,7 +1504,7 @@ case "$ACTION" in
 			*) do_status "$@" ;;
 		esac
 		;;
-	analyze)
+	analyze|triage)
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_analyze "$@" ;;
@@ -1453,10 +1518,12 @@ case "$ACTION" in
 		;;
 	doctor|check) do_doctor "$@" ;;
 	wifi) do_analyze_wifi "$@" ;;
-	cleanup) do_cleanup "$@" ;;
+	cleanup|clean) do_cleanup "$@" ;;
+	menu) do_menu ;;
 	-h|--help|help) show_help ;;
 	*)
-		show_help
+		echo "❌ 未知子命令: $ACTION"
+		echo "💡 输入 capctl help 查看完整命令帮助，或直接输入 capctl 进入交互菜单。"
 		exit 1
 		;;
 esac
