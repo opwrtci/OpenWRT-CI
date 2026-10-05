@@ -455,6 +455,215 @@ do_audit() {
 	echo "============================================================"
 }
 
+do_extract() {
+	local target_dir="$1"
+	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
+		local target_mnt="$(get_largest_mount)"
+		local base_dir="$target_mnt/pcap_vault"
+		target_dir="$base_dir/captures_$(date +%Y-%m-%d)"
+		if [ ! -d "$target_dir" ]; then
+			target_dir="$(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -name "captures_*" 2>/dev/null | sort | tail -n 1)"
+		fi
+	fi
+
+	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
+		echo "❌ 未找到抓包取证目录，请先运行 capctl start 开始抓包。"
+		return 1
+	fi
+
+	local log_files="$(find "$target_dir" -type f \( -name "singbox_*.log" -o -name ".recording_singbox.log" \) 2>/dev/null | sort)"
+	if [ -z "$log_files" ]; then
+		echo "❌ 目录下未发现 Sing-Box 决策流日志，无法进行数据包规则提取。"
+		return 1
+	fi
+
+	local now_ts="$(date +%Y%m%d_%H%M%S)"
+	local out_txt="$target_dir/candidate_rules_${now_ts}.txt"
+	local out_json="$target_dir/candidate_rules_${now_ts}.json"
+
+	echo "============================================================"
+	echo "   ⛏️  CapCtl 智能规则数据提取与候选挖掘 (Rule Extract)      "
+	echo "============================================================"
+	echo "📁 数据目录 : $target_dir"
+	echo "⏰ 提取时间 : $(date '+%Y-%m-%d %H:%M:%S')"
+	echo "🛡️  安全隔离 : 仅分析提取候选数据 | [🔒 不写本地路由] [🔒 不推远程仓库]"
+	echo "------------------------------------------------------------"
+
+	awk -v out_txt="$out_txt" -v out_json="$out_json" -v now_ts="$now_ts" '
+	BEGIN {
+		# 1. 加载 DHCP 设备映射
+		while ((getline < "/tmp/dhcp.leases") > 0) {
+			if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+		}
+		# 2. 加载本地已直连域名 (避免重复提取)
+		direct_file = "/etc/homeproxy/diversion/direct.txt";
+		while ((getline < direct_file) > 0) {
+			gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0);
+			if ($0 != "" && $0 !~ /^#/) existing_direct[$0] = 1;
+		}
+		# 3. 基础内置已知大厂主域名 (若已正常直连则不作多余提取)
+		standard_builtin = "^(taobao\\.com|alipay\\.com|alicdn\\.com|alipayobjects\\.com|qq\\.com|tencent\\.com|baidu\\.com|bilibili\\.com|douyin\\.com|jd\\.com|163\\.com|sina\\.com|weibo\\.com|xiaomi\\.com|mi\\.com|oppomobile\\.com|vivo\\.com|huawei\\.com|honor\\.com|youku\\.com|amap\\.com|ele\\.me|elemecdn\\.com|alibabachengdun\\.com|alibabacorp\\.com|aliyuncs\\.com|aliyun-inc\\.com|pinduoduo\\.com|pinduoduo\\.net)$";
+	}
+	function format_dev(ip) {
+		if (ip in hosts) return ip " (" hosts[ip] ")";
+		return ip;
+	}
+	function get_root_domain(dom) {
+		sub(/^\.+/, "", dom); sub(/\.+$/, "", dom);
+		n = split(dom, parts, ".");
+		if (n <= 1) return dom;
+		if (n == 2) return dom;
+		tld = parts[n]; s_tld = parts[n-1];
+		if ((s_tld == "com" || s_tld == "net" || s_tld == "org" || s_tld == "gov" || s_tld == "edu") && (tld == "cn" || tld == "hk" || tld == "tw" || tld == "uk")) {
+			if (n >= 3) return parts[n-2] "." s_tld "." tld;
+			return dom;
+		}
+		return parts[n-1] "." tld;
+	}
+
+	# 记录连接触发来源设备
+	/inbound\/tun.*inbound (redirect|packet) connection from/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		for(i=1;i<=NF;i++) if ($i == "from") { src = $(i+1); sub(/:[0-9]+$/, "", src); conn_src[id] = format_dev(src); }
+	}
+	# 记录嗅探域名
+	/router: (sniffed .*domain:|found reserve mapped domain:)/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		dom = $0; sub(/.*domain:[[:space:]]*/, "", dom); sub(/[[:space:],].*/, "", dom);
+		if (dom != "" && !(id in conn_dom)) conn_dom[id] = dom;
+	}
+
+	# 铁证1: 实际连接错误泄漏走海外代理出站 (高危漏网)
+	/outbound\/[^d].*: outbound (packet )?connection to/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		dst = $0; sub(/.* to /, "", dst); sub(/[[:space:]].*/, "", dst); sub(/:[0-9]+$/, "", dst);
+		dom = conn_dom[id];
+		if (dom != "") {
+			root = get_root_domain(dom);
+			if (root !~ /(\.arpa$|\.lan$|localhost$)/ && root !~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) {
+				if (root !~ /\.cn$/ && !(root in existing_direct)) {
+					leaked_to_proxy[root] = 1;
+					candidate_hits[root]++;
+					candidate_reason[root] = "🚨 铁证：实际连接已错误泄漏走海外代理出站 (漏网)";
+					if (candidate_subdomains[root] !~ dom) {
+						candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
+					}
+				}
+			}
+		}
+		if (dst ~ /^(155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)/) {
+			anycast_hits[dst]++;
+		}
+	}
+
+	# 识别国内主流云厂商与 CDN CNAME 铁证
+	/dns: exchanged CNAME/ {
+		q_dom = $0; sub(/.*exchanged CNAME[[:space:]]+/, "", q_dom); sub(/[[:space:]].*/, "", q_dom); sub(/\.+$/, "", q_dom);
+		t_dom = $0; sub(/.*IN CNAME[[:space:]]+/, "", t_dom); sub(/[[:space:]].*/, "", t_dom); sub(/\.+$/, "", t_dom);
+		if (t_dom ~ /(\.w\.alikunlun\.com|alibabadns\.com|alipaydns\.com|alicdn\.com|tbcache\.com|\.dnsv1\.com|\.kunlun.*\.com|queniuak\.com|huaweicloud\.com|chinacache\.net|qiniucdn\.com|baidupcs\.com|ourwebcdn\.com|txcloudcdn\.com|tencent-cloud\.net|bytedance\.net)/) {
+			cname_dom[q_dom] = "CNAME 递归命中国内主流云厂商/CDN 节点 (" t_dom ")";
+			root = get_root_domain(q_dom);
+			if (root !~ /(\.arpa$|\.lan$|localhost$)/ && root !~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) {
+				if (root !~ /\.cn$/ && !(root in existing_direct)) {
+					if (root !~ standard_builtin || (root in leaked_to_proxy)) {
+						candidate_hits[root]++;
+						if (!(root in candidate_reason)) candidate_reason[root] = cname_dom[q_dom];
+						if (candidate_subdomains[root] !~ q_dom) {
+							candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") q_dom;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# 收集所有 DNS 解析事件并研判
+	/dns: exchange/ {
+		dom = $0; sub(/.*dns: exchange[[:space:]]+(A |AAAA |CNAME )?/, "", dom); sub(/[[:space:]].*/, "", dom); sub(/\.+$/, "", dom);
+		if (dom == "" || dom !~ /\./ || dom ~ /(\.arpa$|\.lan$|localhost$)/) next;
+		# 排除海外已知 GMS / GFW 封锁服务与全球公共 CDN
+		if (dom ~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) next;
+
+		root = get_root_domain(dom);
+		if (root == "" || root ~ /\.cn$/) next; # 纯 .cn 默认已被全局直连规则收录
+		if (root in existing_direct) next;     # 已经加入直连列表，无需重复提取
+		if (root ~ standard_builtin && !(root in leaked_to_proxy)) next; # 已被基础内置规则库覆盖且未走代理
+
+		reason = "";
+		if (dom in cname_dom) {
+			reason = cname_dom[dom];
+		} else if (dom ~ /(aliapp|effirst|id6\.me|easytomessage|anythinktech|appier|snssdk|cmpassport|gdtimg|tanx|mmstat|talkingdata|gepush|igexin|10086|10010|189|pinduoduo|unionpay|12306|ccb|icbc|cmb|95598|sgcc)/) {
+			reason = "命中国内运营商认证 / 核心大厂第三方 SDK 签名特征";
+		}
+
+		if (reason != "") {
+			candidate_hits[root]++;
+			if (!(root in candidate_reason)) candidate_reason[root] = reason;
+			if (candidate_subdomains[root] !~ dom) {
+				candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
+			}
+		}
+	}
+
+	END {
+		has_candidates = 0;
+		header_txt = "============================================================\n" \
+		             "   📋 候选待入库规则数据集 (Candidate Rules Dataset)        \n" \
+		             "   提取批次: " now_ts "\n" \
+		             "   模式声明: [🔒 纯审计提取模式] 本地配置未变更 / 远程未推送\n" \
+		             "============================================================\n";
+		print header_txt > out_txt;
+
+		json_dom_list = "";
+		print "【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】";
+		print "\n【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】" >> out_txt;
+		for (r in candidate_hits) {
+			has_candidates = 1;
+			line = sprintf("  ✨ 候选根域名 : %s (出现 %d 次)\n     • 判定依据 : %s\n     • 关联子域名 : %s", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
+			print line;
+			print line >> out_txt;
+			
+			entry_json = sprintf("{\"domain\":\"%s\",\"hits\":%d,\"reason\":\"%s\",\"samples\":\"%s\"}", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
+			json_dom_list = (json_dom_list == "" ? "" : json_dom_list ",") entry_json;
+		}
+		if (!has_candidates) {
+			msg = "  ✅ 当前未发现任何未收录的国内域名（现有规则库或直连列表已完全覆盖）。";
+			print msg;
+			print msg >> out_txt;
+		}
+
+		print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】";
+		print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】" >> out_txt;
+		has_anycast = 0;
+		json_any_list = "";
+		for (a in anycast_hits) {
+			has_anycast = 1;
+			line = sprintf("  🌐 候选 Anycast IP : %s (触发频次: %d 次) -> 建议段: %s.0/24", a, anycast_hits[a], a);
+			print line;
+			print line >> out_txt;
+			entry_json = sprintf("{\"ip\":\"%s\",\"hits\":%d}", a, anycast_hits[a]);
+			json_any_list = (json_any_list == "" ? "" : json_any_list ",") entry_json;
+		}
+		if (!has_anycast) {
+			msg = "  ✅ 当前未发现任何未收录的国内 Anycast 异常出站 IP。";
+			print msg;
+			print msg >> out_txt;
+		}
+
+		print "\n【3. 安全隔离与数据存盘报告 (Safety Status)】";
+		status_msg = sprintf("  🔒 本地路由热写入 : [已跳过 / 保持原样]\n" \
+		                     "  🔒 远程 Git 自动提交 : [已跳过 / 隔离未推送]\n" \
+		                     "  💾 结构化分析文本已保存至 : %s\n" \
+		                     "  💾 自动化待审 JSON 已保存至 : %s", out_txt, out_json);
+		print status_msg;
+		print "\n【3. 安全隔离与数据存盘报告】\n" status_msg >> out_txt;
+
+		printf "{\"timestamp\":\"%s\",\"status\":\"isolated_extracted\",\"candidates\":[%s],\"anycast\":[%s]}\n", now_ts, json_dom_list, json_any_list > out_json;
+	}
+	' $log_files
+	echo "============================================================"
+}
+
 do_doctor() {
 	echo "============================================================"
 	echo "       🩺 CapCtl 全链路极速健康巡检 (Doctor Check)           "
@@ -1336,6 +1545,7 @@ show_help() {
   • capctl status                     : 查看当前抓包状态、数据切片与存储余量
   • capctl analyze [关键词/设备IP]     : 综合故障诊断、DNS 慢解析与链路重传
   • capctl audit                      : 分流漏网专项审计 (自动揪出走代理的国内应用)
+  • capctl extract                    : 候选规则挖掘提取 (仅存盘供审核，不写路由不推远程)
   • capctl wifi                       : Wi-Fi 射频、终端信号 RSSI 与协商速率体检
   • capctl check                      : 全链路极速健康巡检 (doctor)
   • capctl cleanup                    : 一键清理历史数据包与日志归档释放空间
@@ -1366,6 +1576,12 @@ show_help() {
       针对长时间挂机运行专门设计的“分流规则漏网与规则库缺失专项审计”。
       自动揪出走代理的国内域名、国内 Anycast 调度段及 DNS 越洋慢解析，
       并输出一键加入 HomeProxy「直连域名列表」的修复建议。
+
+  ★ capctl extract (或 cap extract)
+      规则数据提取与候选挖掘模式（安全隔离：不写本地路由，不提交远程仓库）。
+      智能深度挖掘抓包与 Sing-Box 日志中未收录的国内域名、云厂商 CNAME 及 Anycast 调度段，
+      自动去重并收敛为根域名，将候选规则集以结构化 .txt 和 .json 形式安全存盘，
+      完全杜绝未经验证的热写入与自动推送，确保绝对安全可控。
 
   ★ capctl wifi
       深度体检 OpenWrt Wi-Fi 射频、终端信号(RSSI)、调制协商(MCS)、空口丢帧(tx failed)与多频负载均衡。
@@ -1399,7 +1615,12 @@ show_help() {
     2. 手机电脑日常使用数小时或数天；
     3. 执行 capctl audit，查看国内域名漏网清单与 HomeProxy 直连域名添加建议。
 
-  【场景三：网络偶发丢包 / 游戏卡顿跳 ping】
+  【场景三：挖掘待同步候选规则数据 (仅提取存盘，不写路由不推远程)】
+    1. 日常抓包后执行 capctl extract；
+    2. 脚本自动提炼未收录域名与 Anycast IP，保存为 candidate_rules_*.txt 和 .json；
+    3. 人工或 AI 多轮复核确认无误后，再行同步。
+
+  【场景四：网络偶发丢包 / 游戏卡顿跳 ping】
     1. 执行 capctl start nonss (穿透高通硬件加速)；
     2. 跑几分钟网络测速或游戏对战；
     3. 执行 capctl analyze；
@@ -1433,13 +1654,14 @@ do_menu() {
 	echo "   4) 停止抓包 (stop)          - 停止抓包并自动还原硬件加速/日志"
 	echo "   5) 综合故障诊断 (analyze)    - 全链路网络健康、DNS、TCP RST与丢包"
 	echo "   6) 分流漏网审计 (audit)      - 智能检测走代理的国内应用与规则建议"
-	echo "   7) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
-	echo "   8) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
-	echo "   9) 查看详细状态 (status)    - 查看当前抓包切片与配置详情"
-	echo "  10) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
+	echo "   7) 候选规则挖掘提取 (extract) - 挖掘待同步域名数据 (不写路由不推远程)"
+	echo "   8) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
+	echo "   9) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
+	echo "  10) 查看详细状态 (status)    - 查看当前抓包切片与配置详情"
+	echo "  11) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-10]: "
+	printf " 请输入选项编号 [0-11]: "
 	read -r choice
 	echo ""
 	case "$choice" in
@@ -1453,10 +1675,11 @@ do_menu() {
 			do_analyze $kw
 			;;
 		6) do_audit ;;
-		7) do_analyze_wifi ;;
-		8) do_doctor ;;
-		9) do_status ;;
-		10) do_cleanup ;;
+		7) do_extract ;;
+		8) do_analyze_wifi ;;
+		9) do_doctor ;;
+		10) do_status ;;
+		11) do_cleanup ;;
 		0|"") echo "已退出。"; exit 0 ;;
 		*) echo "❌ 无效选项: $choice"; exit 1 ;;
 	esac
@@ -1469,6 +1692,7 @@ case "$INVOKED_CMD" in
 	status-cap)            ACTION="status" ;;
 	analyze-cap)           ACTION="analyze" ;;
 	audit-cap)             ACTION="audit" ;;
+	extract-cap|mine-cap)  ACTION="extract" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
 		if [ $# -eq 0 ]; then
@@ -1514,6 +1738,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_audit "$@" ;;
+		esac
+		;;
+	extract|mine)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_extract "$@" ;;
 		esac
 		;;
 	doctor|check) do_doctor "$@" ;;
