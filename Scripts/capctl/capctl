@@ -239,7 +239,10 @@ do_analyze_wifi() {
 			if (mac != "") print_sta();
 			mac = tolower($2);
 			signal = 0; tx_rate = ""; rx_rate = ""; tx_failed = 0; tx_retries = 0; tx_pkts = 0; exp_thru = "";
+			inact_ms = 0; conn_sec = 0;
 		}
+		/inactive time:/ { inact_ms = $3 + 0; }
+		/connected time:/ { conn_sec = $3 + 0; }
 		/signal:/ && !/signal avg:/ { signal = $2 + 0; }
 		/tx bitrate:/ {
 			sub(/^[ \t]*tx bitrate:[ \t]*/, "");
@@ -260,20 +263,32 @@ do_analyze_wifi() {
 			if (signal < -72) sig_icon = "🟠 稍弱";
 			if (signal < -78) sig_icon = "🔴 极弱";
 
-			printf("     📱 终端: %s\n", name);
+			inact_str = "";
+			if (inact_ms > 30000) {
+				inact_str = sprintf(" [💤 终端已休眠 %d秒]", int(inact_ms / 1000));
+			}
+
+			printf("     📱 终端: %s%s\n", name, inact_str);
 			printf("        - 物理信号: %d dBm [%s]\n", signal, sig_icon);
 			printf("        - 协商速率: 下行(TX): %s | 上行(RX): %s\n", (tx_rate ? tx_rate : "未知"), (rx_rate ? rx_rate : "未知"));
 			if (exp_thru != "") printf("        - 预期吞吐: %s\n", exp_thru);
 			if (tx_failed > 0 || tx_retries > 0) {
-				fail_rate = (tx_pkts + tx_failed > 0) ? (tx_failed * 100.0 / (tx_pkts + tx_failed)) : 0;
-				printf("        - 空口丢帧: 发送失败 %d 帧 | 重试 %d 帧 (发送包总计 %d | 累计丢帧率: %.1f%%)\n", tx_failed, tx_retries, tx_pkts, fail_rate);
+				fps = (conn_sec > 0) ? (tx_failed / conn_sec) : 0;
+				printf("        - 空口丢帧: 发送失败 %d 帧 | 重试 %d 帧 (连线时长: %d秒 | 平均失败频次: %.2f 帧/秒)\n", tx_failed, tx_retries, conn_sec, fps);
+				if (inact_ms > 30000 && fps < 10) {
+					printf("        💡 [省电机制说明] 终端正处于深度休眠 (WMM-PS/DTIM)，背景广播未能即时响应，非业务丢包。\n");
+				}
 			}
 
 			if (signal <= -72) {
 				printf("        ⚠️ [弱信号风险] 物理衰减较大，易发生空口竞争丢失与重传降速。\n");
 			}
 			if (tx_rate ~ /^[0-9.]+[ \t]*MBit\/s$/ && rx_rate ~ /HE-MCS/) {
-				printf("        ⚠️ [调制降级风险] 终端下行已退化为传统低阶调制 (非 Wi-Fi 6 HE)，建议调整终端距离或频段。\n");
+				if (inact_ms > 30000) {
+					printf("        ℹ️ [空闲速率休眠] 终端当前无活跃数据流，Wi-Fi 速率自适应降频保活 (有流量时秒级恢复 Wi-Fi 6 高阶调制)。\n");
+				} else {
+					printf("        ⚠️ [调制降级风险] 终端下行已退化为传统低阶调制 (非 Wi-Fi 6 HE)，建议调整终端距离或频段。\n");
+				}
 			}
 		}
 		END {
