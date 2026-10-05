@@ -204,6 +204,31 @@ if [ -f "$GROUP_FILE" ]; then
 	grep -q "^docker:" "$GROUP_FILE" || echo "docker:x:1000:docker" >> "$GROUP_FILE"
 fi
 
+#部署全量抓包与 Sing-Box 实时决策流排障取证系统 (CapCtl)
+CAPCTL_SRC_DIR="$GITHUB_WORKSPACE/Scripts/capctl"
+[ -d "$CAPCTL_SRC_DIR" ] || CAPCTL_SRC_DIR="$(dirname "$0")/capctl"
+if [ -d "$CAPCTL_SRC_DIR" ]; then
+	echo "-> Deploying CapCtl suite to package/base-files/files/..."
+	mkdir -p ./package/base-files/files/usr/bin
+	mkdir -p ./package/base-files/files/etc/profile.d
+
+	cp -f "$CAPCTL_SRC_DIR/capctl" ./package/base-files/files/usr/bin/
+	cp -f "$CAPCTL_SRC_DIR/capctl-rotate" ./package/base-files/files/usr/bin/
+	cp -f "$CAPCTL_SRC_DIR/capctl-singbox" ./package/base-files/files/usr/bin/
+	cp -f "$CAPCTL_SRC_DIR/capctl-rotate-singbox" ./package/base-files/files/usr/bin/
+	cp -f "$CAPCTL_SRC_DIR/99-capctl-alert.sh" ./package/base-files/files/etc/profile.d/
+
+	chmod +x ./package/base-files/files/usr/bin/capctl*
+	chmod +x ./package/base-files/files/etc/profile.d/99-capctl-alert.sh
+
+	# 创建常用便捷软链接
+	ln -sf capctl ./package/base-files/files/usr/bin/start-cap
+	ln -sf capctl ./package/base-files/files/usr/bin/stop-cap
+	ln -sf capctl ./package/base-files/files/usr/bin/status-cap
+	ln -sf capctl ./package/base-files/files/usr/bin/analyze-cap
+	echo "   [OK] CapCtl suite deployed successfully."
+fi
+
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config

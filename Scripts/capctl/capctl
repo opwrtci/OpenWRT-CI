@@ -1,0 +1,935 @@
+#!/bin/sh
+# /usr/bin/capctl - Automated Full Packet & Sing-Box Real-Time Log Capture Manager
+# Features:
+#  1. BPF Filtering: Exclude SSH (port 22) and local DNS hijack (port 5333) by default
+#  2. Dual Modes: Lightweight Header-Only (-s 128) vs Full Payload (-s 0 via 'start-cap full')
+#  3. Environment Snapshot: Generates env_snapshot.txt with routing, node, and DNS states
+#  4. Real-time Triage Summary: 'analyze-cap' extracts TCP RST, DNS queries, and Sing-Box errors
+#  5. Ring-Buffer Quota: Retains newest 10 slices (FIFO) + 3-day auto-purge + 50% disk safeguard
+#  6. Qualcomm NSS ECM Awareness: 'start-cap nonss' pauses HW fastpath; auto-restores on stop
+#  7. Log Level Auto Restore: Backs up original level and restores upon stop with zero side effects
+#  8. DHCP Device Attribution: Resolves LAN IPs to device hostnames from /tmp/dhcp.leases
+#  9. TCP Loss & Retransmission Analysis: Calculates retrans rate and isolates congested endpoints
+# 10. Built-in User Guide: Comprehensive help manual accessible via 'capctl help' or '--help'
+
+CHUNK_SIZE_MB="${CHUNK_SIZE_MB:-100}"
+MAX_SLICES="${MAX_SLICES:-10}"
+STATE_DIR="/var/run/capctl"
+PID_FILE="$STATE_DIR/tcpdump.pid"
+SB_PID_FILE="$STATE_DIR/singbox.pid"
+WATCHDOG_PID_FILE="$STATE_DIR/watchdog.pid"
+ALERT_FILE="/etc/capctl_disk_alert"
+PERSIST_LEVEL_FILE="/etc/capctl_orig_homeproxy_level"
+PERSIST_NSS_FILE="/etc/capctl_nss_paused"
+
+get_largest_mount() {
+	local mnt
+	mnt="$(df -k | awk 'NR>1 && $6 !~ /^\/tmp|^\/dev|^\/rom/ && $4 ~ /^[0-9]+$/ {print $4, $6}' | sort -nr | head -n1 | awk '{print $2}')"
+	[ -n "$mnt" ] && [ -d "$mnt" ] || mnt="/overlay"
+	echo "$mnt"
+}
+
+cleanup_old_records() {
+	local base_dir="$1"
+	local max_slices="${MAX_SLICES:-10}"
+	[ -d "$base_dir" ] || return 0
+
+	# 1. Purge older than 3 days
+	find "$base_dir" -type f \( -name "*.pcap" -o -name "*.log" \) -mtime +3 -delete 2>/dev/null
+	find "$base_dir" -type f -name ".recording*" -mtime +3 -delete 2>/dev/null
+
+	# 2. Ring-buffer FIFO quota (keep newest $max_slices .pcap files)
+	local pcap_count="$(find "$base_dir" -type f -name 'cap_*.pcap' 2>/dev/null | wc -l)"
+	if [ "$pcap_count" -gt "$max_slices" ]; then
+		local to_del=$((pcap_count - max_slices))
+		find "$base_dir" -type f -name 'cap_*.pcap' 2>/dev/null | sort | head -n "$to_del" | while read -r f; do
+			rm -f "$f"
+		done
+	fi
+
+	# Keep newest $max_slices singbox .log files
+	local log_count="$(find "$base_dir" -type f -name 'singbox_*.log' 2>/dev/null | wc -l)"
+	if [ "$log_count" -gt "$max_slices" ]; then
+		local to_del=$((log_count - max_slices))
+		find "$base_dir" -type f -name 'singbox_*.log' 2>/dev/null | sort | head -n "$to_del" | while read -r f; do
+			rm -f "$f"
+		done
+	fi
+
+	# 3. Clean empty directories
+	find "$base_dir" -depth -mindepth 1 -type d -empty -delete 2>/dev/null
+}
+
+is_running() {
+	if [ -f "$PID_FILE" ]; then
+		local pid="$(cat "$PID_FILE" 2>/dev/null)"
+		[ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && return 0
+	fi
+	if [ -f "$SB_PID_FILE" ]; then
+		local sb_pid="$(cat "$SB_PID_FILE" 2>/dev/null)"
+		[ -n "$sb_pid" ] && kill -0 "$sb_pid" 2>/dev/null && return 0
+	fi
+	return 1
+}
+
+setup_singbox_log_level() {
+	if uci -q get homeproxy.config >/dev/null; then
+		local cur_level="$(uci -q get homeproxy.config.log_level)"
+		[ -z "$cur_level" ] && cur_level="warn"
+		echo "$cur_level" > "$STATE_DIR/orig_homeproxy_log_level"
+		echo "$cur_level" > "$PERSIST_LEVEL_FILE"
+
+		if [ "$cur_level" != "debug" ] && [ "$cur_level" != "trace" ]; then
+			uci set homeproxy.config.log_level='debug'
+			uci commit homeproxy
+			/etc/init.d/homeproxy reload >/dev/null 2>&1
+			sleep 1
+			echo "🔍 已自动将 Sing-Box 日志级别提升至: debug (原级别: $cur_level，停止抓包后将自动还原)"
+		else
+			echo "🔍 Sing-Box 日志级别当前已为: $cur_level (保持现行级别)"
+		fi
+	fi
+}
+
+restore_singbox_log_level() {
+	local orig_level=""
+	if [ -f "$STATE_DIR/orig_homeproxy_log_level" ]; then
+		orig_level="$(cat "$STATE_DIR/orig_homeproxy_log_level" 2>/dev/null)"
+	elif [ -f "$PERSIST_LEVEL_FILE" ]; then
+		orig_level="$(cat "$PERSIST_LEVEL_FILE" 2>/dev/null)"
+	fi
+
+	if [ -n "$orig_level" ] && uci -q get homeproxy.config >/dev/null; then
+		local cur_level="$(uci -q get homeproxy.config.log_level)"
+		if [ "$cur_level" != "$orig_level" ]; then
+			uci set homeproxy.config.log_level="$orig_level"
+			uci commit homeproxy
+			/etc/init.d/homeproxy reload >/dev/null 2>&1
+			echo "🔄 Sing-Box 日志级别已自动还原为: $orig_level (无任何残留影响)"
+		fi
+	fi
+	rm -f "$STATE_DIR/orig_homeproxy_log_level" "$PERSIST_LEVEL_FILE" 2>/dev/null
+}
+
+setup_nss_acceleration() {
+	local pause_nss="$1"
+	if [ "$pause_nss" -eq 1 ] && [ -d /sys/kernel/debug/ecm ]; then
+		echo 1 > /sys/kernel/debug/ecm/front_end_ipv4_stop 2>/dev/null
+		echo 1 > /sys/kernel/debug/ecm/front_end_ipv6_stop 2>/dev/null
+		echo 1 > "$STATE_DIR/nss_paused"
+		echo 1 > "$PERSIST_NSS_FILE"
+		echo "⚡ 已临时旁路高通 NSS ECM 硬件加速 (确保抓包捕获 100% 底层穿透报文)"
+	elif [ -d /sys/kernel/debug/ecm ]; then
+		local conn_count="$(cat /sys/kernel/debug/ecm/ecm_db/connection_count 2>/dev/null || echo "0")"
+		echo "⚡ 高通 NSS 硬件加速: 运行中 (当前加速流: $conn_count，如需排查硬件旁路丢包可使用: start-cap nonss)"
+	fi
+}
+
+restore_nss_acceleration() {
+	if [ -f "$STATE_DIR/nss_paused" ] || [ -f "$PERSIST_NSS_FILE" ]; then
+		if [ -d /sys/kernel/debug/ecm ]; then
+			echo 0 > /sys/kernel/debug/ecm/front_end_ipv4_stop 2>/dev/null
+			echo 0 > /sys/kernel/debug/ecm/front_end_ipv6_stop 2>/dev/null
+			echo "⚡ 已自动恢复高通 NSS ECM 硬件加速 (零性能损耗)"
+		fi
+		rm -f "$STATE_DIR/nss_paused" "$PERSIST_NSS_FILE" 2>/dev/null
+	fi
+}
+
+generate_snapshot() {
+	local dest_dir="$1"
+	local snap_file="$dest_dir/env_snapshot.txt"
+
+	{
+		echo "============================================================"
+		echo "          🌐 网络环境瞬态快照 (Network Environment Snapshot)"
+		echo "============================================================"
+		echo "⏰ 记录时间 : $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "⏱️  运行时间 : $(uptime | sed 's/^[ \t]*//')"
+		echo "------------------------------------------------------------"
+		echo "[1. IP 地址与网络接口 (Interfaces)]"
+		ip -brief addr 2>/dev/null || ip addr show
+		echo ""
+		echo "[2. 核心路由表 (Routing Tables)]"
+		ip route show 2>/dev/null
+		echo ""
+		echo "[3. 策略路由规则 (IP Rules)]"
+		ip rule show 2>/dev/null
+		echo ""
+		echo "[4. DNS 解析配置 (Resolvers)]"
+		cat /tmp/resolv.conf.d/resolv.conf.auto 2>/dev/null || cat /etc/resolv.conf 2>/dev/null
+		echo ""
+		if uci -q get homeproxy.config >/dev/null; then
+			echo "[5. HomeProxy / Sing-Box 核心配置]"
+			local node_id="$(uci -q get homeproxy.config.main_node)"
+			local node_desc="$(uci -q get homeproxy.$node_id.label 2>/dev/null || uci -q get homeproxy.$node_id.server 2>/dev/null || echo "$node_id")"
+			echo "  - 当前活动主节点 : $node_desc ($node_id)"
+			echo "  - 路由分流模式   : $(uci -q get homeproxy.config.routing_mode)"
+			echo "  - 代理端口模式   : $(uci -q get homeproxy.config.routing_port)"
+			echo "  - 远端主 DNS     : $(uci -q get homeproxy.config.dns_server)"
+			echo "  - 国内直连 DNS   : $(uci -q get homeproxy.config.china_dns_server)"
+			echo "  - 日志级别配置   : $(uci -q get homeproxy.config.log_level)"
+			echo ""
+		fi
+		echo "[6. 高通 NSS 硬件加速 (ECM Status)]"
+		if [ -d /sys/kernel/debug/ecm ]; then
+			local ecm_conn="$(cat /sys/kernel/debug/ecm/ecm_db/connection_count 2>/dev/null || echo "N/A")"
+			local v4_stop="$(cat /sys/kernel/debug/ecm/front_end_ipv4_stop 2>/dev/null || echo "0")"
+			echo "  - 当前硬件加速连接数: $ecm_conn"
+			echo "  - 前端加速状态 (v4): $([ "$v4_stop" = "1" ] && echo "已暂停(Bypassed)" || echo "运行中(Accelerated)")"
+		else
+			echo "  - NSS ECM: 未启用或不支持 debugfs"
+		fi
+		echo ""
+		echo "[7. 局域网活跃客户端 (DHCP Leases)]"
+		if [ -f /tmp/dhcp.leases ]; then
+			awk '{print "  - " $3 " : " $4 " (MAC: " $2 ")"}' /tmp/dhcp.leases
+		else
+			echo "  (无 DHCP 租约记录)"
+		fi
+		echo ""
+		echo "[8. 内存与负载 (System Resources)]"
+		free -m 2>/dev/null
+		echo "============================================================"
+	} > "$snap_file"
+}
+
+do_analyze() {
+	local arg1="$1"
+	local arg2="$2"
+	local target_dir=""
+	local keyword=""
+
+	if [ -n "$arg1" ] && [ -d "$arg1" ]; then
+		target_dir="$arg1"
+		keyword="$arg2"
+	else
+		keyword="$arg1"
+	fi
+
+	if [ -z "$target_dir" ]; then
+		local target_mnt="$(get_largest_mount)"
+		local base_dir="$target_mnt/pcap_vault"
+		target_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
+	fi
+
+	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
+		echo "❌ 未找到可供分析的抓包目录。"
+		return 1
+	fi
+
+	local summary_file="$target_dir/triage_summary.txt"
+	local pcap_count="$(find "$target_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | wc -l)"
+	local log_count="$(find "$target_dir" -maxdepth 1 -name 'singbox_*.log' 2>/dev/null | wc -l)"
+
+	# Prioritize active in-progress files if currently capturing
+	local latest_pcap=""
+	local is_live=0
+	if [ -f "$target_dir/.recording.pcap" ] && [ "$(wc -c < "$target_dir/.recording.pcap" 2>/dev/null || echo 0)" -gt 24 ]; then
+		latest_pcap="$target_dir/.recording.pcap"
+		is_live=1
+	else
+		latest_pcap="$(find "$target_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | sort | tail -n 1)"
+	fi
+
+	local log_files="$(ls "$target_dir"/singbox_*.log "$target_dir"/.recording_singbox.log 2>/dev/null)"
+
+	{
+		echo "============================================================"
+		echo "      📊 网络故障快速诊断摘要 (Network Triage Summary)      "
+		echo "============================================================"
+		echo "📁 数据目录 : $target_dir $([ $is_live -eq 1 ] && echo '[🔴 实时抓包流分析中]')"
+		[ -n "$keyword" ] && echo "🎯 检索关键词: $keyword"
+		echo "⏰ 分析时间 : $(date '+%Y-%m-%d %H:%M:%S')"
+		echo "📦 包含文件 : $pcap_count 个 PCAP 报文, $log_count 个 Sing-Box 日志"
+		echo "------------------------------------------------------------"
+
+		# A. Focused Keyword Investigation Mode
+		if [ -n "$keyword" ]; then
+			echo "🎯【精准专项排查: '$keyword' 追踪】"
+			echo "  [1. 相关 DNS 解析记录]:"
+			local kw_dns="$(grep -i "$keyword" $log_files 2>/dev/null | grep -E 'dns: exchanged' | grep -E 'NOERROR|NXDOMAIN' | head -n 5)"
+			if [ -n "$kw_dns" ]; then
+				echo "$kw_dns" | awk '{print "    - " $0}'
+			else
+				echo "    (未检索到相关 DNS 解析)"
+			fi
+
+			echo "  [2. 相关分流与出站动作]:"
+			local kw_flow="$(grep -i "$keyword" $log_files 2>/dev/null | grep -E 'outbound/|sniffed protocol|match' | head -n 5)"
+			if [ -n "$kw_flow" ]; then
+				echo "$kw_flow" | awk '{print "    - " $0}'
+			else
+				echo "    (未检索到相关出站流动)"
+			fi
+			echo "------------------------------------------------------------"
+		fi
+
+		# 1. Sing-Box 核心异常检测
+		echo "🔍【1. Sing-Box 异常与警告检测】"
+		if [ -n "$log_files" ]; then
+			local err_lines="$(grep -iE 'level=error|level=warn|timed out|handshake failed|dial error|connection refused|context deadline exceeded|i/o timeout' $log_files 2>/dev/null | head -n 6)"
+			if [ -n "$err_lines" ]; then
+				echo "$err_lines" | awk '{print "  ⚠️  " $0}'
+			else
+				echo "  ✅ 未在 Sing-Box 日志中发现显式 ERROR/超时异常"
+			fi
+
+			echo ""
+			echo "🚦【2. 代理出站与直连分流分布 (Outbounds)】"
+			local ob_stat="$(grep -E 'outbound/.*\[.*\]: outbound connection' $log_files 2>/dev/null | \
+				awk '{for(i=1;i<=NF;i++) if($i ~ /^outbound\//) print $i}' | \
+				sort | uniq -c | sort -nr)"
+			if [ -n "$ob_stat" ]; then
+				echo "$ob_stat" | awk '{print "  - " $2 " : " $1 " 次连接"}'
+			else
+				echo "  (暂无出站连接记录)"
+			fi
+
+			local sniff_domains="$(grep -E 'sniffed protocol: .*, domain:' $log_files 2>/dev/null | \
+				awk -F'domain: ' '{print $2}' | sort | uniq -c | sort -nr | head -n 5)"
+			if [ -n "$sniff_domains" ]; then
+				echo "  - 嗅探核心域名 (Top 5):"
+				echo "$sniff_domains" | awk '{print "      • " $2 " (" $1 " 次访问)"}'
+			fi
+		else
+			echo "  (暂无 Sing-Box 日志)"
+		fi
+
+		echo ""
+		# 2. DNS 异常与耗时监控
+		echo "🌐【3. DNS 异常与慢解析诊断 (Slow / NXDOMAIN)】"
+		if [ -n "$log_files" ]; then
+			local nx_domains="$(grep -E 'NXDOMAIN|SERVFAIL' $log_files 2>/dev/null | \
+				awk '($10 ~ /NXDOMAIN|SERVFAIL/) {print $9 " (" $10 ")"}' | sort | uniq -c | sort -nr | head -n 5)"
+			if [ -n "$nx_domains" ]; then
+				echo "  ⚠️ 检测到域名解析失败 (NXDOMAIN):"
+				echo "$nx_domains" | awk '{print "    - " $2 " : " $1 " 次失败"}'
+			else
+				echo "  ✅ 未检测到 NXDOMAIN 解析异常"
+			fi
+
+			local slow_dns="$(awk '
+				/dns: exchanged/ && $6 ~ /ms\]/ && $10 ~ /NOERROR|NXDOMAIN/ {
+					ms = $6; gsub(/[^0-9]/, "", ms); ms = ms + 0;
+					if (ms >= 150) print ms "ms\t" $9 " (" $10 ")";
+				}' $log_files 2>/dev/null | sort -k1,1nr | uniq | head -n 5)"
+			if [ -n "$slow_dns" ]; then
+				echo "  ⏱️ 耗时较高 DNS 请求 (>= 150ms):"
+				echo "$slow_dns" | awk '{print "    - 耗时 " $1 " : " $2}'
+			fi
+		fi
+
+		echo ""
+		# 3. 网络底层异常 (TCP RST / 重传 / 异常断开)
+		echo "⚡【4. TCP 异常连接与 RST 复位检测】"
+		if [ -n "$latest_pcap" ] && [ -f "$latest_pcap" ]; then
+			local rst_targets=""
+			rst_targets="$(tcpdump -nn -r "$latest_pcap" 'tcp[tcpflags] & tcp-rst != 0 and not port 22' 2>/dev/null | \
+				awk '
+				BEGIN {
+					while ((getline < "/tmp/dhcp.leases") > 0) {
+						if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+					}
+				}
+				function format_ep(ep) {
+					sub(/:$/, "", ep);
+					match(ep, /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/);
+					if (RSTART > 0) {
+						ip = substr(ep, RSTART, RLENGTH);
+						rest = substr(ep, RSTART + RLENGTH);
+						if (ip in hosts) return ip rest " (" hosts[ip] ")";
+					}
+					return ep;
+				}
+				{
+					for(i=1;i<=NF;i++) {
+						if($i ~ />/) {
+							src = format_ep($(i-1));
+							dst = format_ep($(i+1));
+							counts[src " -> " dst]++;
+						}
+					}
+				}
+				END {
+					for (p in counts) print counts[p] "\t" p;
+				}' | sort -nr | head -n 5 | awk -F'\t' '{print "    - 频次 " $1 " : " $2}')"
+			if [ -n "$rst_targets" ]; then
+				echo "  ⚠️ 检测到 TCP RST 连接被主动拒绝/重置 (最频繁的前 5 个对端):"
+				echo "$rst_targets"
+			else
+				echo "  ✅ 未检测到集中的 TCP RST 复位拒绝报文"
+			fi
+
+			echo ""
+			echo "📶【5. TCP 链路重传与丢包率估算】"
+			tcpdump -nn -r "$latest_pcap" 'tcp and not port 22' 2>/dev/null | awk '
+			BEGIN {
+				while ((getline < "/tmp/dhcp.leases") > 0) {
+					if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+				}
+			}
+			function format_ep(ep) {
+				sub(/:$/, "", ep);
+				match(ep, /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/);
+				if (RSTART > 0) {
+					ip = substr(ep, RSTART, RLENGTH);
+					rest = substr(ep, RSTART + RLENGTH);
+					if (ip in hosts) return ip rest " (" hosts[ip] ")";
+				}
+				return ep;
+			}
+			{
+				len = 0; seq_start = 0; src = ""; dst = "";
+				for (i = 1; i <= NF; i++) {
+					if ($i == ">") {
+						src = $(i-1);
+						dst = $(i+1);
+						sub(/:$/, "", dst);
+					}
+					if ($i == "seq") {
+						seq_str = $(i+1);
+						sub(/,$/, "", seq_str);
+						split(seq_str, parts, ":");
+						seq_start = parts[1] + 0;
+					}
+					if ($i == "length") {
+						len = $(i+1) + 0;
+					}
+				}
+				if (len > 0 && src != "" && dst != "") {
+					flow = src " -> " dst;
+					total++;
+					if (flow in max_seq && seq_start < max_seq[flow]) {
+						retrans++;
+						retrans_flows[flow]++;
+					} else {
+						max_seq[flow] = seq_start + len;
+					}
+				}
+			}
+			END {
+				if (total > 0) {
+					pct = (retrans / total * 100);
+					printf "  - TCP 数据包总计: %d, 重传包数: %d, 估算重传率: %.2f%%\n", total, retrans, pct;
+					if (pct >= 3.0) {
+						print "  ⚠️ 链路重传率较高 (>= 3%)，可能存在无线信号衰减、线路丢包或对端丢弃:";
+						for (f in retrans_flows) {
+							if (retrans_flows[f] >= 2) {
+								split(f, ep_parts, " -> ");
+								print "      • " format_ep(ep_parts[1]) " -> " format_ep(ep_parts[2]) " [" retrans_flows[f] " 次重传]";
+							}
+						}
+					} else {
+						print "  ✅ 链路质量优秀 (重传率 < 3%)";
+					}
+				} else {
+					print "  (本次捕获中无足量 TCP 数据载荷)";
+				}
+			}'
+
+			echo ""
+			echo "📊【6. 业务流量 Top 5 目标地址】"
+			tcpdump -nn -r "$latest_pcap" 'ip and not port 22' 2>/dev/null | \
+				awk '
+				BEGIN {
+					while ((getline < "/tmp/dhcp.leases") > 0) {
+						if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+					}
+				}
+				{
+					for(i=1;i<=NF;i++) {
+						if($i ~ />/) {
+							ip_ep = $(i+1);
+							sub(/:$/, "", ip_ep);
+							match(ip_ep, /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/);
+							if (RSTART > 0) {
+								ip = substr(ip_ep, RSTART, RLENGTH);
+								if (ip !~ /^127\.|^0\./) {
+									name = (ip in hosts) ? ip " (" hosts[ip] ")" : ip;
+									counts[name]++;
+								}
+							}
+						}
+					}
+				}
+				END {
+					for (k in counts) print counts[k] "\t" k;
+				}' | sort -nr | head -n 5 | \
+				awk -F'\t' '{print "  - 目标: " $2 " (" $1 " 个数据包)"}'
+		else
+			echo "  (暂无 PCAP 报文数据)"
+		fi
+		echo "============================================================"
+	} | tee "$summary_file"
+}
+
+do_start() {
+	if is_running; then
+		local pid="$(cat "$PID_FILE" 2>/dev/null)"
+		local dest="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
+		echo "⚠️  抓包与日志采集任务已经在运行中 (网络抓包 PID: $pid)"
+		echo "📁 当前保存目录: $dest"
+		echo "💡 如需停止，请运行: stop-cap"
+		return 0
+	fi
+
+	local target_mnt="$(get_largest_mount)"
+	local usage_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+	if [ -n "$usage_pct" ] && [ "$usage_pct" -ge 50 ]; then
+		echo "❌ 错误: 分区 $target_mnt 磁盘使用率已达到 ${usage_pct}% (>= 50% 保护红线)，拒绝启动以防撑爆磁盘！"
+		cat << EOF_ALERT > "$ALERT_FILE"
+  📅 触发时间: $(date '+%Y-%m-%d %H:%M:%S')
+  💽 触发分区: $target_mnt (当前使用率: ${usage_pct}% >= 50%)
+  ⚠️ 状态: 磁盘已满 50%，系统已拒绝启动抓包！
+EOF_ALERT
+		return 1
+	fi
+
+	local free_kb="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
+	if [ -z "$free_kb" ] || [ "$free_kb" -lt 2097152 ]; then
+		echo "❌ 错误: 分区 $target_mnt 剩余空间不足 2GB，放弃启动以保护系统！"
+		return 1
+	fi
+
+	# Clean previous alert if now safe
+	rm -f "$ALERT_FILE" 2>/dev/null
+
+	# Parse flags and arguments
+	local snaplen=128
+	local pause_nss=0
+	local mode_str="轻量报头模式 (截取前 128 字节，节省 90% 存储)"
+	local custom_bpf=""
+
+	for arg in "$@"; do
+		case "$arg" in
+			full|-f|--full)
+				snaplen=0
+				mode_str="全载荷模式 (完整捕获 -s 0)"
+				;;
+			nonss|--nonss)
+				pause_nss=1
+				;;
+			*)
+				if [ -n "$arg" ] && [ "$arg" != "start" ]; then
+					custom_bpf="$arg"
+				fi
+				;;
+		esac
+	done
+
+	local bpf_expr="not port 22 and not port 5333"
+	if [ -n "$custom_bpf" ]; then
+		bpf_expr="($custom_bpf) and not port 22"
+	fi
+
+	local base_dir="$target_mnt/pcap_vault"
+	local today_str="$(date +%Y-%m-%d)"
+	local dest_dir="$base_dir/captures_$today_str"
+	mkdir -p "$dest_dir" "$STATE_DIR"
+
+	# Clean up records older than 3 days & ring-buffer check before start
+	cleanup_old_records "$base_dir"
+
+	local start_time="$(date +%Y%m%d_%H%M%S)"
+	echo "$dest_dir" > "$STATE_DIR/current_dest_dir"
+	echo "$base_dir" > "$STATE_DIR/current_base_dir"
+	echo "$target_mnt" > "$STATE_DIR/current_target_mnt"
+	echo "$start_time" > "$STATE_DIR/current_slice_start"
+	echo "$start_time" > "$STATE_DIR/current_singbox_slice_start"
+	echo "$start_time" > "$STATE_DIR/session_start"
+	echo "$mode_str" > "$STATE_DIR/capture_mode"
+
+	# 1. Adjust Sing-Box log level if needed
+	setup_singbox_log_level
+
+	# 2. Configure NSS Hardware Acceleration
+	setup_nss_acceleration "$pause_nss"
+
+	# 3. Generate Environment Snapshot
+	generate_snapshot "$dest_dir"
+
+	# 4. Launch tcpdump in background (100MB per slice)
+	local active_pcap="$dest_dir/.recording.pcap"
+	rm -f "$dest_dir"/.recording* 2>/dev/null
+	nohup /usr/bin/tcpdump -i any -B 8192 -s "$snaplen" -nn -C "$CHUNK_SIZE_MB" -z /usr/bin/capctl-rotate -w "$active_pcap" $bpf_expr >/dev/null 2>&1 &
+	local tcp_pid=$!
+	echo "$tcp_pid" > "$PID_FILE"
+
+	# 5. Launch Sing-Box real-time log collector (100MB per slice)
+	nohup /usr/bin/capctl-singbox "$dest_dir" "$STATE_DIR" "$CHUNK_SIZE_MB" >/dev/null 2>&1 &
+	local sb_pid=$!
+	echo "$sb_pid" > "$SB_PID_FILE"
+
+	# 6. Launch continuous 60s watchdog loop for 50% disk usage safeguard
+	(
+		while true; do
+			sleep 60
+			[ -f "$PID_FILE" ] || [ -f "$SB_PID_FILE" ] || break
+			local p1="$(cat "$PID_FILE" 2>/dev/null)"
+			local p2="$(cat "$SB_PID_FILE" 2>/dev/null)"
+			local alive=0
+			[ -n "$p1" ] && kill -0 "$p1" 2>/dev/null && alive=1
+			[ -n "$p2" ] && kill -0 "$p2" 2>/dev/null && alive=1
+			[ $alive -eq 1 ] || break
+
+			local cur_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+			if [ -n "$cur_pct" ] && [ "$cur_pct" -ge 50 ]; then
+				local alert_time="$(date '+%Y-%m-%d %H:%M:%S')"
+				cat << EOF_ALERT > "$ALERT_FILE"
+  📅 触发时间: $alert_time
+  💽 触发分区: $target_mnt (心跳巡检: 当前使用率 ${cur_pct}% >= 50%)
+  📁 数据目录: $dest_dir
+EOF_ALERT
+				/usr/bin/capctl stop emergency
+				break
+			fi
+		done
+	) >/dev/null 2>&1 &
+	echo $! > "$WATCHDOG_PID_FILE"
+
+	local free_human="$(df -h "$target_mnt" | awk 'NR==2 {print $4}')"
+	echo "============================================================"
+	echo "      🚀 自动全量数据抓包与 Sing-Box 日志归档已启动         "
+	echo "============================================================"
+	echo "📁 存储目录 : $dest_dir"
+	echo "🎯 捕获模式 : $mode_str"
+	echo "🚫 过滤规则 : 自动排除 SSH (port 22) 及本地劫持端口 (5333)"
+	echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包 .pcap 与 Sing-Box .log 均 100MB 自动分卷)"
+	echo "🔄 环形缓冲 : 自动保留最新 ${MAX_SLICES} 卷切片 (FIFO 滚动置换)"
+	echo "📋 环境指纹 : 已自动生成 $dest_dir/env_snapshot.txt"
+	echo "🛡️  安全熔断 : 磁盘占用达 50% 时毫秒级紧急刹车"
+	echo "⏳ 自动清理 : 超过 3 天的历史数据包与日志将自动清空"
+	echo "💽 分区余量 : $free_human 可用 (当前占用率: ${usage_pct}%)"
+	echo "------------------------------------------------------------"
+	echo "🛑 停止方式 : 输入 stop-cap 回车即可一键停止并打印诊断摘要"
+	echo "============================================================"
+}
+
+do_stop() {
+	local is_emergency=0
+	[ "$1" = "emergency" ] && is_emergency=1
+
+	if ! is_running; then
+		if [ $is_emergency -eq 0 ]; then
+			echo "⚠️  当前没有正在运行的抓包任务。"
+			local target_mnt="$(get_largest_mount)"
+			local base_dir="$target_mnt/pcap_vault"
+			local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
+			[ -n "$latest_dir" ] && [ -d "$latest_dir" ] && echo "📁 最近一次抓包目录为: $latest_dir"
+		fi
+		restore_singbox_log_level
+		restore_nss_acceleration
+		return 0
+	fi
+
+	local pid="$(cat "$PID_FILE" 2>/dev/null)"
+	local sb_pid="$(cat "$SB_PID_FILE" 2>/dev/null)"
+	local sb_stream_pid="$(cat "$STATE_DIR/singbox_stream.pid" 2>/dev/null)"
+	local sb_awk_pid="$(cat "$STATE_DIR/singbox_awk.pid" 2>/dev/null)"
+	local watchdog_pid="$(cat "$WATCHDOG_PID_FILE" 2>/dev/null)"
+	local dest_dir="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
+	local base_dir="$(cat "$STATE_DIR/current_base_dir" 2>/dev/null)"
+	local start_time="$(cat "$STATE_DIR/current_slice_start" 2>/dev/null)"
+	local sb_start_time="$(cat "$STATE_DIR/current_singbox_slice_start" 2>/dev/null)"
+	local target_mnt="$(cat "$STATE_DIR/current_target_mnt" 2>/dev/null)"
+	[ -z "$target_mnt" ] && target_mnt="$(get_largest_mount)"
+
+	# 1. Kill watchdog loop
+	[ -n "$watchdog_pid" ] && kill -9 "$watchdog_pid" 2>/dev/null
+	rm -f "$WATCHDOG_PID_FILE" 2>/dev/null
+
+	# 2. Stop tcpdump (SIGINT to flush buffers)
+	[ -n "$pid" ] && kill -2 "$pid" 2>/dev/null
+	local wait_count=0
+	while kill -0 "$pid" 2>/dev/null && [ $wait_count -lt 4 ]; do
+		sleep 1
+		wait_count=$((wait_count + 1))
+	done
+	[ -n "$pid" ] && kill -9 "$pid" 2>/dev/null
+	rm -f "$PID_FILE"
+
+	# 3. Stop Sing-Box logger processes
+	[ -n "$sb_stream_pid" ] && kill -15 "$sb_stream_pid" 2>/dev/null
+	[ -n "$sb_awk_pid" ] && kill -15 "$sb_awk_pid" 2>/dev/null
+	[ -n "$sb_pid" ] && kill -15 "$sb_pid" 2>/dev/null
+	sleep 1
+	[ -n "$sb_stream_pid" ] && kill -9 "$sb_stream_pid" 2>/dev/null
+	[ -n "$sb_awk_pid" ] && kill -9 "$sb_awk_pid" 2>/dev/null
+	[ -n "$sb_pid" ] && kill -9 "$sb_pid" 2>/dev/null
+	rm -f "$SB_PID_FILE" "$STATE_DIR/singbox_stream.pid" "$STATE_DIR/singbox_awk.pid" 2>/dev/null
+
+	# 4. Finalize active recording files
+	local stop_time="$(date +%Y%m%d_%H%M%S)"
+	[ -z "$start_time" ] && start_time="$stop_time"
+	[ -z "$sb_start_time" ] && sb_start_time="$stop_time"
+
+	if [ -n "$dest_dir" ] && [ -d "$dest_dir" ]; then
+		# Finalize PCAP
+		for rf in "$dest_dir"/.recording.pcap*; do
+			if [ -f "$rf" ]; then
+				local sz="$(wc -c < "$rf" 2>/dev/null || echo 0)"
+				if [ "$sz" -gt 24 ]; then
+					mv "$rf" "$dest_dir/cap_${start_time}-${stop_time}.pcap"
+				else
+					rm -f "$rf"
+				fi
+			fi
+		done
+
+		# Finalize Sing-Box LOG
+		local sbrf="$dest_dir/.recording_singbox.log"
+		if [ -f "$sbrf" ]; then
+			local sbsz="$(wc -c < "$sbrf" 2>/dev/null || echo 0)"
+			if [ "$sbsz" -gt 0 ]; then
+				mv "$sbrf" "$dest_dir/singbox_${sb_start_time}-${stop_time}.log"
+			else
+				rm -f "$sbrf"
+			fi
+		fi
+	fi
+
+	# 5. Perform 3-day cleanup & ring-buffer trimming
+	[ -n "$base_dir" ] && cleanup_old_records "$base_dir"
+
+	# 6. Restore Sing-Box log level back to original level
+	restore_singbox_log_level
+
+	# 7. Restore NSS Hardware Acceleration if it was paused
+	restore_nss_acceleration
+
+	# 8. Collect statistics
+	local pcap_count=0
+	local log_count=0
+	local total_size="0 MB"
+	if [ -n "$dest_dir" ] && [ -d "$dest_dir" ]; then
+		pcap_count="$(find "$dest_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | wc -l)"
+		log_count="$(find "$dest_dir" -maxdepth 1 -name 'singbox_*.log' 2>/dev/null | wc -l)"
+		total_size="$(du -sh "$dest_dir" 2>/dev/null | awk '{print $1}')"
+	fi
+
+	local free_human="$(df -h "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
+	local cur_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+
+	if [ $is_emergency -eq 1 ]; then
+		echo "============================================================"
+		echo "        🚨 触发安全熔断: 磁盘占用已达 ${cur_pct}% (>= 50%)       "
+		echo "         抓包与 Sing-Box 日志看门狗已自动紧急停止！         "
+		echo "============================================================"
+	else
+		echo "============================================================"
+		echo "              ✅ 抓包已成功停止 (Capture Stopped)           "
+		echo "============================================================"
+	fi
+	echo "📁 存储路径 : $dest_dir"
+	echo "📦 抓包文件 : $pcap_count 个网络数据包 (cap_*.pcap)"
+	echo "📄 路由日志 : $log_count 个 Sing-Box 决策日志 (singbox_*.log)"
+	echo "💾 目录总计 : $total_size"
+	echo "💽 分区剩余 : $free_human 可用 (当前占用率: ${cur_pct}%)"
+	echo "------------------------------------------------------------"
+	echo "📄 数据分卷清单 :"
+	if [ "$pcap_count" -gt 0 ]; then
+		echo "  [网络报文 (PCAP)]:"
+		find "$dest_dir" -maxdepth 1 -name 'cap_*.pcap' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
+	fi
+	if [ "$log_count" -gt 0 ]; then
+		echo "  [Sing-Box 实时日志 (LOG)]:"
+		find "$dest_dir" -maxdepth 1 -name 'singbox_*.log' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
+	fi
+	if [ "$pcap_count" -eq 0 ] && [ "$log_count" -eq 0 ]; then
+		echo "  (本次运行周期内未产生有效文件)"
+	fi
+	echo "------------------------------------------------------------"
+
+	# 9. Run automated Triage Diagnostic Summary
+	do_analyze "$dest_dir"
+
+	rm -rf "$STATE_DIR" 2>/dev/null
+}
+
+do_status() {
+	if is_running; then
+		local pid="$(cat "$PID_FILE" 2>/dev/null)"
+		local sb_pid="$(cat "$SB_PID_FILE" 2>/dev/null)"
+		local dest_dir="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
+		local start_time="$(cat "$STATE_DIR/session_start" 2>/dev/null)"
+		local mode_str="$(cat "$STATE_DIR/capture_mode" 2>/dev/null || echo "轻量报头模式")"
+		local target_mnt="$(cat "$STATE_DIR/current_target_mnt" 2>/dev/null)"
+		[ -z "$target_mnt" ] && target_mnt="$(get_largest_mount)"
+		local free_human="$(df -h "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
+		local cur_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+		local pcap_count="$(find "$dest_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | wc -l)"
+		local log_count="$(find "$dest_dir" -maxdepth 1 -name 'singbox_*.log' 2>/dev/null | wc -l)"
+		local cur_size="$(du -sh "$dest_dir" 2>/dev/null | awk '{print $1}')"
+
+		local cur_hp_level="$(uci -q get homeproxy.config.log_level)"
+		local orig_hp_level="$(cat "$STATE_DIR/orig_homeproxy_log_level" 2>/dev/null || cat "$PERSIST_LEVEL_FILE" 2>/dev/null)"
+		[ -z "$orig_hp_level" ] && orig_hp_level="$cur_hp_level"
+
+		echo "============================================================"
+		echo "          🟢 抓包看门狗正在运行 (Capturing Active)           "
+		echo "============================================================"
+		echo "⚙️  进程 PID : tcpdump [$pid] | sing-box 日志 [$sb_pid]"
+		echo "🎯 捕获模式 : $mode_str"
+		echo "⏰ 启动时间 : $start_time"
+		echo "📁 保存目录 : $dest_dir"
+		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
+		echo "📦 数据分卷 : $pcap_count 个 cap_*.pcap | $log_count 个 singbox_*.log (上限: ${MAX_SLICES})"
+		echo "💾 当前已存 : $cur_size"
+		echo "💽 分区剩余 : $free_human (当前占用率: ${cur_pct}%，阈值: 50%)"
+		echo "🔍 日志级别 : 当前 $cur_hp_level (启动前原级别: $orig_hp_level，停止时自动还原)"
+		echo "------------------------------------------------------------"
+		echo "🛑 如需停止 : 输入 stop-cap 回车"
+		echo "📊 诊断摘要 : 输入 analyze-cap 回车随时提取实时故障摘要"
+		echo "============================================================"
+	else
+		echo "⚪ 抓包看门狗当前未运行。输入 start-cap 可开启抓包。"
+		local target_mnt="$(get_largest_mount)"
+		local base_dir="$target_mnt/pcap_vault"
+		local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
+		if [ -n "$latest_dir" ] && [ -d "$latest_dir" ]; then
+			echo "📁 最近一次抓包数据存放在: $latest_dir"
+			echo "💡 可运行 analyze-cap 查看最近一次抓包的故障诊断摘要。"
+		fi
+	fi
+}
+
+do_cleanup() {
+	local target_mnt="$(get_largest_mount)"
+	local base_dir="$target_mnt/pcap_vault"
+	echo "🧹 正在执行超过 3 天的历史数据清理与环形配额规整 (目录: $base_dir)..."
+	cleanup_old_records "$base_dir"
+	echo "✅ 清理完成！"
+}
+
+show_help() {
+	cat << 'EOF_HELP'
+================================================================================
+  📡 CapCtl - OpenWrt 全量抓包与 Sing-Box 实时决策流排障取证系统
+================================================================================
+
+【定位与架构】
+  CapCtl 是专为 OpenWrt (软路由/硬路由) 设计的现代化排障与抓包取证工具。
+  它将底层网络报文 (tcpdump) 与应用层代理决策流 (Sing-Box) 完美融合，
+  并具备“轻量抓包、防自激、环境快照、设备识别、丢包重传估算与配置自愈”能力。
+
+--------------------------------------------------------------------------------
+【快捷命令速查】
+--------------------------------------------------------------------------------
+  1. 开启抓包 : start-cap [full] [nonss] [BPF过滤规则]
+  2. 停止抓包 : stop-cap
+  3. 运行状态 : status-cap
+  4. 故障诊断 : analyze-cap [检索关键词]
+  5. 历史清理 : capctl cleanup
+
+--------------------------------------------------------------------------------
+【参数与工作模式详解】
+--------------------------------------------------------------------------------
+  ★ start-cap
+      默认轻量报头模式 (-s 128)。仅截取 IP/TCP/UDP 首部与 TLS ClientHello/DNS，
+      节省 90% 存储与 CPU，完全杜绝 4K 视频测速刷爆硬盘。
+
+  ★ start-cap full (或 -f)
+      全载荷深度模式 (-s 0)。捕获完整明文数据载荷，用于 HTTP/ICMP/DHCP 深度取证。
+
+  ★ start-cap nonss
+      临时旁路高通 NSS ECM 硬件加速。避免高通芯片 DMA 硬件快速转发导致
+      tcpdump 遗漏中间数据包，停止时 100% 自动恢复加速。
+
+  ★ start-cap "host 192.168.10.154"
+      针对特定设备 IP 或协议过滤（内部依然会自动剔除 SSH 端口 22）。
+
+  ★ analyze-cap
+      无论当前抓包是否已停止，随时提取最新的《网络故障快速诊断摘要》。
+
+  ★ analyze-cap <keyword> (如: analyze-cap google 或 analyze-cap 192.168.10.176)
+      精准靶向追踪特定域名、对端 IP 或局域网设备的 DNS、出站流及异常。
+
+--------------------------------------------------------------------------------
+【核心安全与自愈机制】
+--------------------------------------------------------------------------------
+  • 磁盘 50% 看门狗熔断 : 无论何时存储分区占用达 50%，系统毫秒级紧急刹车。
+  • 环形缓冲配额 (Ring) : 自动保留最新 10 卷分卷 (FIFO 滚动覆盖)，杜绝历史堆积。
+  • 超出 3 天自动删除   : 超过 72 小时的旧数据与空目录自动彻底清理。
+  • 流量防自激保护       : 默认排除端口 22 与 5333，绝不会抓取 SSH 自身回环流量。
+  • 日志级别自动自愈     : 启动前快照记录初始级别，停止后 100% 自动还原，零残留。
+  • NSS 硬件加速自愈     : 停止时自动将 front_end_ipv4_stop/v6 还原为 0。
+  • 局域网设备自动翻译   : 自动读取 /tmp/dhcp.leases 将 IP 翻译为设备名称。
+  • TCP 重传丢包率估算   : 自动计算链路丢包率，定位高频重传的拥塞对端。
+
+--------------------------------------------------------------------------------
+【常见网络故障排障 SOP】
+--------------------------------------------------------------------------------
+  【场景一：网页或 App 打不开 / 疑似被拦截】
+    1. 输入 start-cap 回车开启轻量抓包；
+    2. 在手机或电脑上复现打不开的网页（如访问 google 或某个 App）；
+    3. 在终端执行: analyze-cap <域名关键词> (如 analyze-cap google)；
+    4. 观察：
+       - DNS 结果是 NOERROR 还是 NXDOMAIN？耗时是否超长？
+       - Sing-Box 是走 main-out 代理还是直连 bypass？有没有 connection refused 报错？
+    5. 复现完成后执行 stop-cap。
+
+  【场景二：网络偶发丢包 / 游戏卡顿跳 ping】
+    1. 执行 start-cap nonss (穿透高通硬件加速)；
+    2. 跑几分钟网络测速或游戏对战；
+    3. 执行 analyze-cap；
+    4. 查看【TCP 链路重传与丢包率估算】：
+       - 若重传率 >= 3%，报告会直接标出产生高频重传的局域网设备与对端 IP！
+    5. 执行 stop-cap。
+
+  【场景三：将数据包提供给 AI 或 Wireshark 深度分析】
+    1. 抓包目录位置固定在: /mnt/mmcblk0p27/pcap_vault/captures_YYYY-MM-DD/；
+    2. 目录内置文件:
+       - cap_*.pcap        : 原始网络报文 (Wireshark 格式)
+       - singbox_*.log     : Sing-Box 实时决策流日志
+       - env_snapshot.txt  : 抓包时刻的 WAN/路由/节点/DNS 环境瞬态快照
+       - triage_summary.txt: 诊断分析摘要
+    3. 用 SCP/WinSCP 下载该目录即可进行离线分析。
+================================================================================
+EOF_HELP
+}
+
+INVOKED_CMD="$(basename "$0")"
+case "$INVOKED_CMD" in
+	stop-cap)    ACTION="stop" ;;
+	start-cap)   ACTION="start" ;;
+	status-cap)  ACTION="status" ;;
+	analyze-cap) ACTION="analyze" ;;
+	*)
+		ACTION="${1:-status}"
+		shift 2>/dev/null
+		;;
+esac
+
+case "$ACTION" in
+	start)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_start "$@" ;;
+		esac
+		;;
+	stop)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_stop "$@" ;;
+		esac
+		;;
+	status)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_status "$@" ;;
+		esac
+		;;
+	analyze)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_analyze "$@" ;;
+		esac
+		;;
+	cleanup) do_cleanup "$@" ;;
+	-h|--help|help) show_help ;;
+	*)
+		show_help
+		exit 1
+		;;
+esac

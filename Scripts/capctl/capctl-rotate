@@ -1,0 +1,52 @@
+#!/bin/sh
+# /usr/bin/capctl-rotate
+# Called automatically by tcpdump -z when a 100MB slice finishes
+
+ROTATED_FILE="$1"
+[ -f "$ROTATED_FILE" ] || exit 0
+
+STATE_DIR="/var/run/capctl"
+[ -d "$STATE_DIR" ] || exit 0
+
+DIR_NAME="$(dirname "$ROTATED_FILE")"
+BASE_DIR="$(cat "$STATE_DIR/current_base_dir" 2>/dev/null)"
+TARGET_MNT="$(cat "$STATE_DIR/current_target_mnt" 2>/dev/null)"
+START_TIME="$(cat "$STATE_DIR/current_slice_start" 2>/dev/null)"
+MAX_SLICES="${MAX_SLICES:-10}"
+
+NOW="$(date +%Y%m%d_%H%M%S)"
+[ -z "$START_TIME" ] && START_TIME="$NOW"
+
+FINAL_NAME="cap_${START_TIME}-${NOW}.pcap"
+mv "$ROTATED_FILE" "$DIR_NAME/$FINAL_NAME"
+
+# Update start time for the next slice
+echo "$NOW" > "$STATE_DIR/current_slice_start"
+
+# 1. Purge older than 3 days
+if [ -n "$BASE_DIR" ] && [ -d "$BASE_DIR" ]; then
+	find "$BASE_DIR" -type f \( -name "*.pcap" -o -name "*.log" \) -mtime +3 -delete 2>/dev/null
+
+	# 2. Ring-buffer FIFO quota (keep newest 10 slices)
+	pcap_count="$(find "$BASE_DIR" -type f -name 'cap_*.pcap' 2>/dev/null | wc -l)"
+	if [ "$pcap_count" -gt "$MAX_SLICES" ]; then
+		to_del=$((pcap_count - MAX_SLICES))
+		find "$BASE_DIR" -type f -name 'cap_*.pcap' 2>/dev/null | sort | head -n "$to_del" | while read -r f; do
+			rm -f "$f"
+		done
+	fi
+
+	find "$BASE_DIR" -depth -mindepth 1 -type d -empty -delete 2>/dev/null
+fi
+
+# 3. Check disk usage threshold (50%)
+[ -z "$TARGET_MNT" ] && TARGET_MNT="$DIR_NAME"
+USAGE_PCT="$(df -k "$TARGET_MNT" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+if [ -n "$USAGE_PCT" ] && [ "$USAGE_PCT" -ge 50 ]; then
+	cat << EOF_ALERT > /etc/capctl_disk_alert
+  📅 触发时间: $(date '+%Y-%m-%d %H:%M:%S')
+  💽 触发分区: $TARGET_MNT (抓包切片轮转检测: 当前磁盘使用率达到 ${USAGE_PCT}% >= 50%)
+  📁 数据目录: $DIR_NAME
+EOF_ALERT
+	/usr/bin/capctl stop emergency &
+fi

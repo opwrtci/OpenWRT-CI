@@ -1,0 +1,67 @@
+#!/bin/sh
+# /usr/bin/capctl-singbox - Real-time Sing-Box Log Stream Collector & 100MB Rotator
+
+DEST_DIR="$1"
+STATE_DIR="$2"
+CHUNK_SIZE_MB="${3:-100}"
+MAX_BYTES=$((CHUNK_SIZE_MB * 1024 * 1024))
+FIFO="$STATE_DIR/singbox_stream.fifo"
+
+[ -d "$DEST_DIR" ] || exit 1
+[ -d "$STATE_DIR" ] || exit 1
+
+rm -f "$FIFO" 2>/dev/null
+mkfifo "$FIFO"
+
+# 1. Determine log stream source
+# Primary: direct stream from Homeproxy sing-box log /var/run/homeproxy/sing-box-c.log
+# Secondary: /var/run/sing-box/sing-box.log
+# Fallback: logread -f -e sing-box
+if [ -f "/var/run/homeproxy/sing-box-c.log" ]; then
+	tail -F -n 0 /var/run/homeproxy/sing-box-c.log > "$FIFO" 2>/dev/null &
+elif [ -f "/var/run/sing-box/sing-box.log" ]; then
+	tail -F -n 0 /var/run/sing-box/sing-box.log > "$FIFO" 2>/dev/null &
+else
+	logread -f -e sing-box > "$FIFO" 2>/dev/null &
+fi
+STREAM_PID=$!
+echo "$STREAM_PID" > "$STATE_DIR/singbox_stream.pid"
+
+# 2. Awk consumer: buffers lines, prints to .recording_singbox.log, rolls over at 100MB
+awk -v dest_dir="$DEST_DIR" -v state_dir="$STATE_DIR" -v max_bytes="$MAX_BYTES" '
+BEGIN {
+	cmd = "date +%Y%m%d_%H%M%S"
+	cmd | getline start_time
+	close(cmd)
+	cur_file = dest_dir "/.recording_singbox.log"
+	printf "%s", start_time > (state_dir "/current_singbox_slice_start")
+	close(state_dir "/current_singbox_slice_start")
+	bytes = 0
+}
+{
+	len = length($0) + 1
+	print $0 >> cur_file
+	fflush(cur_file)
+	bytes += len
+	if (bytes >= max_bytes) {
+		close(cur_file)
+		cmd = "date +%Y%m%d_%H%M%S"
+		cmd | getline now_time
+		close(cmd)
+		final_file = dest_dir "/singbox_" start_time "-" now_time ".log"
+		system("mv \"" cur_file "\" \"" final_file "\"")
+		system("/usr/bin/capctl-rotate-singbox \"" final_file "\" &")
+		start_time = now_time
+		printf "%s", start_time > (state_dir "/current_singbox_slice_start")
+		close(state_dir "/current_singbox_slice_start")
+		bytes = 0
+	}
+}
+' < "$FIFO" &
+AWK_PID=$!
+echo "$AWK_PID" > "$STATE_DIR/singbox_awk.pid"
+
+wait "$AWK_PID" 2>/dev/null
+
+kill -9 "$STREAM_PID" 2>/dev/null
+rm -f "$FIFO" 2>/dev/null
