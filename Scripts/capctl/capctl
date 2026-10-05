@@ -484,7 +484,7 @@ do_analyze() {
 
 			echo ""
 			echo "📶【5. TCP 链路重传与丢包率估算】"
-			tcpdump -tt -nn -r "$latest_pcap" 'tcp and not port 22' 2>/dev/null | awk '
+			tcpdump -S -tt -nn -r "$latest_pcap" 'tcp and not port 22' 2>/dev/null | awk '
 			BEGIN {
 				while ((getline < "/tmp/dhcp.leases") > 0) {
 					if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
@@ -521,7 +521,12 @@ do_analyze() {
 				ts = $1 + 0;
 				if (len > 0 && src != "" && dst != "") {
 					flow = src " -> " dst;
+					# Bridge exact duplicate filter
 					if (flow in last_seq && seq_start == last_seq[flow] && (ts - last_ts[flow]) < 0.05) {
+						next;
+					}
+					# GSO/TSO multi-interface subsegment deduplication
+					if (flow in max_seq && (seq_start + len) <= max_seq[flow] && (ts - max_seq_ts[flow]) < 0.05) {
 						next;
 					}
 					total++;
@@ -530,6 +535,7 @@ do_analyze() {
 						retrans_flows[flow]++;
 					} else {
 						max_seq[flow] = seq_start + len;
+						max_seq_ts[flow] = ts;
 					}
 					last_seq[flow] = seq_start;
 					last_ts[flow] = ts;

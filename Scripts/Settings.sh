@@ -208,7 +208,7 @@ cat << 'EOF' > "$HP_CIDR_DEF"
 
 if [ -f /etc/config/homeproxy ]; then
 	uci -q set homeproxy.control=homeproxy
-	for cidr in 155.102.0.0/16 163.181.0.0/16 47.88.0.0/16 47.89.0.0/16 47.90.0.0/16 47.91.0.0/16 47.246.0.0/16; do
+	for cidr in 155.102.0.0/16 163.181.0.0/16 139.95.0.0/16 47.88.0.0/16 47.89.0.0/16 47.90.0.0/16 47.91.0.0/16 47.246.0.0/16 198.11.128.0/18 205.204.96.0/19 43.109.0.0/16; do
 		if ! uci -q get homeproxy.control.wan_direct_ipv4_ips | grep -q "$cidr"; then
 			uci -q add_list homeproxy.control.wan_direct_ipv4_ips="$cidr"
 		fi
