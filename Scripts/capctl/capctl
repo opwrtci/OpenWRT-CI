@@ -303,7 +303,7 @@ do_analyze_wifi() {
 	for b in $band_stas; do
 		local b_if="$(echo "$b" | cut -d: -f1)"
 		local b_cnt="$(echo "$b" | cut -d: -f2)"
-		if [ "$b_cnt" -ge 2 ]; then
+		if [ "$b_cnt" -ge 8 ]; then
 			crowded_iface="$b_if ($b_cnt台)"
 		fi
 		if [ "$b_cnt" -eq 0 ] && echo "$b_if" | grep -qE "phy0|phy2"; then
@@ -311,8 +311,13 @@ do_analyze_wifi() {
 		fi
 	done
 	if [ -n "$crowded_iface" ] && [ -n "$idle_5g" ]; then
-		echo "     ⚠️ [多频扎堆告警] 检测到多台高流量设备集中连接在 $crowded_iface，而 5GHz 频段 $idle_5g 完全空闲！"
-		echo "        💡 建议: 将部分终端迁移至另一 5GHz 频段 (如 OWRT_5G 信道 149)，消除同频空口时间争抢。"
+		echo "     ⚠️ [多频密集告警] 检测到单频接入设备较多: $crowded_iface，而另一 5GHz 硬件频段 $idle_5g 完全空闲。"
+		echo "        💡 建议: 可将部分高带宽吞吐终端分流至 $idle_5g，获取最极致的空口隔离带宽。"
+	elif [ "$total_stas" -le 4 ]; then
+		echo "     ✅ 射频负载极轻 (当前仅 $total_stas 台设备，AX6600 硬件吞吐绰绰有余，无需干预)。"
+		if [ -n "$idle_5g" ]; then
+			echo "        💡 提示: 路由器具备双 5GHz 独立芯片硬件，如未来有 NAS/PC 大文件下载，可单独连入另一 5G 频段实现物理隔离。"
+		fi
 	else
 		echo "     ✅ 射频频段分配处于均衡状态。"
 	fi
