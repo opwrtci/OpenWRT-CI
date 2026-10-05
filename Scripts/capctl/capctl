@@ -213,7 +213,7 @@ do_analyze_wifi() {
 	for iface in $ifaces; do
 		local info="$(iwinfo $iface info 2>/dev/null)"
 		local ssid="$(echo "$info" | grep "ESSID:" | awk -F\" '{print $2}')"
-		local chan="$(echo "$info" | grep "Channel:" | awk '{print $4, $5}')"
+		local chan="$(echo "$info" | grep "Channel:" | sed -E 's/.*Channel:[[:space:]]*//; s/[[:space:]]*HT Mode:.*//')"
 		local txp="$(echo "$info" | grep "Tx-Power:" | awk '{print $2, $3}')"
 		[ -z "$ssid" ] && ssid="$iface"
 
@@ -265,7 +265,8 @@ do_analyze_wifi() {
 			printf("        - 协商速率: 下行(TX): %s | 上行(RX): %s\n", (tx_rate ? tx_rate : "未知"), (rx_rate ? rx_rate : "未知"));
 			if (exp_thru != "") printf("        - 预期吞吐: %s\n", exp_thru);
 			if (tx_failed > 0 || tx_retries > 0) {
-				printf("        - 空口丢帧: 发送失败 %d 帧 | 重试 %d 帧 (发送包总计 %d)\n", tx_failed, tx_retries, tx_pkts);
+				fail_rate = (tx_pkts + tx_failed > 0) ? (tx_failed * 100.0 / (tx_pkts + tx_failed)) : 0;
+				printf("        - 空口丢帧: 发送失败 %d 帧 | 重试 %d 帧 (发送包总计 %d | 累计丢帧率: %.1f%%)\n", tx_failed, tx_retries, tx_pkts, fail_rate);
 			}
 
 			if (signal <= -72) {
@@ -291,7 +292,7 @@ do_analyze_wifi() {
 			crowded_iface="$b_if ($b_cnt台)"
 		fi
 		if [ "$b_cnt" -eq 0 ] && echo "$b_if" | grep -qE "phy0|phy2"; then
-			idle_5g="$idle_5g $b_if"
+			[ -z "$idle_5g" ] && idle_5g="$b_if" || idle_5g="$idle_5g $b_if"
 		fi
 	done
 	if [ -n "$crowded_iface" ] && [ -n "$idle_5g" ]; then
@@ -348,7 +349,13 @@ do_analyze() {
 		latest_pcap="$(find "$target_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | sort | tail -n 1)"
 	fi
 
-	local log_files="$(ls "$target_dir"/singbox_*.log "$target_dir"/.recording_singbox.log 2>/dev/null)"
+	local log_files=""
+	if [ $is_live -eq 1 ] && [ -s "$target_dir/.recording_singbox.log" ]; then
+		log_files="$target_dir/.recording_singbox.log"
+	else
+		log_files="$(find "$target_dir" -maxdepth 1 -name 'singbox_*.log' 2>/dev/null | sort | tail -n 1)"
+		[ -z "$log_files" ] && log_files="$(ls "$target_dir"/singbox_*.log "$target_dir"/.recording_singbox.log 2>/dev/null)"
+	fi
 
 	{
 		echo "============================================================"
@@ -399,7 +406,7 @@ do_analyze() {
 			echo ""
 			echo "🚦【2. 代理出站与直连分流分布 (Outbounds)】"
 			local ob_stat="$(grep -E 'outbound/.*\[.*\]: outbound connection' $log_files 2>/dev/null | \
-				awk '{for(i=1;i<=NF;i++) if($i ~ /^outbound\//) print $i}' | \
+				awk '{for(i=1;i<=NF;i++) if($i ~ /^outbound\//) { sub(/:$/, "", $i); print $i }}' | \
 				sort | uniq -c | sort -nr)"
 			if [ -n "$ob_stat" ]; then
 				echo "$ob_stat" | awk '{print "  - " $2 " : " $1 " 次连接"}'
@@ -412,6 +419,16 @@ do_analyze() {
 			if [ -n "$sniff_domains" ]; then
 				echo "  - 嗅探核心域名 (Top 5):"
 				echo "$sniff_domains" | awk '{print "      • " $2 " (" $1 " 次访问)"}'
+			fi
+
+			# 阿里 Anycast / AMDC 调度合规审计
+			local anycast_leaks="$(grep -E 'outbound/[^d].*outbound connection to (155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)' $log_files 2>/dev/null | head -n 3)"
+			local anycast_directs="$(grep -E 'outbound/direct.*outbound connection to (155\.102\.|163\.181\.|139\.95\.|47\.88\.|47\.89\.|47\.90\.|47\.91\.|47\.246\.|198\.11\.|205\.204\.|43\.109\.)' $log_files 2>/dev/null | wc -l)"
+			if [ -n "$anycast_leaks" ]; then
+				echo "  ⚠️ [Anycast 分流告警] 发现阿里/AMDC 国内段被错误代理出站:"
+				echo "$anycast_leaks" | awk '{print "      • " $0}'
+			elif [ "$anycast_directs" -gt 0 ]; then
+				echo "  ✅ 阿里 Anycast / AMDC 国内段分流: 100% 成功直连 ($anycast_directs 次出站)"
 			fi
 		else
 			echo "  (暂无 Sing-Box 日志)"
