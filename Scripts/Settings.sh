@@ -198,6 +198,27 @@ exit 0
 EOF
 chmod +x "$CLASHOO_DEF"
 
+#预置HomeProxy国内阿里系/Anycast直连段，彻底杜绝淘宝/天猫CDN跨洋死锁与丢包
+HP_CIDR_DEF="./package/base-files/files/etc/uci-defaults/996_set-homeproxy-cidrs.sh"
+mkdir -p "$(dirname "$HP_CIDR_DEF")"
+cat << 'EOF' > "$HP_CIDR_DEF"
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# 预置国内阿里系/Anycast直连段，彻底杜绝淘宝/天猫跨洋死锁
+
+if [ -f /etc/config/homeproxy ]; then
+	uci -q set homeproxy.control=homeproxy
+	for cidr in 155.102.0.0/16 163.181.0.0/16 47.88.0.0/16 47.89.0.0/16 47.90.0.0/16 47.91.0.0/16 47.246.0.0/16; do
+		if ! uci -q get homeproxy.control.wan_direct_ipv4_ips | grep -q "$cidr"; then
+			uci -q add_list homeproxy.control.wan_direct_ipv4_ips="$cidr"
+		fi
+	done
+	uci -q commit homeproxy
+fi
+exit 0
+EOF
+chmod +x "$HP_CIDR_DEF"
+
 #预置docker用户组，消除dockerd启动时group docker not found警告
 GROUP_FILE="./package/base-files/files/etc/group"
 if [ -f "$GROUP_FILE" ]; then

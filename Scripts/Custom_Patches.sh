@@ -38,6 +38,14 @@ if [ -n "$HP_DIR" ]; then
 		sed -i 's|/usr/bin/curl -fsS|/usr/bin/curl -sS|g' "$HP_DIR/root/usr/share/rpcd/ucode/luci.homeproxy"
 		echo "   [OK] HomeProxy latency probe anti-loopback & TUN penetration patched."
 	fi
+
+	if [ -f "$HP_DIR/root/etc/homeproxy/scripts/generate_client.uc" ]; then
+		# DNS 独立缓存容量优化 (提升非大陆及防重放解析响应速度)
+		if ! grep -q "cache_capacity" "$HP_DIR/root/etc/homeproxy/scripts/generate_client.uc"; then
+			sed -i "/config.dns = {/a \\\tcache_capacity: 4096," "$HP_DIR/root/etc/homeproxy/scripts/generate_client.uc"
+			echo "   [OK] HomeProxy DNS cache_capacity: 4096 patched."
+		fi
+	fi
 fi
 
 echo "=== [Custom Patches] All custom verified patches applied successfully! ==="

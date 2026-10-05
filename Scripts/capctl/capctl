@@ -194,6 +194,122 @@ generate_snapshot() {
 	} > "$snap_file"
 }
 
+do_analyze_wifi() {
+	echo "📶【7. Wi-Fi 无线链路与射频健康体检】"
+	if ! command -v iw >/dev/null 2>&1 && ! command -v iwinfo >/dev/null 2>&1; then
+		echo "  (未检测到 iw 或 iwinfo 工具，跳过无线体检)"
+		return 0
+	fi
+
+	local ifaces="$(iw dev 2>/dev/null | grep Interface | awk '{print $2}')"
+	if [ -z "$ifaces" ]; then
+		echo "  (未发现活跃的无线网络接口)"
+		return 0
+	fi
+
+	local total_stas=0
+	local band_stas=""
+
+	for iface in $ifaces; do
+		local info="$(iwinfo $iface info 2>/dev/null)"
+		local ssid="$(echo "$info" | grep "ESSID:" | awk -F\" '{print $2}')"
+		local chan="$(echo "$info" | grep "Channel:" | awk '{print $4, $5}')"
+		local txp="$(echo "$info" | grep "Tx-Power:" | awk '{print $2, $3}')"
+		[ -z "$ssid" ] && ssid="$iface"
+
+		local stations="$(iw dev $iface station dump 2>/dev/null)"
+		local sta_cnt="$(echo "$stations" | grep -c "^Station " 2>/dev/null)"
+		[ -z "$sta_cnt" ] && sta_cnt=0
+		total_stas=$((total_stas + sta_cnt))
+		band_stas="$band_stas $iface:$sta_cnt"
+
+		echo "  📡 射频接口: $iface (SSID: \"$ssid\" | 信道: ${chan:-未知} | 功率: ${txp:-未知})"
+		if [ "$sta_cnt" -eq 0 ]; then
+			echo "     (当前无连接终端)"
+			continue
+		fi
+
+		echo "$stations" | awk -v iface="$iface" '
+		BEGIN {
+			while ((getline < "/tmp/dhcp.leases") > 0) {
+				if ($2 != "" && $4 != "*" && $4 != "") hosts[tolower($2)] = $4 " (" $3 ")";
+			}
+		}
+		/^Station / {
+			if (mac != "") print_sta();
+			mac = tolower($2);
+			signal = 0; tx_rate = ""; rx_rate = ""; tx_failed = 0; tx_retries = 0; tx_pkts = 0; exp_thru = "";
+		}
+		/signal:/ && !/signal avg:/ { signal = $2 + 0; }
+		/tx bitrate:/ {
+			sub(/^[ \t]*tx bitrate:[ \t]*/, "");
+			tx_rate = $0;
+		}
+		/rx bitrate:/ {
+			sub(/^[ \t]*rx bitrate:[ \t]*/, "");
+			rx_rate = $0;
+		}
+		/tx failed:/ { tx_failed = $3 + 0; }
+		/tx retries:/ { tx_retries = $3 + 0; }
+		/tx packets:/ { tx_pkts = $3 + 0; }
+		/expected throughput:/ { exp_thru = $3; }
+		function print_sta() {
+			name = (mac in hosts) ? hosts[mac] : mac;
+			sig_icon = "🟢 极佳";
+			if (signal < -65) sig_icon = "🟡 良好";
+			if (signal < -72) sig_icon = "🟠 稍弱";
+			if (signal < -78) sig_icon = "🔴 极弱";
+
+			printf("     📱 终端: %s\n", name);
+			printf("        - 物理信号: %d dBm [%s]\n", signal, sig_icon);
+			printf("        - 协商速率: 下行(TX): %s | 上行(RX): %s\n", (tx_rate ? tx_rate : "未知"), (rx_rate ? rx_rate : "未知"));
+			if (exp_thru != "") printf("        - 预期吞吐: %s\n", exp_thru);
+			if (tx_failed > 0 || tx_retries > 0) {
+				printf("        - 空口丢帧: 发送失败 %d 帧 | 重试 %d 帧 (发送包总计 %d)\n", tx_failed, tx_retries, tx_pkts);
+			}
+
+			if (signal <= -72) {
+				printf("        ⚠️ [弱信号风险] 物理衰减较大，易发生空口竞争丢失与重传降速。\n");
+			}
+			if (tx_rate ~ /^[0-9.]+[ \t]*MBit\/s$/ && rx_rate ~ /HE-MCS/) {
+				printf("        ⚠️ [调制降级风险] 终端下行已退化为传统低阶调制 (非 Wi-Fi 6 HE)，建议调整终端距离或频段。\n");
+			}
+		}
+		END {
+			if (mac != "") print_sta();
+		}
+		'
+	done
+
+	echo "  📊【射频负载均衡审计】: 在网终端总数: $total_stas 台"
+	local crowded_iface=""
+	local idle_5g=""
+	for b in $band_stas; do
+		local b_if="$(echo "$b" | cut -d: -f1)"
+		local b_cnt="$(echo "$b" | cut -d: -f2)"
+		if [ "$b_cnt" -ge 2 ]; then
+			crowded_iface="$b_if ($b_cnt台)"
+		fi
+		if [ "$b_cnt" -eq 0 ] && echo "$b_if" | grep -qE "phy0|phy2"; then
+			idle_5g="$idle_5g $b_if"
+		fi
+	done
+	if [ -n "$crowded_iface" ] && [ -n "$idle_5g" ]; then
+		echo "     ⚠️ [多频扎堆告警] 检测到多台高流量设备集中连接在 $crowded_iface，而 5GHz 频段 $idle_5g 完全空闲！"
+		echo "        💡 建议: 将部分终端迁移至另一 5GHz 频段 (如 OWRT_5G 信道 149)，消除同频空口时间争抢。"
+	else
+		echo "     ✅ 射频频段分配处于均衡状态。"
+	fi
+
+	local ath_errs="$(dmesg 2>/dev/null | grep -iE "ath11k.*(crash|error|failed|fault|beacon miss)" | tail -n 3)"
+	if [ -n "$ath_errs" ]; then
+		echo "  ⚠️ [驱动日志告警] 检测到底层无线驱动异常事件:"
+		echo "$ath_errs" | sed "s/^/     /"
+	else
+		echo "  ✅ 底层无线驱动与固件稳定运行无报错。"
+	fi
+}
+
 do_analyze() {
 	local arg1="$1"
 	local arg2="$2"
@@ -246,6 +362,11 @@ do_analyze() {
 
 		# A. Focused Keyword Investigation Mode
 		if [ -n "$keyword" ]; then
+			if [ "$keyword" = "wifi" ]; then
+				do_analyze_wifi
+				echo "============================================================"
+				return 0
+			fi
 			echo "🎯【精准专项排查: '$keyword' 追踪】"
 			echo "  [1. 相关 DNS 解析记录]:"
 			local kw_dns="$(grep -i "$keyword" $log_files 2>/dev/null | grep -E 'dns: exchanged' | grep -E 'NOERROR|NXDOMAIN' | head -n 5)"
@@ -363,7 +484,7 @@ do_analyze() {
 
 			echo ""
 			echo "📶【5. TCP 链路重传与丢包率估算】"
-			tcpdump -nn -r "$latest_pcap" 'tcp and not port 22' 2>/dev/null | awk '
+			tcpdump -tt -nn -r "$latest_pcap" 'tcp and not port 22' 2>/dev/null | awk '
 			BEGIN {
 				while ((getline < "/tmp/dhcp.leases") > 0) {
 					if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
@@ -397,8 +518,12 @@ do_analyze() {
 						len = $(i+1) + 0;
 					}
 				}
+				ts = $1 + 0;
 				if (len > 0 && src != "" && dst != "") {
 					flow = src " -> " dst;
+					if (flow in last_seq && seq_start == last_seq[flow] && (ts - last_ts[flow]) < 0.05) {
+						next;
+					}
 					total++;
 					if (flow in max_seq && seq_start < max_seq[flow]) {
 						retrans++;
@@ -406,6 +531,8 @@ do_analyze() {
 					} else {
 						max_seq[flow] = seq_start + len;
 					}
+					last_seq[flow] = seq_start;
+					last_ts[flow] = ts;
 				}
 			}
 			END {
@@ -460,6 +587,8 @@ do_analyze() {
 		else
 			echo "  (暂无 PCAP 报文数据)"
 		fi
+		echo ""
+		do_analyze_wifi
 		echo "============================================================"
 	} | tee "$summary_file"
 }
@@ -820,7 +949,8 @@ show_help() {
   2. 停止抓包 : stop-cap
   3. 运行状态 : status-cap
   4. 故障诊断 : analyze-cap [检索关键词]
-  5. 历史清理 : capctl cleanup
+  5. 无线体检 : analyze-cap wifi (或 capctl wifi)
+  6. 历史清理 : capctl cleanup
 
 --------------------------------------------------------------------------------
 【参数与工作模式详解】
@@ -844,6 +974,9 @@ show_help() {
 
   ★ analyze-cap <keyword> (如: analyze-cap google 或 analyze-cap 192.168.10.176)
       精准靶向追踪特定域名、对端 IP 或局域网设备的 DNS、出站流及异常。
+
+  ★ analyze-cap wifi (或 capctl wifi)
+      深度体检 OpenWrt Wi-Fi 射频、终端信号(RSSI)、调制协商(MCS)、空口丢帧(tx failed)与多频负载均衡。
 
 --------------------------------------------------------------------------------
 【核心安全与自愈机制】
@@ -926,6 +1059,7 @@ case "$ACTION" in
 			*) do_analyze "$@" ;;
 		esac
 		;;
+	wifi) do_analyze_wifi "$@" ;;
 	cleanup) do_cleanup "$@" ;;
 	-h|--help|help) show_help ;;
 	*)
