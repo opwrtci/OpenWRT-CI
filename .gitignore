@@ -10,3 +10,7 @@ __pycache__/
 .idea/
 *.swp
 *~
+*.env
+*.env.*
+.env*
+*capctl.env*
