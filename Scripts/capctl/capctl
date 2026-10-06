@@ -494,6 +494,10 @@ do_extract() {
 	local now_ts="$(date +%Y%m%d_%H%M%S)"
 	local out_txt="$target_dir/candidate_rules_${now_ts}.txt"
 	local out_json="$target_dir/candidate_rules_${now_ts}.json"
+	if [ $is_silent -eq 1 ]; then
+		out_txt="$target_dir/candidate_rules_latest.txt"
+		out_json="$target_dir/candidate_rules_latest.json"
+	fi
 
 	if [ $is_silent -eq 0 ]; then
 		echo "============================================================"
@@ -519,6 +523,8 @@ do_extract() {
 		}
 		# 3. 基础内置已知大厂主域名 (若已正常直连则不作多余提取)
 		standard_builtin = "^(taobao\\.com|alipay\\.com|alicdn\\.com|alipayobjects\\.com|qq\\.com|tencent\\.com|baidu\\.com|bilibili\\.com|douyin\\.com|jd\\.com|163\\.com|sina\\.com|weibo\\.com|xiaomi\\.com|mi\\.com|oppomobile\\.com|vivo\\.com|huawei\\.com|honor\\.com|youku\\.com|amap\\.com|ele\\.me|elemecdn\\.com|alibabachengdun\\.com|alibabacorp\\.com|aliyuncs\\.com|aliyun-inc\\.com|pinduoduo\\.com|pinduoduo\\.net)$";
+		# 4. GFW 投毒虚假 IP 库 (严禁将解析到投毒 IP 的境外网站误当国内业务)
+		poison_ips = "^(221\\.228\\.32\\.13|118\\.184\\.78\\.78|203\\.208\\.46\\.200|31\\.13\\.72\\.36|243\\.185\\.187\\.39|37\\.61\\.54\\.158|46\\.82\\.174\\.68|78\\.16\\.49\\.15|93\\.46\\.8\\.89)$";
 	}
 	function format_dev(ip) {
 		if (ip in hosts) return ip " (" hosts[ip] ")";
@@ -549,21 +555,34 @@ do_extract() {
 		if (dom != "" && !(id in conn_dom)) conn_dom[id] = dom;
 	}
 
-	# 铁证1: 实际连接错误泄漏走海外代理出站 (高危漏网)
+	# 记录已由 geosite-cn 或 direct-out 规则正确分流的域名 (排除无效候选)
+	/rule_set=geosite-cn/ || /route\(china-dns\)/ || /route\(direct-out\)/ || /=> bypass\(\)/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		dom = conn_dom[id];
+		if (dom != "") {
+			root = get_root_domain(dom);
+			already_covered[dom] = 1;
+			already_covered[root] = 1;
+		}
+		if (id in dns_queries) {
+			qdom = dns_queries[id];
+			root = get_root_domain(qdom);
+			already_covered[qdom] = 1;
+			already_covered[root] = 1;
+		}
+	}
+
+	# 记录走海外代理出站的连接 (用于与国内特征进行交叉印证)
 	/outbound\/[^d].*: outbound (packet )?connection to/ {
 		id = $5; gsub(/[^0-9]/, "", id);
 		dst = $0; sub(/.* to /, "", dst); sub(/[[:space:]].*/, "", dst); sub(/:[0-9]+$/, "", dst);
 		dom = conn_dom[id];
 		if (dom != "") {
 			root = get_root_domain(dom);
-			if (root !~ /(\.arpa$|\.lan$|localhost$)/ && root !~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) {
-				if (root !~ /\.cn$/ && !(root in existing_direct)) {
-					leaked_to_proxy[root] = 1;
-					candidate_hits[root]++;
-					candidate_reason[root] = "🚨 铁证：实际连接已错误泄漏走海外代理出站 (漏网)";
-					if (candidate_subdomains[root] !~ dom) {
-						candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
-					}
+			if (root !~ /(\.arpa$|\.lan$|localhost$)/) {
+				leaked_to_proxy[root] = 1;
+				if (candidate_subdomains[root] !~ dom) {
+					candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
 				}
 			}
 		}
@@ -576,14 +595,18 @@ do_extract() {
 	/dns: exchanged CNAME/ {
 		q_dom = $0; sub(/.*exchanged CNAME[[:space:]]+/, "", q_dom); sub(/[[:space:]].*/, "", q_dom); sub(/\.+$/, "", q_dom);
 		t_dom = $0; sub(/.*IN CNAME[[:space:]]+/, "", t_dom); sub(/[[:space:]].*/, "", t_dom); sub(/\.+$/, "", t_dom);
-		if (t_dom ~ /(\.w\.alikunlun\.com|alibabadns\.com|alipaydns\.com|alicdn\.com|tbcache\.com|\.dnsv1\.com|\.kunlun.*\.com|queniuak\.com|huaweicloud\.com|chinacache\.net|qiniucdn\.com|baidupcs\.com|ourwebcdn\.com|txcloudcdn\.com|tencent-cloud\.net|bytedance\.net)/) {
+		if (t_dom ~ /(\.w\.alikunlun\.com|alibabadns\.com|alipaydns\.com|alicdn\.com|tbcache\.com|\.dnsv1\.com|\.kunlun.*\.com|queniuak\.com|huaweicloud\.com|chinacache\.net|qiniucdn\.com|baidupcs\.com|ourwebcdn\.com|txcloudcdn\.com|tencent-cloud\.net|bytedance\.net|bytedns[0-9]*\.com|cdnbuild\.net|volces\.com|volccdn\.com)/) {
 			cname_dom[q_dom] = "CNAME 递归命中国内主流云厂商/CDN 节点 (" t_dom ")";
 			root = get_root_domain(q_dom);
 			if (root !~ /(\.arpa$|\.lan$|localhost$)/ && root !~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) {
-				if (root !~ /\.cn$/ && !(root in existing_direct)) {
+				if (root !~ /\.cn$/ && !(root in existing_direct) && !(root in already_covered)) {
 					if (root !~ standard_builtin || (root in leaked_to_proxy)) {
 						candidate_hits[root]++;
-						if (!(root in candidate_reason)) candidate_reason[root] = cname_dom[q_dom];
+						if (root in leaked_to_proxy) {
+							candidate_reason[root] = "🚨 铁证：确认命中国内云厂商 CNAME (" t_dom ") 但实际连接错误泄漏走海外代理出站 (漏网)";
+						} else if (!(root in candidate_reason)) {
+							candidate_reason[root] = cname_dom[q_dom];
+						}
 						if (candidate_subdomains[root] !~ q_dom) {
 							candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") q_dom;
 						}
@@ -595,26 +618,32 @@ do_extract() {
 
 	# 收集所有 DNS 解析事件并研判
 	/dns: exchange/ {
+		id = $5; gsub(/[^0-9]/, "", id);
 		dom = $0; sub(/.*dns: exchange[[:space:]]+(A |AAAA |CNAME )?/, "", dom); sub(/[[:space:]].*/, "", dom); sub(/\.+$/, "", dom);
 		if (dom == "" || dom !~ /\./ || dom ~ /(\.arpa$|\.lan$|localhost$)/) next;
+		dns_queries[id] = dom;
 		# 排除海外已知 GMS / GFW 封锁服务与全球公共 CDN
 		if (dom ~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) next;
 
 		root = get_root_domain(dom);
 		if (root == "" || root ~ /\.cn$/) next; # 纯 .cn 默认已被全局直连规则收录
-		if (root in existing_direct) next;     # 已经加入直连列表，无需重复提取
+		if (root in existing_direct || root in already_covered) next; # 已经加入直连列表或已被 geosite-cn 覆盖
 		if (root ~ standard_builtin && !(root in leaked_to_proxy)) next; # 已被基础内置规则库覆盖且未走代理
 
 		reason = "";
 		if (dom in cname_dom) {
 			reason = cname_dom[dom];
-		} else if (dom ~ /(aliapp|effirst|id6\.me|easytomessage|anythinktech|appier|snssdk|cmpassport|gdtimg|tanx|mmstat|talkingdata|gepush|igexin|10086|10010|189|pinduoduo|unionpay|12306|ccb|icbc|cmb|95598|sgcc)/) {
+		} else if (dom ~ /(aliapp|effirst|id6\.me|easytomessage|anythinktech|appier|snssdk|ctobsnssdk|cmpassport|gdtimg|tanx|mmstat|talkingdata|gepush|igexin|10086|10010|189|pinduoduo|unionpay|12306|ccb|icbc|cmb|95598|sgcc|volcengine)/) {
 			reason = "命中国内运营商认证 / 核心大厂第三方 SDK 签名特征";
 		}
 
 		if (reason != "") {
 			candidate_hits[root]++;
-			if (!(root in candidate_reason)) candidate_reason[root] = reason;
+			if (root in leaked_to_proxy) {
+				candidate_reason[root] = "🚨 铁证：确认命中国内特征但实际连接错误泄漏走海外代理出站 (漏网)";
+			} else if (!(root in candidate_reason)) {
+				candidate_reason[root] = reason;
+			}
 			if (candidate_subdomains[root] !~ dom) {
 				candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
 			}
@@ -678,12 +707,78 @@ do_extract() {
 	}
 	' $log_files
 
-	cp -f "$out_txt" "$target_dir/candidate_rules_latest.txt" 2>/dev/null
-	cp -f "$out_json" "$target_dir/candidate_rules_latest.json" 2>/dev/null
 	if [ $is_silent -eq 0 ]; then
+		cp -f "$out_txt" "$target_dir/candidate_rules_latest.txt" 2>/dev/null
+		cp -f "$out_json" "$target_dir/candidate_rules_latest.json" 2>/dev/null
 		echo "============================================================"
 	fi
 	return 0
+}
+
+do_add_direct() {
+	local dom="$1"
+	if [ -z "$dom" ]; then
+		echo "用法: capctl add-direct <域名>"
+		echo "示例: capctl add-direct ctobsnssdk.com"
+		return 1
+	fi
+
+	# 规范化域名
+	dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+	echo "============================================================"
+	echo "   🚀 CapCtl 一键直连入库与多端联动 (Add Direct Rule)        "
+	echo "============================================================"
+	echo "目标域名: $dom"
+	echo "------------------------------------------------------------"
+
+	# 第一步：本地秒级生效
+	local direct_file="/etc/homeproxy/diversion/direct.txt"
+	if [ -f "$direct_file" ]; then
+		if grep -Fxq "$dom" "$direct_file"; then
+			echo "ℹ️  [本地检查] 域名 $dom 已存在于本地直连列表 ($direct_file)，无需重复追加。"
+		else
+			echo "$dom" >> "$direct_file"
+			echo "✅ [本地写入] 成功追加 $dom 至 $direct_file"
+			echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+			/etc/init.d/homeproxy reload >/dev/null 2>&1
+			echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入直连并由 Sing-Box 内核即刻执行。"
+		fi
+	else
+		echo "⚠️ 未找到 HomeProxy 本地直连文件 ($direct_file)，跳过本地写入。"
+	fi
+
+	# 第二步：联动远程 Git 仓库（若在包含 meta-rules-dat 的开发环境）
+	local git_repo="/home/joefom/Public/gitpro/meta-rules-dat"
+	if [ -d "$git_repo/.git" ]; then
+		echo "------------------------------------------------------------"
+		echo "🔍 [远程联动] 检测到本地 meta-rules-dat Git 仓库，准备自动同步..."
+		local c_domains="$git_repo/custom-rules/china-custom-domains.txt"
+		local r_direct="$git_repo/resouces/direct.txt"
+		local changed=0
+
+		if [ -f "$c_domains" ] && ! grep -Fxq "$dom" "$c_domains"; then
+			echo "$dom" >> "$c_domains"
+			changed=1
+		fi
+		if [ -f "$r_direct" ] && ! grep -Fxq "$dom" "$r_direct"; then
+			echo "$dom" >> "$r_direct"
+			changed=1
+		fi
+
+		if [ $changed -eq 1 ]; then
+			(
+				cd "$git_repo" || exit 1
+				git add custom-rules/china-custom-domains.txt resouces/direct.txt
+				git commit -m "feat(rules): sync domestic domain $dom via capctl add-direct"
+				git push origin master >/dev/null 2>&1
+			)
+			echo "🎉 [第二步完成] 远程 Git 仓库已自动提交并推送到 GitHub！云端规则编译将自动触发。"
+		else
+			echo "ℹ️  [远程检查] 远程规则文件中已包含 $dom，无需重复提交。"
+		fi
+	fi
+	echo "============================================================"
 }
 
 do_doctor() {
@@ -1584,6 +1679,7 @@ show_help() {
   • capctl analyze [关键词/设备IP]     : 综合故障诊断、DNS 慢解析与链路重传
   • capctl audit                      : 分流漏网专项审计 (自动揪出走代理的国内应用)
   • capctl extract                    : 候选规则挖掘提取 (仅存盘供审核，不写路由不推远程)
+  • capctl add-direct <域名>           : 一键直连入库与联动 (本地秒级生效 + 远程同步)
   • capctl wifi                       : Wi-Fi 射频、终端信号 RSSI 与协商速率体检
   • capctl check                      : 全链路极速健康巡检 (doctor)
   • capctl cleanup                    : 一键清理历史数据包与日志归档释放空间
@@ -1697,9 +1793,10 @@ do_menu() {
 	echo "   9) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
 	echo "  10) 查看详细状态 (status)    - 查看当前抓包切片与配置详情"
 	echo "  11) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
+	echo "  12) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-11]: "
+	printf " 请输入选项编号 [0-12]: "
 	read -r choice
 	echo ""
 	case "$choice" in
@@ -1718,6 +1815,11 @@ do_menu() {
 		9) do_doctor ;;
 		10) do_status ;;
 		11) do_cleanup ;;
+		12)
+			printf " 请输入要直连的国内域名 (例如 ctobsnssdk.com): "
+			read -r dom
+			do_add_direct "$dom"
+			;;
 		0|"") echo "已退出。"; exit 0 ;;
 		*) echo "❌ 无效选项: $choice"; exit 1 ;;
 	esac
@@ -1782,6 +1884,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_extract "$@" ;;
+		esac
+		;;
+	add-direct|add-rule|sync-rule)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_add_direct "$@" ;;
 		esac
 		;;
 	doctor|check) do_doctor "$@" ;;
