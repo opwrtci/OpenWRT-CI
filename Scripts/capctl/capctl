@@ -2048,6 +2048,7 @@ EOF_ALERT
 	local snaplen=128
 	local pause_nss=0
 	local enable_ai=0
+	local explicit_ai=-1
 	local mode_str="轻量报头模式 (截取前 128 字节，节省 90% 存储)"
 	local custom_bpf=""
 
@@ -2062,6 +2063,11 @@ EOF_ALERT
 				;;
 			ai|--ai|auto-sync|--auto-sync|autopilot)
 				enable_ai=1
+				explicit_ai=1
+				;;
+			noai|--noai|--no-ai)
+				enable_ai=0
+				explicit_ai=0
 				;;
 			*)
 				if [ -n "$arg" ] && [ "$arg" != "start" ]; then
@@ -2071,9 +2077,30 @@ EOF_ALERT
 		esac
 	done
 
+	# 若未在命令行显式指定 ai 或 noai，且处于交互式终端中，主动询问用户是否开启 AI 分析与自动提交
+	if [ "$explicit_ai" -eq -1 ] && [ -t 0 ]; then
+		local prompt_def="y/N"
+		local default_ans="N"
+		if [ -f "/var/run/capctl_last_session" ] && grep -q 'LAST_AI="1"' "/var/run/capctl_last_session" 2>/dev/null; then
+			prompt_def="Y/n"
+			default_ans="Y"
+		fi
+		printf "🤖 是否开启 AI 深度分析与规则自动提交功能? [%s]: " "$prompt_def"
+		read -r ai_ans
+		[ -z "$ai_ans" ] && ai_ans="$default_ans"
+		case "$ai_ans" in
+			y|Y|yes|YES)
+				enable_ai=1
+				;;
+			*)
+				enable_ai=0
+				;;
+		esac
+	fi
+
 	if [ $enable_ai -eq 1 ]; then
 		if ! ensure_gemini_key; then
-			echo "⚠️  未能配置有效 Gemini 凭据，AI 自动研判模式未激活 (仍保持普通抓包启动)。"
+			echo "⚠️  未能配置有效 Gemini 凭据，AI 自动分析功能未激活 (仍保持普通抓包启动)。"
 			enable_ai=0
 		fi
 	fi
@@ -2322,6 +2349,8 @@ do_stop() {
 	local cur_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
 
 	# Save persistent last session info
+	local last_ai=0
+	[ -f "$STATE_DIR/ai_autopilot" ] && last_ai=1
 	local last_info_file="/var/run/capctl_last_session"
 	local persistent_info_file="$base_dir/.last_session_info"
 	{
@@ -2332,6 +2361,7 @@ do_stop() {
 		echo "LAST_PCAP_COUNT=\"$pcap_count\""
 		echo "LAST_LOG_COUNT=\"$log_count\""
 		echo "LAST_TOTAL_SIZE=\"$total_size\""
+		echo "LAST_AI=\"$last_ai\""
 	} > "$last_info_file" 2>/dev/null
 	[ -n "$base_dir" ] && [ -d "$base_dir" ] && cp -f "$last_info_file" "$persistent_info_file" 2>/dev/null
 
@@ -2446,9 +2476,9 @@ do_status() {
 		echo "⏰ 启动时间 : ${start_human:-$raw_start}"
 		echo "⏱️  运行时长 : $uptime_str"
 		if [ -f "$STATE_DIR/ai_autopilot" ]; then
-			echo "🤖 AI 自动闭环 : 🟢 已激活 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
+			echo "🤖 AI 分析与提交 : 🟢 已开启 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
 		else
-			echo "🤖 AI 自动闭环 : ⚪ 未开启 (日常可用 capctl start ai 开启)"
+			echo "🤖 AI 分析与提交 : ⚪ 未开启"
 		fi
 		echo "📁 保存目录 : $dest_dir"
 		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
@@ -2482,6 +2512,11 @@ do_status() {
 			echo "⏰ 上次启动时间 : $LAST_START_TIME"
 			echo "🛑 上次停止时间 : $LAST_STOP_TIME"
 			echo "⏱️  上次运行时长 : $LAST_DURATION"
+			if [ "$LAST_AI" = "1" ]; then
+				echo "🤖 AI 分析与提交 : 🟢 上次会话已开启 (待机中)"
+			else
+				echo "🤖 AI 分析与提交 : ⚪ 未开启 (待机中)"
+			fi
 			echo "📦 产生数据分卷 : $LAST_PCAP_COUNT 个报文分卷 | $LAST_LOG_COUNT 个日志分卷 (共 $LAST_TOTAL_SIZE)"
 			echo "💽 分区剩余空间 : $free_human (当前占用率: ${usage_pct}%，阈值: 50%)"
 			echo "------------------------------------------------------------"
@@ -2654,9 +2689,18 @@ do_menu() {
 	if is_running; then
 		local pid="$(cat "$PID_FILE" 2>/dev/null)"
 		local mode="$(cat "$STATE_DIR/capture_mode" 2>/dev/null || echo "轻量模式")"
+		local ai_tag="⚪ 未开启"
+		[ -f "$STATE_DIR/ai_autopilot" ] && ai_tag="🟢 已开启 (48h 周期沉淀与自动提交)"
 		echo " 🟢 抓包状态: [正在运行 (PID: $pid)] | 模式: $mode"
+		echo " 🤖 AI 闭环 : $ai_tag"
 	else
 		echo " ⚪ 抓包状态: [待机中 / 未运行]"
+		local last_info_file="/var/run/capctl_last_session"
+		local ai_last_tag="⚪ 未开启 (待机中)"
+		if [ -f "$last_info_file" ] && grep -q 'LAST_AI="1"' "$last_info_file" 2>/dev/null; then
+			ai_last_tag="⚪ 待机中 (上次会话曾开启)"
+		fi
+		echo " 🤖 AI 闭环 : $ai_last_tag"
 	fi
 	local target_mnt="$(get_largest_mount)"
 	local usage_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
