@@ -22,6 +22,27 @@ ALERT_FILE="/etc/capctl_disk_alert"
 PERSIST_LEVEL_FILE="/etc/capctl_orig_homeproxy_level"
 PERSIST_NSS_FILE="/etc/capctl_nss_paused"
 
+format_duration() {
+	local seconds="$1"
+	[ -z "$seconds" ] && seconds=0
+	local days=$((seconds / 86400))
+	local hours=$(( (seconds % 86400) / 3600 ))
+	local mins=$(( (seconds % 3600) / 60 ))
+	local secs=$((seconds % 60))
+
+	local res=""
+	if [ "$days" -gt 0 ]; then
+		res="${days}天 ${hours}小时 ${mins}分 ${secs}秒"
+	elif [ "$hours" -gt 0 ]; then
+		res="${hours}小时 ${mins}分 ${secs}秒"
+	elif [ "$mins" -gt 0 ]; then
+		res="${mins}分 ${secs}秒"
+	else
+		res="${secs}秒"
+	fi
+	echo "$res"
+}
+
 get_largest_mount() {
 	local mnt
 	mnt="$(df -k | awk 'NR>1 && $6 !~ /^\/tmp|^\/dev|^\/rom/ && $4 ~ /^[0-9]+$/ {print $4, $6}' | sort -nr | head -n1 | awk '{print $2}')"
@@ -1429,12 +1450,16 @@ EOF_ALERT
 	cleanup_old_records "$base_dir"
 
 	local start_time="$(date +%Y%m%d_%H%M%S)"
+	local start_epoch="$(date +%s)"
+	local start_human="$(date '+%Y-%m-%d %H:%M:%S')"
 	echo "$dest_dir" > "$STATE_DIR/current_dest_dir"
 	echo "$base_dir" > "$STATE_DIR/current_base_dir"
 	echo "$target_mnt" > "$STATE_DIR/current_target_mnt"
 	echo "$start_time" > "$STATE_DIR/current_slice_start"
 	echo "$start_time" > "$STATE_DIR/current_singbox_slice_start"
 	echo "$start_time" > "$STATE_DIR/session_start"
+	echo "$start_epoch" > "$STATE_DIR/session_start_epoch"
+	echo "$start_human" > "$STATE_DIR/session_start_human"
 	echo "$mode_str" > "$STATE_DIR/capture_mode"
 
 	# 1. Adjust Sing-Box log level if needed
@@ -1520,10 +1545,12 @@ EOF_ALERT
 
 do_stop() {
 	local is_emergency=0
+	local is_quick=0
 	[ "$1" = "emergency" ] && is_emergency=1
+	[ "$1" = "quick" ] || [ "$1" = "restart" ] && is_quick=1
 
 	if ! is_running; then
-		if [ $is_emergency -eq 0 ]; then
+		if [ $is_emergency -eq 0 ] && [ $is_quick -eq 0 ]; then
 			echo "⚠️  当前没有正在运行的抓包任务。"
 			local target_mnt="$(get_largest_mount)"
 			local base_dir="$target_mnt/pcap_vault"
@@ -1546,6 +1573,25 @@ do_stop() {
 	local sb_start_time="$(cat "$STATE_DIR/current_singbox_slice_start" 2>/dev/null)"
 	local target_mnt="$(cat "$STATE_DIR/current_target_mnt" 2>/dev/null)"
 	[ -z "$target_mnt" ] && target_mnt="$(get_largest_mount)"
+
+	# Parse timestamps for duration reporting
+	local stop_epoch="$(date +%s)"
+	local stop_human="$(date '+%Y-%m-%d %H:%M:%S')"
+	local start_human="$(cat "$STATE_DIR/session_start_human" 2>/dev/null)"
+	local start_epoch="$(cat "$STATE_DIR/session_start_epoch" 2>/dev/null)"
+	local raw_start="$(cat "$STATE_DIR/session_start" 2>/dev/null)"
+	if [ -z "$start_human" ] && [ -n "$raw_start" ]; then
+		start_human="$(echo "$raw_start" | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3 \4:\5:\6/')"
+	fi
+	if [ -z "$start_epoch" ] && [ -n "$start_human" ]; then
+		start_epoch="$(date -d "$start_human" +%s 2>/dev/null)"
+	fi
+	local duration_str="未知"
+	if [ -n "$start_epoch" ] && [ "$start_epoch" -gt 0 ] 2>/dev/null; then
+		local dur_sec=$((stop_epoch - start_epoch))
+		[ "$dur_sec" -lt 0 ] && dur_sec=0
+		duration_str="$(format_duration "$dur_sec")"
+	fi
 
 	# 1. Kill watchdog loop
 	[ -n "$watchdog_pid" ] && kill -9 "$watchdog_pid" 2>/dev/null
@@ -1623,48 +1669,85 @@ do_stop() {
 	local free_human="$(df -h "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
 	local cur_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
 
+	# Save persistent last session info
+	local last_info_file="/var/run/capctl_last_session"
+	local persistent_info_file="$base_dir/.last_session_info"
+	{
+		echo "LAST_START_TIME=\"${start_human:-$raw_start}\""
+		echo "LAST_STOP_TIME=\"$stop_human\""
+		echo "LAST_DURATION=\"$duration_str\""
+		echo "LAST_DEST_DIR=\"$dest_dir\""
+		echo "LAST_PCAP_COUNT=\"$pcap_count\""
+		echo "LAST_LOG_COUNT=\"$log_count\""
+		echo "LAST_TOTAL_SIZE=\"$total_size\""
+	} > "$last_info_file" 2>/dev/null
+	[ -n "$base_dir" ] && [ -d "$base_dir" ] && cp -f "$last_info_file" "$persistent_info_file" 2>/dev/null
+
 	if [ $is_emergency -eq 1 ]; then
 		echo "============================================================"
 		echo "        🚨 触发安全熔断: 磁盘占用已达 ${cur_pct}% (>= 50%)       "
 		echo "         抓包与 Sing-Box 日志看门狗已自动紧急停止！         "
 		echo "============================================================"
+	elif [ $is_quick -eq 1 ]; then
+		echo "⏹️  前一会话已平滑归档 (运行周期: ${start_human:-$raw_start} 至 $stop_human，持续: $duration_str)"
 	else
 		echo "============================================================"
 		echo "              ✅ 抓包已成功停止 (Capture Stopped)           "
 		echo "============================================================"
 	fi
-	echo "📁 存储路径 : $dest_dir"
-	echo "📦 抓包文件 : $pcap_count 个网络数据包 (cap_*.pcap)"
-	echo "📄 路由日志 : $log_count 个 Sing-Box 决策日志 (singbox_*.log)"
-	echo "💾 目录总计 : $total_size"
-	echo "💽 分区剩余 : $free_human 可用 (当前占用率: ${cur_pct}%)"
-	echo "------------------------------------------------------------"
-	echo "📄 数据分卷清单 :"
-	if [ "$pcap_count" -gt 0 ]; then
-		echo "  [网络报文 (PCAP)]:"
-		find "$dest_dir" -maxdepth 1 -name 'cap_*.pcap' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
-	fi
-	if [ "$log_count" -gt 0 ]; then
-		echo "  [Sing-Box 实时日志 (LOG)]:"
-		find "$dest_dir" -maxdepth 1 -name 'singbox_*.log' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
-	fi
-	if [ "$pcap_count" -eq 0 ] && [ "$log_count" -eq 0 ]; then
-		echo "  (本次运行周期内未产生有效文件)"
-	fi
-	echo "------------------------------------------------------------"
 
-	# 9. Run automated Triage Diagnostic Summary
-	do_analyze "$dest_dir"
+	if [ $is_quick -eq 0 ]; then
+		echo "📁 存储路径 : $dest_dir"
+		echo "⏰ 运行周期 : ${start_human:-$raw_start} 至 $stop_human (共持续: $duration_str)"
+		echo "📦 抓包文件 : $pcap_count 个网络数据包 (cap_*.pcap)"
+		echo "📄 路由日志 : $log_count 个 Sing-Box 决策日志 (singbox_*.log)"
+		echo "💾 目录总计 : $total_size"
+		echo "💽 分区剩余 : $free_human 可用 (当前占用率: ${cur_pct}%)"
+		echo "------------------------------------------------------------"
+		echo "📄 数据分卷清单 :"
+		if [ "$pcap_count" -gt 0 ]; then
+			echo "  [网络报文 (PCAP)]:"
+			find "$dest_dir" -maxdepth 1 -name 'cap_*.pcap' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
+		fi
+		if [ "$log_count" -gt 0 ]; then
+			echo "  [Sing-Box 实时日志 (LOG)]:"
+			find "$dest_dir" -maxdepth 1 -name 'singbox_*.log' -exec ls -lh {} + | awk '{print "    - " $9 " (" $5 ")"}' | sed "s|$dest_dir/||"
+		fi
+		if [ "$pcap_count" -eq 0 ] && [ "$log_count" -eq 0 ]; then
+			echo "  (本次运行周期内未产生有效文件)"
+		fi
+		echo "------------------------------------------------------------"
 
-	# 10. 静默刷新最新候选规则数据集 (保持终端清爽，不冗长打印)
-	do_extract "$dest_dir" silent >/dev/null 2>&1
-	if [ -f "$dest_dir/candidate_rules_latest.txt" ]; then
-		echo ""
-		echo "💡 候选规则最新挖掘数据集已自动刷新存盘: $dest_dir/candidate_rules_latest.txt"
-		echo "   (随时运行 cap extract 可查看完整报告，安全隔离：未写入本地路由/未推送远程)"
+		# 9. Run automated Triage Diagnostic Summary
+		do_analyze "$dest_dir"
+
+		# 10. 静默刷新最新候选规则数据集 (保持终端清爽，不冗长打印)
+		do_extract "$dest_dir" silent >/dev/null 2>&1
+		if [ -f "$dest_dir/candidate_rules_latest.txt" ]; then
+			echo ""
+			echo "💡 候选规则最新挖掘数据集已自动刷新存盘: $dest_dir/candidate_rules_latest.txt"
+			echo "   (随时运行 cap extract 可查看完整报告，安全隔离：未写入本地路由/未推送远程)"
+		fi
+	else
+		# 快速/重启模式下刷新候选规则但跳过冗长 Triage 分析打印
+		do_extract "$dest_dir" silent >/dev/null 2>&1
 	fi
 
 	rm -rf "$STATE_DIR" 2>/dev/null
+}
+
+do_restart() {
+	echo "============================================================"
+	echo "         🔄 正在平滑重启抓包看门狗 (Restarting Capture)       "
+	echo "============================================================"
+	if is_running; then
+		echo "⏹️  正在收敛并归档当前会话切片..."
+		do_stop "quick"
+		sleep 1
+	else
+		echo "⚪ 当前未运行，将直接启动全新抓包会话..."
+	fi
+	do_start "$@"
 }
 
 do_status() {
@@ -1672,7 +1755,6 @@ do_status() {
 		local pid="$(cat "$PID_FILE" 2>/dev/null)"
 		local sb_pid="$(cat "$SB_PID_FILE" 2>/dev/null)"
 		local dest_dir="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
-		local start_time="$(cat "$STATE_DIR/session_start" 2>/dev/null)"
 		local mode_str="$(cat "$STATE_DIR/capture_mode" 2>/dev/null || echo "轻量报头模式")"
 		local target_mnt="$(cat "$STATE_DIR/current_target_mnt" 2>/dev/null)"
 		[ -z "$target_mnt" ] && target_mnt="$(get_largest_mount)"
@@ -1686,12 +1768,31 @@ do_status() {
 		local orig_hp_level="$(cat "$STATE_DIR/orig_homeproxy_log_level" 2>/dev/null || cat "$PERSIST_LEVEL_FILE" 2>/dev/null)"
 		[ -z "$orig_hp_level" ] && orig_hp_level="$cur_hp_level"
 
+		local start_human="$(cat "$STATE_DIR/session_start_human" 2>/dev/null)"
+		local start_epoch="$(cat "$STATE_DIR/session_start_epoch" 2>/dev/null)"
+		local raw_start="$(cat "$STATE_DIR/session_start" 2>/dev/null)"
+		if [ -z "$start_human" ] && [ -n "$raw_start" ]; then
+			start_human="$(echo "$raw_start" | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3 \4:\5:\6/')"
+		fi
+		if [ -z "$start_epoch" ] && [ -n "$start_human" ]; then
+			start_epoch="$(date -d "$start_human" +%s 2>/dev/null)"
+		fi
+
+		local uptime_str="未知"
+		if [ -n "$start_epoch" ] && [ "$start_epoch" -gt 0 ] 2>/dev/null; then
+			local now_epoch="$(date +%s)"
+			local elapsed=$((now_epoch - start_epoch))
+			[ "$elapsed" -lt 0 ] && elapsed=0
+			uptime_str="$(format_duration "$elapsed")"
+		fi
+
 		echo "============================================================"
 		echo "          🟢 抓包看门狗正在运行 (Capturing Active)           "
 		echo "============================================================"
 		echo "⚙️  进程 PID : tcpdump [$pid] | sing-box 日志 [$sb_pid]"
 		echo "🎯 捕获模式 : $mode_str"
-		echo "⏰ 启动时间 : $start_time"
+		echo "⏰ 启动时间 : ${start_human:-$raw_start}"
+		echo "⏱️  运行时长 : $uptime_str"
 		echo "📁 保存目录 : $dest_dir"
 		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
 		echo "📦 数据分卷 : $pcap_count 个 cap_*.pcap | $log_count 个 singbox_*.log (上限: ${MAX_SLICES})"
@@ -1699,17 +1800,47 @@ do_status() {
 		echo "💽 分区剩余 : $free_human (当前占用率: ${cur_pct}%，阈值: 50%)"
 		echo "🔍 日志级别 : 当前 $cur_hp_level (启动前原级别: $orig_hp_level，停止时自动还原)"
 		echo "------------------------------------------------------------"
+		echo "🔄 如需重启 : 输入 capctl restart 回车"
 		echo "🛑 如需停止 : 输入 capctl stop 回车"
 		echo "📊 诊断摘要 : 输入 capctl analyze (或 capctl audit) 随时提取诊断摘要"
 		echo "============================================================"
 	else
-		echo "⚪ 抓包看门狗当前未运行。输入 capctl start 可开启抓包 (或直接输入 capctl 进入控制台菜单)。"
 		local target_mnt="$(get_largest_mount)"
 		local base_dir="$target_mnt/pcap_vault"
-		local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
-		if [ -n "$latest_dir" ] && [ -d "$latest_dir" ]; then
-			echo "📁 最近一次抓包数据存放在: $latest_dir"
-			echo "💡 可运行 capctl analyze 查看诊断摘要，或运行 capctl audit 审计分流漏网。"
+		local free_human="$(df -h "$target_mnt" 2>/dev/null | awk 'NR==2 {print $4}')"
+		local usage_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
+
+		local last_info_file="/var/run/capctl_last_session"
+		local persistent_info_file="$base_dir/.last_session_info"
+		if [ ! -f "$last_info_file" ] && [ -f "$persistent_info_file" ]; then
+			cp -f "$persistent_info_file" "$last_info_file" 2>/dev/null
+		fi
+
+		if [ -f "$last_info_file" ]; then
+			. "$last_info_file"
+			echo "============================================================"
+			echo "          ⚪ 抓包看门狗当前未运行 (Capture Inactive)         "
+			echo "============================================================"
+			echo "📁 上次保存目录 : $LAST_DEST_DIR"
+			echo "⏰ 上次启动时间 : $LAST_START_TIME"
+			echo "🛑 上次停止时间 : $LAST_STOP_TIME"
+			echo "⏱️  上次运行时长 : $LAST_DURATION"
+			echo "📦 产生数据分卷 : $LAST_PCAP_COUNT 个报文分卷 | $LAST_LOG_COUNT 个日志分卷 (共 $LAST_TOTAL_SIZE)"
+			echo "💽 分区剩余空间 : $free_human (当前占用率: ${usage_pct}%，阈值: 50%)"
+			echo "------------------------------------------------------------"
+			echo "💡 常用操作指引 :"
+			echo "   • capctl start           : 立即开启全新轻量抓包会话"
+			echo "   • capctl restart         : 平滑重新开启抓包"
+			echo "   • capctl analyze         : 对上次抓包数据运行综合诊断"
+			echo "   • capctl audit           : 专项审计分流漏网与直连建议"
+			echo "============================================================"
+		else
+			echo "⚪ 抓包看门狗当前未运行。输入 capctl start 可开启抓包 (或直接输入 capctl 进入控制台菜单)。"
+			local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
+			if [ -n "$latest_dir" ] && [ -d "$latest_dir" ]; then
+				echo "📁 最近一次抓包数据存放在: $latest_dir"
+				echo "💡 可运行 capctl analyze 查看诊断摘要，或运行 capctl audit 审计分流漏网。"
+			fi
 		fi
 	fi
 }
@@ -1739,8 +1870,9 @@ show_help() {
 【子命令速查】
 --------------------------------------------------------------------------------
   • capctl start [full] [nonss] [BPF]  : 开启抓包 (默认轻量防爆模式)
+  • capctl restart [full] [nonss]      : 平滑重启抓包 (归档当前切片并无缝开跑)
   • capctl stop                       : 停止抓包并恢复加速与日志级别
-  • capctl status                     : 查看当前抓包状态、数据切片与存储余量
+  • capctl status                     : 查看抓包状态、运行时长、数据切片与存储余量
   • capctl analyze [关键词/设备IP]     : 综合故障诊断、DNS 慢解析与链路重传
   • capctl audit                      : 分流漏网专项审计 (自动揪出走代理的国内应用)
   • capctl extract                    : 候选规则挖掘提取 (仅存盘供审核，不写路由不推远程)
@@ -1757,6 +1889,10 @@ show_help() {
   ★ capctl start
       默认轻量报头模式 (-s 128)。仅截取 IP/TCP/UDP 首部与 TLS ClientHello/DNS，
       节省 90% 存储与 CPU，完全杜绝 4K 视频测速刷爆硬盘。
+
+  ★ capctl restart [full] [nonss]
+      平滑重启抓包看门狗。若当前有抓包任务正在运行，会自动对当前正在录制的切片
+      执行原子化归档与环形配额清理，并立即以指定模式启动全新抓包会话，无需手动 stop 再 start。
 
   ★ capctl start full (或 -f)
       全载荷深度模式 (-s 0)。捕获完整明文数据载荷，用于 HTTP/ICMP/DHCP 深度取证。
@@ -1850,37 +1986,39 @@ do_menu() {
 	echo "   1) 开启抓包 (start)         - 轻量报头模式，长期挂机安全无感"
 	echo "   2) 开启全载荷抓包 (full)     - 捕获明文全数据 (Wireshark 深度排障)"
 	echo "   3) 穿透加速抓包 (nonss)      - 临时旁路高通 NSS 加速排查丢包"
-	echo "   4) 停止抓包 (stop)          - 停止抓包并自动还原硬件加速/日志"
-	echo "   5) 综合故障诊断 (analyze)    - 全链路网络健康、DNS、TCP RST与丢包"
-	echo "   6) 分流漏网审计 (audit)      - 智能检测走代理的国内应用与规则建议"
-	echo "   7) 候选规则挖掘提取 (extract) - 挖掘待同步域名数据 (不写路由不推远程)"
-	echo "   8) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
-	echo "   9) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
-	echo "  10) 查看详细状态 (status)    - 查看当前抓包切片与配置详情"
-	echo "  11) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
-	echo "  12) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
+	echo "   4) 平滑重启抓包 (restart)    - 归档当前切片并无缝开启全新抓包会话"
+	echo "   5) 停止抓包 (stop)          - 停止抓包并自动还原硬件加速/日志"
+	echo "   6) 综合故障诊断 (analyze)    - 全链路网络健康、DNS、TCP RST与丢包"
+	echo "   7) 分流漏网审计 (audit)      - 智能检测走代理的国内应用与规则建议"
+	echo "   8) 候选规则挖掘提取 (extract) - 挖掘待同步域名数据 (不写路由不推远程)"
+	echo "   9) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
+	echo "  10) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
+	echo "  11) 查看详细状态 (status)    - 查看当前抓包切片与运行时长"
+	echo "  12) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
+	echo "  13) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-12]: "
+	printf " 请输入选项编号 [0-13]: "
 	read -r choice
 	echo ""
 	case "$choice" in
 		1) do_start ;;
 		2) do_start full ;;
 		3) do_start nonss ;;
-		4) do_stop ;;
-		5)
+		4) do_restart ;;
+		5) do_stop ;;
+		6)
 			printf " 可选: 请输入要靶向追踪的域名或 IP (直接回车进行全量分析): "
 			read -r kw
 			do_analyze $kw
 			;;
-		6) do_audit ;;
-		7) do_extract ;;
-		8) do_analyze_wifi ;;
-		9) do_doctor ;;
-		10) do_status ;;
-		11) do_cleanup ;;
-		12)
+		7) do_audit ;;
+		8) do_extract ;;
+		9) do_analyze_wifi ;;
+		10) do_doctor ;;
+		11) do_status ;;
+		12) do_cleanup ;;
+		13)
 			printf " 请输入要直连的国内域名 (例如 ctobsnssdk.com): "
 			read -r dom
 			do_add_direct "$dom"
@@ -1894,6 +2032,7 @@ INVOKED_CMD="$(basename "$0")"
 case "$INVOKED_CMD" in
 	stop-cap)              ACTION="stop" ;;
 	start-cap)             ACTION="start" ;;
+	restart-cap)           ACTION="restart" ;;
 	status-cap)            ACTION="status" ;;
 	analyze-cap)           ACTION="analyze" ;;
 	audit-cap)             ACTION="audit" ;;
@@ -1919,6 +2058,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_start "$@" ;;
+		esac
+		;;
+	restart)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_restart "$@" ;;
 		esac
 		;;
 	stop)
