@@ -1158,7 +1158,7 @@ do_ai_audit() {
 	for arg in "$@"; do
 		case "$arg" in
 			sync|auto) auto_sync=1 ;;
-			--force|-f) force_run=1 ;;
+			--force|-f|force) force_run=1 ;;
 		esac
 	done
 
@@ -1184,7 +1184,7 @@ do_ai_audit() {
 		local past_mins=$(( (elapsed % 3600) / 60 ))
 
 		if [ "$force_run" -eq 0 ]; then
-			if [ -t 0 ] && [ "$auto_sync" -eq 0 ]; then
+			if [ -t 0 ]; then
 				echo "============================================================"
 				echo "      ⏳ CapCtl AI 规则沉淀冷却保护 (48小时防频控保护)       "
 				echo "============================================================"
@@ -1192,7 +1192,11 @@ do_ai_audit() {
 				echo "🛡️  最小沉淀周期 : 48 小时 (不得低于 2 天，确保充分收集真实流量与样本)"
 				echo "⏳ 距离推荐研判 : 尚需沉淀 ${rem_hours}小时 ${rem_mins}分"
 				echo "------------------------------------------------------------"
-				printf "⚠️  是否为了紧急排障跳过沉淀冷却期，强制立即调用 Gemini 深度研判? [y/N]: "
+				if [ "$auto_sync" -eq 1 ]; then
+					printf "⚠️  是否跳过沉淀冷却期，强制立即触发 Gemini 研判并自动入库同步? [y/N]: "
+				else
+					printf "⚠️  是否为了紧急排障跳过沉淀冷却期，强制立即调用 Gemini 深度研判? [y/N]: "
+				fi
 				read -r override_choice
 				if [ "$override_choice" != "y" ] && [ "$override_choice" != "Y" ]; then
 					echo "ℹ️  已保持沉淀状态。capctl 将在后台持续累积多天流量样本与设备特征。"
@@ -1200,18 +1204,21 @@ do_ai_audit() {
 				fi
 			else
 				echo "⏳ [AI 频控保护] 距离上次研判仅 ${past_hours}小时 (冷却期: 48小时/2天)，跳过本次调用以持续沉淀样本。"
-				echo "💡 如需立即强制分析，可附加参数: capctl ai --force"
+				if [ "$auto_sync" -eq 1 ]; then
+					echo "💡 如需立即强制分析与同步，可附加参数: capctl ai-sync --force"
+				else
+					echo "💡 如需立即强制分析，可附加参数: capctl ai --force"
+				fi
 				return 0
 			fi
 		else
-			echo "⚡ 检测到 --force 强制参数，跳过 48 小时沉淀冷却期直接运行..."
+			echo "⚡ 检测到强制参数，跳过 48 小时沉淀冷却期直接运行..."
 		fi
 	fi
 
-	# 2. 定位或同步最新候选数据
-	if [ ! -f "$pool_file" ]; then
-		do_extract silent >/dev/null 2>&1
-	fi
+	# 2. 定位或同步最新候选数据 (自动刷新长效候选池)
+	echo "🔍 正在从抓包记录与分流日志中增量提炼最新候选域名..."
+	do_extract silent >/dev/null 2>&1
 
 	local source_file="$pool_file"
 	if [ ! -f "$source_file" ] || [ ! -s "$source_file" ]; then
