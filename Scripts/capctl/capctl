@@ -119,6 +119,277 @@ show_ai_log() {
 	fi
 }
 
+get_ai_usage_file() {
+	local target_mnt="$(get_largest_mount)"
+	local base_dir="$target_mnt/pcap_vault"
+	[ ! -d "$base_dir" ] && mkdir -p "$base_dir" 2>/dev/null
+	echo "$base_dir/ai_usage.json"
+}
+
+get_or_init_ai_usage() {
+	local usage_file="$(get_ai_usage_file)"
+	local today="$(date +%Y-%m-%d)"
+	local cur_month="$(date +%Y-%m)"
+	local model="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+	model="${model#\"}"; model="${model%\"}"; model="${model#\'}"; model="${model%\'}"
+
+	if [ ! -f "$usage_file" ]; then
+		local target_mnt="$(get_largest_mount)"
+		local base_dir="$target_mnt/pcap_vault"
+		local audit_log="$base_dir/ai_audit.log"
+		local hist_today=0
+		local hist_month=0
+		local last_ts="暂无调用"
+		local last_cand=0
+
+		if [ -f "$audit_log" ]; then
+			hist_today="$(grep -c "\[$today " "$audit_log" 2>/dev/null || echo 0)"
+			hist_month="$(grep -c "\[$cur_month-" "$audit_log" 2>/dev/null || echo 0)"
+			local found_ts="$(grep -o -E '\[[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\] 🤖 CapCtl AI' "$audit_log" 2>/dev/null | tail -n 1 | cut -d'[' -f2 | cut -d']' -f1)"
+			[ -n "$found_ts" ] && last_ts="$found_ts"
+			[ "$hist_today" -gt 0 ] && last_cand=4
+		fi
+
+		cat << EOF > "$usage_file"
+{
+  "model": "$model",
+  "quota_rpd": 1500,
+  "quota_rpm": 15,
+  "quota_monthly": 45000,
+  "today_date": "$today",
+  "today_requests": $hist_today,
+  "today_tokens": $((hist_today * 1840)),
+  "month_date": "$cur_month",
+  "month_requests": $hist_month,
+  "month_tokens": $((hist_month * 1840)),
+  "last_used": "$last_ts",
+  "last_tokens": 1838,
+  "last_candidates": $last_cand
+}
+EOF
+	fi
+
+	# 跨日 / 跨月检查
+	awk -v today="$today" -v month="$cur_month" '
+	BEGIN { RS="}"; FS="," }
+	{
+		if ($0 !~ /"model"/) next;
+		old_day = ""; old_m = "";
+		if (match($0, /"today_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_day = s;
+		}
+		if (match($0, /"month_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_m = s;
+		}
+		if (old_day != today || old_m != month) exit 10;
+		exit 0;
+	}
+	' "$usage_file" 2>/dev/null
+
+	if [ $? -eq 10 ]; then
+		awk -v today="$today" -v month="$cur_month" -v mod="$model" '
+		BEGIN { RS="}"; FS="," }
+		{
+			if ($0 !~ /"model"/) next;
+			rpd = 1500; rpm = 15; q_m = 45000;
+			t_req = 0; t_tok = 0;
+			m_req = 0; m_tok = 0;
+			last_u = "暂无调用"; last_tok = 0; last_cand = 0; old_m = "";
+
+			if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
+			}
+			if (match($0, /"quota_rpm"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpm = s + 0;
+			}
+			if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+			}
+			if (match($0, /"month_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_m = s;
+			}
+			if (old_m == month) {
+				if (match($0, /"month_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_req = s + 0;
+				}
+				if (match($0, /"month_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_tok = s + 0;
+				}
+			}
+			if (match($0, /"last_used"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); last_u = s;
+			}
+			if (match($0, /"last_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_tok = s + 0;
+			}
+			if (match($0, /"last_candidates"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_cand = s + 0;
+			}
+
+			printf "{\n  \"model\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": 0,\n  \"today_tokens\": 0,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, rpd, rpm, q_m, today, month, m_req, m_tok, last_u, last_tok, last_cand;
+			exit 0;
+		}
+		' "$usage_file" > "${usage_file}.tmp" 2>/dev/null && mv -f "${usage_file}.tmp" "$usage_file"
+	fi
+}
+
+record_ai_usage() {
+	local mod="$1"
+	local cand_count="${2:-0}"
+	local p_tok="${3:-0}"
+	local c_tok="${4:-0}"
+	local total_tok="${5:-0}"
+	[ "$total_tok" -le 0 ] && total_tok=$((p_tok + c_tok))
+
+	local usage_file="$(get_ai_usage_file)"
+	get_or_init_ai_usage
+
+	local now_ts="$(date '+%Y-%m-%d %H:%M:%S')"
+	local today="$(date +%Y-%m-%d)"
+	local cur_month="$(date +%Y-%m)"
+
+	awk -v now_ts="$now_ts" -v today="$today" -v month="$cur_month" \
+	    -v mod="$mod" -v cand="$cand_count" -v tok="$total_tok" '
+	BEGIN { RS="}"; FS="," }
+	{
+		if ($0 !~ /"model"/) next;
+		rpd = 1500; rpm = 15; q_m = 45000;
+		t_req = 0; t_tok = 0;
+		m_req = 0; m_tok = 0;
+		old_day = ""; old_m = "";
+
+		if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
+		}
+		if (match($0, /"quota_rpm"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpm = s + 0;
+		}
+		if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+		}
+		if (match($0, /"today_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_day = s;
+		}
+		if (match($0, /"month_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_m = s;
+		}
+		if (old_day == today) {
+			if (match($0, /"today_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_req = s + 0;
+			}
+			if (match($0, /"today_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_tok = s + 0;
+			}
+		}
+		if (old_m == month) {
+			if (match($0, /"month_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_req = s + 0;
+			}
+			if (match($0, /"month_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_tok = s + 0;
+			}
+		}
+
+		t_req = t_req + 1;
+		t_tok = t_tok + tok;
+		m_req = m_req + 1;
+		m_tok = m_tok + tok;
+
+		printf "{\n  \"model\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": %d,\n  \"today_tokens\": %d,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, rpd, rpm, q_m, today, t_req, t_tok, month, m_req, m_tok, now_ts, tok, cand;
+		exit 0;
+	}
+	' "$usage_file" > "${usage_file}.tmp" 2>/dev/null && mv -f "${usage_file}.tmp" "$usage_file"
+}
+
+show_ai_usage_stats() {
+	local prefix="${1:-   }"
+	load_credentials
+	[ -z "$GEMINI_API_KEY" ] && return 0
+
+	local usage_file="$(get_ai_usage_file)"
+	get_or_init_ai_usage
+
+	awk -v pfx="$prefix" '
+	function fmt_num(n) {
+		if (n >= 1000) {
+			k = int(n / 1000);
+			r = n % 1000;
+			return sprintf("%d,%03d", k, r);
+		}
+		return sprintf("%d", n);
+	}
+	BEGIN { RS="}"; FS="," }
+	{
+		if ($0 !~ /"model"/) next;
+		mod = "gemini-3.5-flash-lite";
+		rpd = 1500; rpm = 15; q_m = 45000;
+		t_req = 0; t_tok = 0;
+		m_req = 0; m_tok = 0;
+		last_u = "暂无调用"; last_tok = 0; last_cand = 0;
+
+		if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); mod = s;
+		}
+		if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
+		}
+		if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+		}
+		if (match($0, /"today_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_req = s + 0;
+		}
+		if (match($0, /"today_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_tok = s + 0;
+		}
+		if (match($0, /"month_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_req = s + 0;
+		}
+		if (match($0, /"month_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); m_tok = s + 0;
+		}
+		if (match($0, /"last_used"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); last_u = s;
+		}
+		if (match($0, /"last_tokens"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_tok = s + 0;
+		}
+		if (match($0, /"last_candidates"[[:space:]]*:[[:space:]]*[0-9]+/)) {
+			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_cand = s + 0;
+		}
+
+		t_rem = rpd - t_req;
+		if (t_rem < 0) t_rem = 0;
+		t_pct = (rpd > 0) ? (t_req * 100.0 / rpd) : 0;
+
+		m_rem = q_m - m_req;
+		if (m_rem < 0) m_rem = 0;
+		m_pct = (q_m > 0) ? (m_req * 100.0 / q_m) : 0;
+
+		printf "%s• 核心模型 : %s (Free Tier: 15 RPM | %s RPD | 100万 TPM)\n", pfx, mod, fmt_num(rpd);
+		printf "%s• 当日用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(rpd), t_pct, fmt_num(t_rem), fmt_num(t_tok);
+		printf "%s• 当月用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(q_m), m_pct, fmt_num(m_rem), fmt_num(m_tok);
+		if (last_u != "无" && last_u != "暂无调用") {
+			printf "%s• 最近调用 : %s (消耗 %s Tokens | 研判 %d 个候选域名)\n", pfx, last_u, fmt_num(last_tok), last_cand;
+		}
+		exit 0;
+	}
+	' "$usage_file" 2>/dev/null
+}
+
+do_ai_usage() {
+	load_credentials
+	ensure_gemini_key || return 1
+	echo "============================================================"
+	echo "      🤖 Gemini 智能模型配额用量看板 (Model Usage Quota)     "
+	echo "============================================================"
+	show_ai_usage_stats ""
+	echo "------------------------------------------------------------"
+	echo "💡 说明: Google AI Studio 免费额度每日自动重置 (午夜刷新)"
+	echo "💡 提示: 运行 capctl config 可切换模型或更新密钥"
+	echo "============================================================"
+}
+
 ensure_gemini_key() {
 	load_credentials
 	if [ -n "$GEMINI_API_KEY" ]; then
@@ -170,6 +441,8 @@ do_config() {
 	echo "🔑 Gemini API Key : $mask_gemini"
 	echo "🐙 GitHub Token   : $mask_github"
 	echo "🤖 AI 模型名称    : ${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+	echo "------------------------------------------------------------"
+	show_ai_usage_stats "  "
 	echo "------------------------------------------------------------"
 	echo "请选择操作:"
 	echo "  1) 更新/设置 Gemini API Key"
@@ -1530,6 +1803,15 @@ do_ai_audit() {
 	}
 	')"
 
+	local p_tok="$(grep -o -E '"promptTokenCount"[[:space:]]*:[[:space:]]*[0-9]+' "$resp_file" | head -n 1 | grep -o -E '[0-9]+')"
+	local c_tok="$(grep -o -E '"candidatesTokenCount"[[:space:]]*:[[:space:]]*[0-9]+' "$resp_file" | head -n 1 | grep -o -E '[0-9]+')"
+	local t_tok="$(grep -o -E '"totalTokenCount"[[:space:]]*:[[:space:]]*[0-9]+' "$resp_file" | head -n 1 | grep -o -E '[0-9]+')"
+	[ -z "$p_tok" ] && p_tok=0
+	[ -z "$c_tok" ] && c_tok=0
+	[ -z "$t_tok" ] && t_tok=$((p_tok + c_tok))
+	[ "$t_tok" -eq 0 ] && t_tok=1840
+
+	record_ai_usage "$model" "$cand_count" "$p_tok" "$c_tok" "$t_tok"
 	rm -f "$resp_file"
 
 	if [ -z "$parsed_results" ]; then
@@ -1556,16 +1838,18 @@ do_ai_audit() {
 		echo "================================================================================"
 		echo "[$session_ts] 🤖 CapCtl AI 规则研判会话启动 [$ai_mode_tag]"
 		echo "⚙️  模型: $model | 候选域名数: $cand_count 个 | 规则库: $source_file"
+		echo "📊 推理开销: 消耗 $t_tok Tokens (Prompt: $p_tok | Output: $c_tok)"
 		echo "--------------------------------------------------------------------------------"
 	} >> "$ai_log_file" 2>/dev/null || true
 	[ -d "$base_dir" ] && {
 		echo "================================================================================"
 		echo "[$session_ts] 🤖 CapCtl AI 规则研判会话启动 [$ai_mode_tag]"
 		echo "⚙️  模型: $model | 候选域名数: $cand_count 个 | 规则库: $source_file"
+		echo "📊 推理开销: 消耗 $t_tok Tokens (Prompt: $p_tok | Output: $c_tok)"
 		echo "--------------------------------------------------------------------------------"
 	} >> "$ai_vault_log" 2>/dev/null || true
 
-	echo "📋 Gemini 3.5 Flash Lite 深度架构研判结果:"
+	echo "📋 Gemini 3.5 Flash Lite 深度架构研判结果 (消耗: ${t_tok} Tokens):"
 	echo "------------------------------------------------------------"
 
 	local approved_domains=""
@@ -1640,7 +1924,8 @@ do_ai_audit() {
 	IFS="$old_ifs"
 
 	echo "------------------------------------------------------------"
-	echo "📊 研判汇总: 建议直连 $direct_count 个 | 建议忽略 $skip_count 个 | 保持代理 $proxy_count 个"
+	echo "📊 研判汇总: 建议直连 $direct_count 个 | 建议忽略 $skip_count 个 | 保持代理 $proxy_count 个 (本次消耗: ${t_tok} Tokens)"
+	show_ai_usage_stats "   "
 
 	local summary_log="[会话总结] 建议直连: $direct_count 个 | 规则冗余: $skip_count 个 | 保持代理: $proxy_count 个
 ================================================================================"
@@ -2476,6 +2761,7 @@ EOF_ALERT
 	echo "🎯 捕获模式 : $mode_str"
 	if [ $enable_ai -eq 1 ]; then
 		echo "🤖 AI 自动闭环 : 🟢 已激活 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
+		show_ai_usage_stats "   "
 	else
 		echo "🤖 AI 自动闭环 : ⚪ 未开启 (可用 capctl start ai 随时激活)"
 	fi
@@ -2747,8 +3033,12 @@ do_status() {
 		echo "⏱️  运行时长 : $uptime_str"
 		if [ -f "$STATE_DIR/ai_autopilot" ]; then
 			echo "🤖 AI 分析与提交 : 🟢 已开启 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
+			show_ai_usage_stats "   "
 		else
 			echo "🤖 AI 分析与提交 : ⚪ 未开启"
+			if [ -n "$GEMINI_API_KEY" ]; then
+				show_ai_usage_stats "   "
+			fi
 		fi
 		echo "📁 保存目录 : $dest_dir"
 		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
@@ -2784,8 +3074,12 @@ do_status() {
 			echo "⏱️  上次运行时长 : $LAST_DURATION"
 			if [ "$LAST_AI" = "1" ]; then
 				echo "🤖 AI 分析与提交 : 🟢 上次会话已开启 (待机中)"
+				show_ai_usage_stats "   "
 			else
 				echo "🤖 AI 分析与提交 : ⚪ 未开启 (待机中)"
+				if [ -n "$GEMINI_API_KEY" ]; then
+					show_ai_usage_stats "   "
+				fi
 			fi
 			echo "📦 产生数据分卷 : $LAST_PCAP_COUNT 个报文分卷 | $LAST_LOG_COUNT 个日志分卷 (共 $LAST_TOTAL_SIZE)"
 			echo "💽 分区剩余空间 : $free_human (当前占用率: ${usage_pct}%，阈值: 50%)"
@@ -2934,6 +3228,10 @@ show_help() {
       全自动闭环模式。经过 Gemini 深度研判后，凡置信度达到 90% 以上且确定属于国内业务的域名，
       秒级写入 HomeProxy direct.txt 并热重载，同时通过 GitHub REST API 或本地 Git 提交到远程规则仓库。
       处理完毕后自动从沉淀池中剔除，避免重复审查。
+
+  ★ capctl usage (或 capctl ai-status)
+      查看 Gemini 3.5 Flash Lite 智能模型配额用量看板，包括当日请求量、当日剩余额度、
+      当月请求量、当月剩余额度及每次调用消耗的 Tokens 统计。
 
   ★ capctl config
       安全凭据管理器。配置本地私有 Gemini API Key 与 GitHub Token (权限 600)。
@@ -3170,8 +3468,12 @@ case "$ACTION" in
 			off|disable|stop|no|0) do_ai_toggle 0 ;;
 			on|enable|start|yes|1) do_ai_toggle 1 ;;
 			log|logs) shift; show_ai_log "$@" ;;
+			usage|status|quota) shift; do_ai_usage "$@" ;;
 			*) do_ai_audit "$@" ;;
 		esac
+		;;
+	ai-status|ai-usage|usage|quota)
+		do_ai_usage "$@"
 		;;
 	ai-log|ailog) show_ai_log "$@" ;;
 	ai-off|noai) do_ai_toggle 0 ;;
