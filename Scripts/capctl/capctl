@@ -1080,58 +1080,178 @@ get_curl_proxy_opt() {
 	fi
 }
 
-github_api_append_domain() {
-	local dom="$1"
-	local file_path="$2"
-	local repo="opwrtci/meta-rules-dat"
-
+github_api_sync_domain_batch() {
+	load_credentials
 	[ -z "$GITHUB_TOKEN" ] && return 1
 
+	local repo="opwrtci/meta-rules-dat"
+	local branch="master"
+	local tok="${GITHUB_TOKEN#\"}"; tok="${tok%\"}"; tok="${tok#\'}"; tok="${tok%\'}"
 	local proxy_opt="$(get_curl_proxy_opt)"
-	local api_url="https://api.github.com/repos/$repo/contents/$file_path"
-	local get_resp="$(curl -s -m 15 $proxy_opt -H "Authorization: Bearer $GITHUB_TOKEN" \
+	local file1="custom-rules/china-custom-domains.txt"
+	local file2="resouces/direct.txt"
+
+	# 1. 检查各文件当前内容并创建新 Blob
+	local tree_items=""
+	local updated_count=0
+	local domains_added=0
+
+	for fpath in "$file1" "$file2"; do
+		local get_resp="$(curl -s -m 15 $proxy_opt \
+			-H "Authorization: Bearer $tok" \
+			-H "Accept: application/vnd.github+json" \
+			-H "X-GitHub-Api-Version: 2022-11-28" \
+			"https://api.github.com/repos/$repo/contents/$fpath?ref=$branch")"
+
+		local b64="$(echo "$get_resp" | grep -o -E '"content"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+		if [ -z "$b64" ]; then
+			local err_msg="$(echo "$get_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+			echo "⚠️  [GitHub API] 无法获取 $fpath 的内容: ${err_msg:-未知错误}"
+			continue
+		fi
+
+		local raw_content="$(echo "$b64" | sed 's/\\n//g' | base64 -d 2>/dev/null)"
+		local file_modified=0
+		local updated_content="$raw_content"
+
+		for dom in "$@"; do
+			dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+			[ -z "$dom" ] && continue
+			if echo "$updated_content" | grep -Fxq "$dom"; then
+				echo "ℹ️  [GitHub API] $fpath 中已收录 $dom"
+			else
+				if [ -z "$updated_content" ]; then
+					updated_content="$dom"
+				else
+					updated_content="${updated_content}
+${dom}"
+				fi
+				file_modified=1
+				domains_added=$((domains_added + 1))
+			fi
+		done
+
+		if [ $file_modified -eq 0 ]; then
+			continue
+		fi
+
+		local updated_b64="$(echo "$updated_content" | base64 | tr -d '\r\n')"
+
+		# 创建 Blob 对象
+		local blob_payload="{\"content\":\"$updated_b64\",\"encoding\":\"base64\"}"
+		local blob_resp="$(curl -s -m 15 $proxy_opt -X POST \
+			-H "Authorization: Bearer $tok" \
+			-H "Accept: application/vnd.github+json" \
+			-H "X-GitHub-Api-Version: 2022-11-28" \
+			-d "$blob_payload" \
+			"https://api.github.com/repos/$repo/git/blobs")"
+
+		local blob_sha="$(echo "$blob_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+		if [ -n "$blob_sha" ]; then
+			local tree_entry="{\"path\":\"$fpath\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}"
+			if [ -z "$tree_items" ]; then
+				tree_items="$tree_entry"
+			else
+				tree_items="${tree_items},${tree_entry}"
+			fi
+			updated_count=$((updated_count + 1))
+		else
+			local err_msg="$(echo "$blob_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+			echo "⚠️  [GitHub API] 创建 $fpath Blob 失败: ${err_msg:-未知错误}"
+		fi
+	done
+
+	if [ $updated_count -eq 0 ] || [ -z "$tree_items" ]; then
+		echo "ℹ️  [GitHub API] 远程规则库所有目标文件中已均收录所请求域名，无需重复提交。"
+		return 0
+	fi
+
+	# 2. 获取当前分支 HEAD Commit 及基准 Tree
+	local ref_resp="$(curl -s -m 15 $proxy_opt \
+		-H "Authorization: Bearer $tok" \
 		-H "Accept: application/vnd.github+json" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
-		"$api_url")"
+		"https://api.github.com/repos/$repo/git/ref/heads/$branch")"
 
-	local sha="$(echo "$get_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
-	if [ -z "$sha" ]; then
-		echo "⚠️  [GitHub API] 无法获取 $file_path 的 SHA 信息"
+	local head_sha="$(echo "$ref_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+	if [ -z "$head_sha" ]; then
+		local err_msg="$(echo "$ref_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+		echo "⚠️  [GitHub API] 无法获取 $branch 分支的 HEAD SHA: ${err_msg:-未知错误}"
 		return 1
 	fi
 
-	local b64="$(echo "$get_resp" | grep -o -E '"content"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
-	local raw_content="$(echo "$b64" | sed 's/\\n//g' | base64 -d 2>/dev/null)"
-
-	if echo "$raw_content" | grep -Fxq "$dom"; then
-		echo "ℹ️  [GitHub API] $file_path 中已收录 $dom，无需重复提交。"
-		return 0
-	fi
-
-	local updated_content="${raw_content}
-${dom}"
-	local updated_b64="$(echo "$updated_content" | base64 | tr -d '\n')"
-
-	local payload="{\"message\":\"feat(rules): sync domestic domain $dom via capctl AI\",\"content\":\"$updated_b64\",\"sha\":\"$sha\",\"branch\":\"master\"}"
-
-	local put_resp="$(curl -s -m 15 $proxy_opt -X PUT "$api_url" \
-		-H "Authorization: Bearer $GITHUB_TOKEN" \
+	local commit_resp="$(curl -s -m 15 $proxy_opt \
+		-H "Authorization: Bearer $tok" \
 		-H "Accept: application/vnd.github+json" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
-		-d "$payload")"
+		"https://api.github.com/repos/$repo/git/commits/$head_sha")"
 
-	if echo "$put_resp" | grep -q '"commit"'; then
-		echo "✅ [GitHub API] 成功提交 $dom 至 $file_path"
+	local base_tree_sha="$(echo "$commit_resp" | grep -A 3 '"tree"' | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+	if [ -z "$base_tree_sha" ]; then
+		local err_msg="$(echo "$commit_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+		echo "⚠️  [GitHub API] 无法获取基准 Tree SHA: ${err_msg:-未知错误}"
+		return 1
+	fi
+
+	# 3. 创建多文件合并 Tree
+	local tree_payload="{\"base_tree\":\"$base_tree_sha\",\"tree\":[$tree_items]}"
+	local tree_resp="$(curl -s -m 15 $proxy_opt -X POST \
+		-H "Authorization: Bearer $tok" \
+		-H "Accept: application/vnd.github+json" \
+		-H "X-GitHub-Api-Version: 2022-11-28" \
+		-d "$tree_payload" \
+		"https://api.github.com/repos/$repo/git/trees")"
+
+	local new_tree_sha="$(echo "$tree_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+	if [ -z "$new_tree_sha" ]; then
+		local err_msg="$(echo "$tree_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+		echo "⚠️  [GitHub API] 创建聚合 Tree 失败: ${err_msg:-未知错误}"
+		return 1
+	fi
+
+	# 4. 创建唯一 Commit
+	local commit_msg
+	if [ $# -eq 1 ]; then
+		commit_msg="feat(rules): sync domestic domain $1 via capctl AI"
+	else
+		commit_msg="feat(rules): sync domestic domains ($*) via capctl AI"
+	fi
+	local new_commit_payload="{\"message\":\"$commit_msg\",\"tree\":\"$new_tree_sha\",\"parents\":[\"$head_sha\"]}"
+	local new_commit_resp="$(curl -s -m 15 $proxy_opt -X POST \
+		-H "Authorization: Bearer $tok" \
+		-H "Accept: application/vnd.github+json" \
+		-H "X-GitHub-Api-Version: 2022-11-28" \
+		-d "$new_commit_payload" \
+		"https://api.github.com/repos/$repo/git/commits")"
+
+	local new_commit_sha="$(echo "$new_commit_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+	if [ -z "$new_commit_sha" ]; then
+		local err_msg="$(echo "$new_commit_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+		echo "⚠️  [GitHub API] 创建聚合 Commit 失败: ${err_msg:-未知错误}"
+		return 1
+	fi
+
+	# 5. 原子级更新分支 HEAD 引用
+	local patch_ref_payload="{\"sha\":\"$new_commit_sha\",\"force\":false}"
+	local update_ref_resp="$(curl -s -m 15 $proxy_opt -X PATCH \
+		-H "Authorization: Bearer $tok" \
+		-H "Accept: application/vnd.github+json" \
+		-H "X-GitHub-Api-Version: 2022-11-28" \
+		-d "$patch_ref_payload" \
+		"https://api.github.com/repos/$repo/git/refs/heads/$branch")"
+
+	if echo "$update_ref_resp" | grep -q '"ref"'; then
+		echo "✅ [GitHub API] 成功聚合提交至 $repo (Commit: ${new_commit_sha:0:7}，单次 Commit 合并修改 $updated_count 个文件)"
 		return 0
 	else
-		local err_msg="$(echo "$put_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
-		echo "⚠️  [GitHub API] 提交失败: ${err_msg:-未知错误}"
+		local err_msg="$(echo "$update_ref_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+		echo "⚠️  [GitHub API] 更新分支 HEAD 引用失败: ${err_msg:-未知错误}"
 		return 1
 	fi
 }
 
 sync_to_github_repo() {
-	local dom="$1"
+	load_credentials
 	local git_repo="/home/joefom/Public/gitpro/meta-rules-dat"
 
 	if [ -d "$git_repo/.git" ]; then
@@ -1141,32 +1261,39 @@ sync_to_github_repo() {
 		local r_direct="$git_repo/resouces/direct.txt"
 		local changed=0
 
-		if [ -f "$c_domains" ] && ! grep -Fxq "$dom" "$c_domains"; then
-			echo "$dom" >> "$c_domains"
-			changed=1
-		fi
-		if [ -f "$r_direct" ] && ! grep -Fxq "$dom" "$r_direct"; then
-			echo "$dom" >> "$r_direct"
-			changed=1
-		fi
+		for dom in "$@"; do
+			dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+			[ -z "$dom" ] && continue
+			if [ -f "$c_domains" ] && ! grep -Fxq "$dom" "$c_domains"; then
+				echo "$dom" >> "$c_domains"
+				changed=1
+			fi
+			if [ -f "$r_direct" ] && ! grep -Fxq "$dom" "$r_direct"; then
+				echo "$dom" >> "$r_direct"
+				changed=1
+			fi
+		done
 
 		if [ $changed -eq 1 ]; then
 			(
 				cd "$git_repo" || exit 1
 				git add custom-rules/china-custom-domains.txt resouces/direct.txt
-				git commit -m "feat(rules): sync domestic domain $dom via capctl"
+				if [ $# -eq 1 ]; then
+					git commit -m "feat(rules): sync domestic domain $1 via capctl"
+				else
+					git commit -m "feat(rules): sync domestic domains ($*) via capctl"
+				fi
 				git push origin master >/dev/null 2>&1
 			)
 			echo "🎉 [远程同步] 本地 Git 仓库已提交并推送到 GitHub master！"
 		else
-			echo "ℹ️  [远程检查] 本地 Git 仓库规则文件中已包含 $dom。"
+			echo "ℹ️  [远程检查] 本地 Git 仓库规则文件中已包含全部指定域名。"
 		fi
 	elif [ -n "$GITHUB_TOKEN" ]; then
 		echo "------------------------------------------------------------"
-		echo "🐙 [远程联动] 通过 GitHub REST API 同步至 opwrtci/meta-rules-dat..."
-		github_api_append_domain "$dom" "custom-rules/china-custom-domains.txt"
-		github_api_append_domain "$dom" "resouces/direct.txt"
-		echo "🎉 [远程同步] GitHub REST API 同步完成！云端规则编译将自动触发。"
+		echo "🐙 [远程联动] 通过 GitHub Git Database API 原子聚合提交至 opwrtci/meta-rules-dat..."
+		github_api_sync_domain_batch "$@"
+		echo "🎉 [远程同步] 云端单 Commit 聚合同步完成！云端规则编译将自动触发。"
 	else
 		echo "ℹ️  [远程联动] 未检测到本地 Git 仓库或 GITHUB_TOKEN，跳过远程提交 (运行 capctl config 可随时配置 Token)。"
 	fi
@@ -1525,12 +1652,32 @@ do_ai_audit() {
 			echo "============================================================"
 			echo "   ⚡ 正在自动将高置信度域名执行本地热生效与远程同步...      "
 			echo "============================================================"
+			local direct_file="/etc/homeproxy/diversion/direct.txt"
+			local any_local_added=0
+
 			for adom in $approved_domains; do
-				do_add_direct "$adom"
+				if [ -f "$direct_file" ]; then
+					if ! grep -Fxq "$adom" "$direct_file"; then
+						echo "$adom" >> "$direct_file"
+						echo "✅ [本地生效] 已将 $adom 写入 $direct_file"
+						any_local_added=1
+					else
+						echo "ℹ️  [本地检查] $adom 已存在于本地直连列表"
+					fi
+				fi
 				prune_from_candidate_pool "$adom"
-				echo "[[$session_ts] 自动生效同步] 域名 $adom 已写入 direct.txt 并同步远程" >> "$ai_log_file" 2>/dev/null || true
-				[ -d "$base_dir" ] && echo "[[$session_ts] 自动生效同步] 域名 $adom 已写入 direct.txt 并同步远程" >> "$ai_vault_log" 2>/dev/null || true
+				echo "[[$session_ts] 自动生效同步] 域名 $adom 已加入直连" >> "$ai_log_file" 2>/dev/null || true
+				[ -d "$base_dir" ] && echo "[[$session_ts] 自动生效同步] 域名 $adom 已加入直连" >> "$ai_vault_log" 2>/dev/null || true
 			done
+
+			if [ $any_local_added -eq 1 ]; then
+				echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+				/etc/init.d/homeproxy reload >/dev/null 2>&1
+				echo "🎉 [本地重载] HomeProxy 规则已即刻热重载生效！"
+			fi
+
+			# 一次性原子同步远程 Git / GitHub API
+			sync_to_github_repo $approved_domains
 		else
 			echo "ℹ️  当前没有达到置信阈值 (>=90%) 的待入库域名，无需执行同步。"
 		fi
