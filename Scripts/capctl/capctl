@@ -985,6 +985,66 @@ do_analyze() {
 			else
 				echo "  ✅ 未在 Sing-Box 日志中发现显式 ERROR/超时异常"
 			fi
+			local flood_drops="$(grep 'dropped due to flooding' $log_files 2>/dev/null | wc -l)"
+			flood_drops=$((flood_drops + 0))
+			if [ "$flood_drops" -gt 0 ]; then
+				echo "  ⚠️ [UDP限速静默丢包] 捕获到 $flood_drops 次 UDP 报文被 Sing-Box 限速丢弃 (dropped due to flooding)"
+				echo "      💡 风险提示: 并发 QUIC 请求超出 ICMP 速率上限被静默丢包，导致终端未收到即刻拒绝而原地挂起等待超时。"
+			fi
+
+			local slow_conns="$(awk '
+			BEGIN {
+				while ((getline < "/tmp/dhcp.leases") > 0) {
+					if ($3 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $4 != "*" && $4 != "") hosts[$3] = $4;
+				}
+			}
+			function format_dev(ip) {
+				if (ip in hosts) return ip " (" hosts[ip] ")";
+				return ip;
+			}
+			/inbound\/tun.*inbound redirect connection from/ {
+				id = substr($5, 2);
+				for(i=1;i<=NF;i++) if ($i == "from") { src = $(i+1); sub(/:[0-9]+$/, "", src); conn_src[id] = format_dev(src); }
+			}
+			/router: (sniffed protocol: .*, domain:|found reserve mapped domain:)/ {
+				id = substr($5, 2);
+				for(i=1;i<=NF;i++) {
+					if ($i == "domain:") { conn_dom[id] = $(i+1); break; }
+					if ($i == "mapped" && $(i+1) == "domain:") { conn_dom[id] = $(i+2); break; }
+				}
+			}
+			/connection: connection (download|upload) finished/ {
+				id = substr($5, 2);
+				dur_str = substr($6, 1, length($6)-1);
+				sec = 0;
+				if (dur_str ~ /ms$/) {
+					sub(/ms$/, "", dur_str);
+					sec = (dur_str + 0) / 1000.0;
+				} else if (dur_str ~ /s$/ && dur_str !~ /m/) {
+					sub(/s$/, "", dur_str);
+					sec = dur_str + 0;
+				} else if (dur_str ~ /m/) {
+					min = dur_str; sub(/m.*$/, "", min);
+					s_part = dur_str; sub(/^.*m/, "", s_part); sub(/s$/, "", s_part);
+					sec = (min + 0) * 60 + (s_part + 0);
+				}
+				if (sec >= 5.0) {
+					dom = conn_dom[id];
+					if (dom == "") dom = "未知目标";
+					src = conn_src[id];
+					if (src == "") src = "局域网终端";
+					if (!(id in reported)) {
+						reported[id] = 1;
+						printf("%.1fs\t%s\t%s\n", sec, dom, src);
+					}
+				}
+			}
+			' $log_files 2>/dev/null | sort -rn | head -n 5)"
+			if [ -n "$slow_conns" ]; then
+				echo "  ⏱️ [高延迟/慢连接挂起告警] 发现代理出站高耗时连接 (>= 5秒):"
+				echo "$slow_conns" | awk -F'\t' '{print "      • 耗时 " $1 " : " $2 " [终端: " $3 "]"}'
+				echo "      💡 说明: 常见于节点对端被严重控速、上游 WAF/盾牌拦截等待超时或客户端 SPA 路由假死。"
+			fi
 
 			echo ""
 			echo "🚦【2. 代理出站与直连分流分布 (Outbounds)】"
@@ -1068,6 +1128,11 @@ do_analyze() {
 		# 2. DNS 异常与耗时监控
 		echo "🌐【3. DNS 异常与慢解析诊断 (Slow / NXDOMAIN)】"
 		if [ -n "$log_files" ]; then
+			local doh_errs="$(grep -E 'dns: exchange failed.*(EOF|timeout|refused)' $log_files 2>/dev/null | head -n 3)"
+			if [ -n "$doh_errs" ]; then
+				echo "  ⚠️ [远端 DNS 握手异常] 捕获到上游 DoH 服务器响应中断 (EOF/超时):"
+				echo "$doh_errs" | awk '{print "    - " $0}'
+			fi
 			local nx_domains="$(grep -E 'NXDOMAIN|SERVFAIL' $log_files 2>/dev/null | \
 				awk '($10 ~ /NXDOMAIN|SERVFAIL/) {print $9 " (" $10 ")"}' | sort | uniq -c | sort -nr | head -n 5)"
 			if [ -n "$nx_domains" ]; then

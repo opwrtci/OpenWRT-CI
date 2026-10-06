@@ -62,6 +62,9 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.key="${BASE_WORD}"
 			uci -q set wireless.$iface.disassoc_low_ack='0'
 			uci -q set wireless.$iface.uapsd='0'
+			uci -q set wireless.$iface.ieee80211k='1'
+			uci -q set wireless.$iface.ieee80211v='1'
+			uci -q set wireless.$iface.bss_transition='1'
 			uci -q set wireless.$iface.disabled='0'
 		# 2. 5GHz-2 电竞频段 (QCN9074 5G PCIe 插卡 - 低信道 36 / 发射功率 28dBm / 开启 4x4 MU-MIMO 与 SU/HE 波束成形增强穿墙与物理层覆盖)
 		elif echo "$path" | grep -qi "pcie"; then
@@ -83,6 +86,9 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.key="${BASE_WORD}"
 			uci -q set wireless.$iface.disassoc_low_ack='0'
 			uci -q set wireless.$iface.uapsd='0'
+			uci -q set wireless.$iface.ieee80211k='1'
+			uci -q set wireless.$iface.ieee80211v='1'
+			uci -q set wireless.$iface.bss_transition='1'
 			uci -q set wireless.$iface.disabled='0'
 		# 3. 5GHz-1 频段 (IPQ6000 SOC 板载 5G - 高信道 149 / 发射功率 28dBm / 开启 SU/MU 波束成形与弱信号防踢)
 		elif [ "$band" = "5g" ]; then
@@ -104,6 +110,9 @@ jdcloud,re-cs-02)
 			uci -q set wireless.$iface.key="${BASE_WORD}"
 			uci -q set wireless.$iface.disassoc_low_ack='0'
 			uci -q set wireless.$iface.uapsd='0'
+			uci -q set wireless.$iface.ieee80211k='1'
+			uci -q set wireless.$iface.ieee80211v='1'
+			uci -q set wireless.$iface.bss_transition='1'
 			uci -q set wireless.$iface.disabled='0'
 		fi
 	done
