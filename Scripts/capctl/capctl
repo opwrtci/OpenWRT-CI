@@ -31,13 +31,25 @@ load_credentials() {
 			case "$line" in
 				\#*|"") continue ;;
 				GEMINI_API_KEY=*)
-					[ -z "$GEMINI_API_KEY" ] && export GEMINI_API_KEY="${line#GEMINI_API_KEY=}"
+					if [ -z "$GEMINI_API_KEY" ]; then
+						local raw_k="${line#GEMINI_API_KEY=}"
+						raw_k="${raw_k#\"}"; raw_k="${raw_k%\"}"; raw_k="${raw_k#\'}"; raw_k="${raw_k%\'}"
+						export GEMINI_API_KEY="$raw_k"
+					fi
 					;;
 				GITHUB_TOKEN=*)
-					[ -z "$GITHUB_TOKEN" ] && export GITHUB_TOKEN="${line#GITHUB_TOKEN=}"
+					if [ -z "$GITHUB_TOKEN" ]; then
+						local raw_t="${line#GITHUB_TOKEN=}"
+						raw_t="${raw_t#\"}"; raw_t="${raw_t%\"}"; raw_t="${raw_t#\'}"; raw_t="${raw_t%\'}"
+						export GITHUB_TOKEN="$raw_t"
+					fi
 					;;
 				GEMINI_MODEL=*)
-					[ -z "$GEMINI_MODEL" ] && export GEMINI_MODEL="${line#GEMINI_MODEL=}"
+					if [ -z "$GEMINI_MODEL" ]; then
+						local raw_m="${line#GEMINI_MODEL=}"
+						raw_m="${raw_m#\"}"; raw_m="${raw_m%\"}"; raw_m="${raw_m#\'}"; raw_m="${raw_m%\'}"
+						export GEMINI_MODEL="$raw_m"
+					fi
 					;;
 			esac
 		done < "$CRED_FILE"
@@ -49,6 +61,10 @@ save_credentials() {
 	local g_key="$1"
 	local gh_tok="$2"
 	local g_mod="${3:-gemini-3.5-flash-lite}"
+
+	g_key="${g_key#\"}"; g_key="${g_key%\"}"; g_key="${g_key#\'}"; g_key="${g_key%\'}"
+	gh_tok="${gh_tok#\"}"; gh_tok="${gh_tok%\"}"; gh_tok="${gh_tok#\'}"; gh_tok="${gh_tok%\'}"
+	g_mod="${g_mod#\"}"; g_mod="${g_mod%\"}"; g_mod="${g_mod#\'}"; g_mod="${g_mod%\'}"
 
 	local target_conf="/etc/capctl/capctl.env"
 	if [ ! -d "/etc/capctl" ]; then
@@ -68,6 +84,39 @@ save_credentials() {
 	export GITHUB_TOKEN="$gh_tok"
 	export GEMINI_MODEL="$g_mod"
 	CRED_FILE="$target_conf"
+}
+
+rotate_ai_log() {
+	local f="$1"
+	if [ -f "$f" ]; then
+		local sz="$(wc -c < "$f" 2>/dev/null || echo 0)"
+		if [ "$sz" -gt 5242880 ]; then
+			mv -f "$f" "${f}.old" 2>/dev/null || true
+		fi
+	fi
+}
+
+show_ai_log() {
+	local target_mnt="$(get_largest_mount)"
+	local log_file="$target_mnt/pcap_vault/ai_audit.log"
+	[ ! -f "$log_file" ] && log_file="/var/log/capctl_ai.log"
+
+	if [ ! -f "$log_file" ] || [ ! -s "$log_file" ]; then
+		echo "ℹ️  暂无 AI 研判日志记录。运行 capctl ai 或 capctl ai-sync 后将自动生成。"
+		return 0
+	fi
+
+	echo "============================================================"
+	echo "       📜 CapCtl AI 智能审计追踪日志 ($log_file)             "
+	echo "============================================================"
+	if [ "$1" = "-f" ] || [ "$1" = "follow" ]; then
+		tail -n 60 -f "$log_file"
+	else
+		tail -n 60 "$log_file"
+		echo "------------------------------------------------------------"
+		echo "💡 提示: 实时追踪日志可运行: capctl ai log -f"
+		echo "============================================================"
+	fi
 }
 
 ensure_gemini_key() {
@@ -1023,6 +1072,14 @@ prune_from_candidate_pool() {
 	fi
 }
 
+get_curl_proxy_opt() {
+	if netstat -tulnp 2>/dev/null | grep -q ':5330[[:space:]]'; then
+		echo "--proxy http://127.0.0.1:5330"
+	elif [ -n "$http_proxy" ]; then
+		echo "--proxy $http_proxy"
+	fi
+}
+
 github_api_append_domain() {
 	local dom="$1"
 	local file_path="$2"
@@ -1030,8 +1087,9 @@ github_api_append_domain() {
 
 	[ -z "$GITHUB_TOKEN" ] && return 1
 
+	local proxy_opt="$(get_curl_proxy_opt)"
 	local api_url="https://api.github.com/repos/$repo/contents/$file_path"
-	local get_resp="$(curl -s -m 15 -H "Authorization: Bearer $GITHUB_TOKEN" \
+	local get_resp="$(curl -s -m 15 $proxy_opt -H "Authorization: Bearer $GITHUB_TOKEN" \
 		-H "Accept: application/vnd.github+json" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		"$api_url")"
@@ -1056,7 +1114,7 @@ ${dom}"
 
 	local payload="{\"message\":\"feat(rules): sync domestic domain $dom via capctl AI\",\"content\":\"$updated_b64\",\"sha\":\"$sha\",\"branch\":\"master\"}"
 
-	local put_resp="$(curl -s -m 15 -X PUT "$api_url" \
+	local put_resp="$(curl -s -m 15 $proxy_opt -X PUT "$api_url" \
 		-H "Authorization: Bearer $GITHUB_TOKEN" \
 		-H "Accept: application/vnd.github+json" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
@@ -1269,9 +1327,12 @@ do_ai_audit() {
 	' "$source_file" > "$req_file"
 
 	local model="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
-	local api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}"
+	model="${model#\"}"; model="${model%\"}"; model="${model#\'}"; model="${model%\'}"
+	local api_key="${GEMINI_API_KEY#\"}"; api_key="${api_key%\"}"; api_key="${api_key#\'}"; api_key="${api_key%\'}"
+	local api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}"
 
-	curl -s -m 45 -X POST "$api_url" \
+	local proxy_opt="$(get_curl_proxy_opt)"
+	curl -s -m 45 $proxy_opt -X POST "$api_url" \
 		-H "Content-Type: application/json" \
 		-d @"$req_file" > "$resp_file"
 
@@ -1282,7 +1343,7 @@ do_ai_audit() {
 		if [ "$model" != "gemini-2.5-flash" ]; then
 			echo "🔄 检测到模型 $model 不可用，平滑切换至 gemini-2.5-flash 重试..."
 			model="gemini-2.5-flash"
-			api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}"
+			api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}"
 			awk '
 			BEGIN {
 				printf "{\"contents\":[{\"parts\":[{\"text\":\"You are a Principal Network Architect and DNS/BGP Infrastructure Specialist for Chinese Internet. Evaluate these candidate domains with zero false positives. Respond ONLY with valid JSON schema: {\\\"results\\\":[{\\\"domain\\\":\\\"example.com\\\",\\\"decision\\\":\\\"ADD_DIRECT|SKIP_INCLUDED|KEEP_PROXY|UNCERTAIN\\\",\\\"confidence\\\":95,\\\"company\\\":\\\"Company Name\\\",\\\"rationale\\\":\\\"Detailed rationale\\\"}]}. Candidates:\\n"
@@ -1295,7 +1356,7 @@ do_ai_audit() {
 			}
 			' "$source_file" > "$req_file"
 
-			curl -s -m 45 -X POST "$api_url" \
+			curl -s -m 45 $proxy_opt -X POST "$api_url" \
 				-H "Content-Type: application/json" \
 				-d @"$req_file" > "$resp_file"
 			rm -f "$req_file"
@@ -1353,6 +1414,30 @@ do_ai_audit() {
 	date +%s > "$last_ai_file"
 	date "+%Y-%m-%d %H:%M:%S" > "$base_dir/.last_ai_audit_human"
 
+	# 初始化细粒度审计日志 (定位分析准与不准的原因)
+	local ai_log_file="/var/log/capctl_ai.log"
+	local ai_vault_log="$base_dir/ai_audit.log"
+	rotate_ai_log "$ai_log_file"
+	rotate_ai_log "$ai_vault_log"
+
+	local session_ts="$(date '+%Y-%m-%d %H:%M:%S')"
+	local ai_mode_tag="MANUAL"
+	[ "$force_run" -eq 1 ] && ai_mode_tag="MANUAL_FORCE"
+	[ "$auto_sync" -eq 1 ] && ai_mode_tag="${ai_mode_tag}+AUTOSYNC"
+
+	{
+		echo "================================================================================"
+		echo "[$session_ts] 🤖 CapCtl AI 规则研判会话启动 [$ai_mode_tag]"
+		echo "⚙️  模型: $model | 候选域名数: $cand_count 个 | 规则库: $source_file"
+		echo "--------------------------------------------------------------------------------"
+	} >> "$ai_log_file" 2>/dev/null || true
+	[ -d "$base_dir" ] && {
+		echo "================================================================================"
+		echo "[$session_ts] 🤖 CapCtl AI 规则研判会话启动 [$ai_mode_tag]"
+		echo "⚙️  模型: $model | 候选域名数: $cand_count 个 | 规则库: $source_file"
+		echo "--------------------------------------------------------------------------------"
+	} >> "$ai_vault_log" 2>/dev/null || true
+
 	echo "📋 Gemini 3.5 Flash Lite 深度架构研判结果:"
 	echo "------------------------------------------------------------"
 
@@ -1371,14 +1456,25 @@ do_ai_audit() {
 		local f_comp="$(echo "$item" | cut -d'|' -f4 | sed 's/^"//;s/"$//')"
 		local f_rat="$(echo "$item" | cut -d'|' -f5 | sed 's/^"//;s/"$//')"
 
+		# 提取该域名在候选池中的抓包证据
+		local ev_hits="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"hits\":/){sub(/.*\"hits\":/,"",$i);gsub(/[^0-9]/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
+		local ev_sample="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"samples\":/){sub(/.*\"samples\":\"?/,"",$i);sub(/\"$/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
+		local ev_reason="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"reason\":/){sub(/.*\"reason\":\"?/,"",$i);sub(/\"$/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
+		[ -z "$ev_hits" ] && ev_hits="1"
+
+		local action_log=""
 		case "$f_dec" in
 			ADD_DIRECT)
 				echo "  🟢 [建议直连] $f_dom (置信度: ${f_conf}%)"
 				echo "     • 所属主体: $f_comp"
+				echo "     • 流量线索: 累计命中 ${ev_hits} 次${ev_sample:+ | 样本: $ev_sample}${ev_reason:+ | 归因: $ev_reason}"
 				echo "     • 深度研判: $f_rat"
 				if [ "$f_conf" -ge 90 ] 2>/dev/null; then
 					approved_domains="${approved_domains} $f_dom"
 					direct_count=$((direct_count + 1))
+					action_log="QUALIFIED (置信度达标 >=90%，列入直连候选)"
+				else
+					action_log="CONFIDENCE_LOW (置信度未达90%，暂缓入库)"
 				fi
 				;;
 			SKIP_INCLUDED)
@@ -1386,6 +1482,7 @@ do_ai_audit() {
 				echo "     • 所属主体: $f_comp"
 				echo "     • 深度研判: $f_rat (上游基础规则库已收录)"
 				skip_count=$((skip_count + 1))
+				action_log="PRUNED (上游已收录，从候选池修剪)"
 				prune_from_candidate_pool "$f_dom"
 				;;
 			KEEP_PROXY)
@@ -1393,18 +1490,35 @@ do_ai_audit() {
 				echo "     • 所属主体: $f_comp"
 				echo "     • 深度研判: $f_rat"
 				proxy_count=$((proxy_count + 1))
+				action_log="KEPT_PROXY (境外/第三方依赖，保持代理)"
 				;;
 			*)
 				echo "  ⚪ [存疑待定] $f_dom"
 				echo "     • 深度研判: $f_rat"
+				action_log="UNCERTAIN (信息不足，继续沉淀样本)"
 				;;
 		esac
+
+		# 写入细粒度审计日志供定位准/不准原因
+		local detail_log="[研判记录] 域名: $f_dom | 决议: $f_dec (${f_conf}%)
+  • 主体识别: $f_comp
+  • 流量线索: 命中 ${ev_hits} 次${ev_sample:+ | 样本: $ev_sample}${ev_reason:+ | 特征: $ev_reason}
+  • 决策推导: $f_rat
+  • 状态动作: $action_log"
+
+		echo "$detail_log" >> "$ai_log_file" 2>/dev/null || true
+		[ -d "$base_dir" ] && echo "$detail_log" >> "$ai_vault_log" 2>/dev/null || true
 		echo ""
 	done
 	IFS="$old_ifs"
 
 	echo "------------------------------------------------------------"
 	echo "📊 研判汇总: 建议直连 $direct_count 个 | 建议忽略 $skip_count 个 | 保持代理 $proxy_count 个"
+
+	local summary_log="[会话总结] 建议直连: $direct_count 个 | 规则冗余: $skip_count 个 | 保持代理: $proxy_count 个
+================================================================================"
+	echo "$summary_log" >> "$ai_log_file" 2>/dev/null || true
+	[ -d "$base_dir" ] && echo "$summary_log" >> "$ai_vault_log" 2>/dev/null || true
 
 	if [ $auto_sync -eq 1 ]; then
 		if [ -n "$approved_domains" ]; then
@@ -1414,6 +1528,8 @@ do_ai_audit() {
 			for adom in $approved_domains; do
 				do_add_direct "$adom"
 				prune_from_candidate_pool "$adom"
+				echo "[[$session_ts] 自动生效同步] 域名 $adom 已写入 direct.txt 并同步远程" >> "$ai_log_file" 2>/dev/null || true
+				[ -d "$base_dir" ] && echo "[[$session_ts] 自动生效同步] 域名 $adom 已写入 direct.txt 并同步远程" >> "$ai_vault_log" 2>/dev/null || true
 			done
 		else
 			echo "ℹ️  当前没有达到置信阈值 (>=90%) 的待入库域名，无需执行同步。"
@@ -2617,6 +2733,7 @@ show_help() {
   • capctl ai off / capctl ai on      : 热关闭/热开启 AI 自动闭环 (抓包看门狗不中断)
   • capctl ai [--force]               : AI 智能深度研判 (Gemini 3.5 Flash Lite 审查，>=2天沉淀保护)
   • capctl ai-sync [--force]          : AI 深度研判并自动入库 (高置信度域名秒级生效 + 远程同步)
+  • capctl ai log [-f]                : 查看 AI 研判追踪日志 (复盘推理过程、置信度与归因决策依据)
   • capctl add-direct <域名>           : 一键直连入库与联动 (本地秒级生效 + 远程同步)
   • capctl config                     : 本地私有安全密钥配置 (Gemini API Key 与 GitHub Token 管理)
   • capctl wifi                       : Wi-Fi 射频、终端信号 RSSI 与协商速率体检
@@ -2774,15 +2891,16 @@ do_menu() {
 	echo "   9) 候选规则挖掘提取 (extract)    - 挖掘待同步域名数据 (不写路由不推远程)"
 	echo "  10) 🤖 AI 智能深度研判 (ai)      - Gemini 3.5 Flash Lite 深度研判 (>=2天沉淀)"
 	echo "  11) ⚡ AI 研判并自动入库 (ai-sync) - 深度研判高置信度域名并自动热生效与云端同步"
-	echo "  12) Wi-Fi 射频体检 (wifi)        - 终端信号 RSSI、协商速率与空口质量"
-	echo "  13) 极速健康巡检 (check)        - Sing-Box、Dnsmasq 与核心服务极速巡检"
-	echo "  14) 查看详细状态 (status)       - 查看当前抓包切片与运行时长"
-	echo "  15) 清理历史释放空间 (clean)     - 清理旧的 PCAP 报文与日志归档"
-	echo "  16) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
-	echo "  17) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
+	echo "  12) 📜 查看 AI 研判追踪日志 (ai log) - 复盘大模型推理过程与归因决策依据"
+	echo "  13) Wi-Fi 射频体检 (wifi)        - 终端信号 RSSI、协商速率与空口质量"
+	echo "  14) 极速健康巡检 (check)        - Sing-Box、Dnsmasq 与核心服务极速巡检"
+	echo "  15) 查看详细状态 (status)       - 查看当前抓包切片与运行时长"
+	echo "  16) 清理历史释放空间 (clean)     - 清理旧的 PCAP 报文与日志归档"
+	echo "  17) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
+	echo "  18) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-17]: "
+	printf " 请输入选项编号 [0-18]: "
 	read -r choice
 	echo ""
 	case "$choice" in
@@ -2811,16 +2929,17 @@ do_menu() {
 		9) do_extract ;;
 		10) do_ai_audit ;;
 		11) do_ai_sync ;;
-		12) do_analyze_wifi ;;
-		13) do_doctor ;;
-		14) do_status ;;
-		15) do_cleanup ;;
-		16)
+		12) show_ai_log ;;
+		13) do_analyze_wifi ;;
+		14) do_doctor ;;
+		15) do_status ;;
+		16) do_cleanup ;;
+		17)
 			printf " 请输入要直连的国内域名 (例如 ctobsnssdk.com): "
 			read -r dom
 			do_add_direct "$dom"
 			;;
-		17) do_config ;;
+		18) do_config ;;
 		0|"") echo "已退出。"; exit 0 ;;
 		*) echo "❌ 无效选项: $choice"; exit 1 ;;
 	esac
@@ -2836,6 +2955,7 @@ case "$INVOKED_CMD" in
 	audit-cap)             ACTION="audit" ;;
 	extract-cap|mine-cap)  ACTION="extract" ;;
 	ai-cap)                ACTION="ai" ;;
+	ailog-cap)             ACTION="ai-log" ;;
 	aisync-cap)            ACTION="ai-sync" ;;
 	config-cap)            ACTION="config" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
@@ -2902,9 +3022,11 @@ case "$ACTION" in
 			-h|--help|help) show_help ;;
 			off|disable|stop|no|0) do_ai_toggle 0 ;;
 			on|enable|start|yes|1) do_ai_toggle 1 ;;
+			log|logs) shift; show_ai_log "$@" ;;
 			*) do_ai_audit "$@" ;;
 		esac
 		;;
+	ai-log|ailog) show_ai_log "$@" ;;
 	ai-off|noai) do_ai_toggle 0 ;;
 	ai-on|aion) do_ai_toggle 1 ;;
 	ai-sync)
