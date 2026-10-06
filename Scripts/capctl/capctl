@@ -1423,6 +1423,16 @@ do_ai_sync() {
 	do_ai_audit sync "$@"
 }
 
+do_ai_cron() {
+	load_credentials
+	[ -n "$GEMINI_API_KEY" ] || return 0
+	local target_mnt="$(get_largest_mount)"
+	local base_dir="$target_mnt/pcap_vault"
+	local latest_dir="$(find "$base_dir" -maxdepth 1 -type d -name 'captures_*' 2>/dev/null | sort | tail -n 1)"
+	[ -n "$latest_dir" ] && do_extract "$latest_dir" silent >/dev/null 2>&1
+	do_ai_sync >> /var/log/capctl_ai.log 2>&1
+}
+
 do_doctor() {
 	echo "============================================================"
 	echo "       🩺 CapCtl 全链路极速健康巡检 (Doctor Check)           "
@@ -2037,6 +2047,7 @@ EOF_ALERT
 	# Parse flags and arguments
 	local snaplen=128
 	local pause_nss=0
+	local enable_ai=0
 	local mode_str="轻量报头模式 (截取前 128 字节，节省 90% 存储)"
 	local custom_bpf=""
 
@@ -2049,6 +2060,9 @@ EOF_ALERT
 			nonss|--nonss)
 				pause_nss=1
 				;;
+			ai|--ai|auto-sync|--auto-sync|autopilot)
+				enable_ai=1
+				;;
 			*)
 				if [ -n "$arg" ] && [ "$arg" != "start" ]; then
 					custom_bpf="$arg"
@@ -2056,6 +2070,13 @@ EOF_ALERT
 				;;
 		esac
 	done
+
+	if [ $enable_ai -eq 1 ]; then
+		if ! ensure_gemini_key; then
+			echo "⚠️  未能配置有效 Gemini 凭据，AI 自动研判模式未激活 (仍保持普通抓包启动)。"
+			enable_ai=0
+		fi
+	fi
 
 	local bpf_expr="not port 22 and not port 5333"
 	if [ -n "$custom_bpf" ]; then
@@ -2081,6 +2102,7 @@ EOF_ALERT
 	echo "$start_time" > "$STATE_DIR/session_start"
 	echo "$start_epoch" > "$STATE_DIR/session_start_epoch"
 	echo "$start_human" > "$STATE_DIR/session_start_human"
+	[ $enable_ai -eq 1 ] && echo "1" > "$STATE_DIR/ai_autopilot"
 	echo "$mode_str" > "$STATE_DIR/capture_mode"
 
 	# 1. Adjust Sing-Box log level if needed
@@ -2141,6 +2163,10 @@ EOF_ALERT
 			if [ $((loop_cnt % 10)) -eq 0 ]; then
 				/usr/bin/capctl extract "$dest_dir" silent >/dev/null 2>&1
 			fi
+			# 若激活 AI 自动闭环模式，每小时巡检一次沉淀池与冷却期 (满足 >=48h 自动触发 Gemini 研判与提库)
+			if [ -f "$STATE_DIR/ai_autopilot" ] && [ $((loop_cnt % 60)) -eq 0 ]; then
+				/usr/bin/capctl ai-cron >/dev/null 2>&1 &
+			fi
 		done
 	) >/dev/null 2>&1 &
 	echo $! > "$WATCHDOG_PID_FILE"
@@ -2151,6 +2177,11 @@ EOF_ALERT
 	echo "============================================================"
 	echo "📁 存储目录 : $dest_dir"
 	echo "🎯 捕获模式 : $mode_str"
+	if [ $enable_ai -eq 1 ]; then
+		echo "🤖 AI 自动闭环 : 🟢 已激活 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
+	else
+		echo "🤖 AI 自动闭环 : ⚪ 未开启 (可用 capctl start ai 随时激活)"
+	fi
 	echo "🚫 过滤规则 : 自动排除 SSH (port 22) 及本地劫持端口 (5333)"
 	echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包 .pcap 与 Sing-Box .log 均 100MB 自动分卷)"
 	echo "🔄 环形缓冲 : 自动保留最新 ${MAX_SLICES} 卷切片 (FIFO 滚动置换)"
@@ -2414,6 +2445,11 @@ do_status() {
 		echo "🎯 捕获模式 : $mode_str"
 		echo "⏰ 启动时间 : ${start_human:-$raw_start}"
 		echo "⏱️  运行时长 : $uptime_str"
+		if [ -f "$STATE_DIR/ai_autopilot" ]; then
+			echo "🤖 AI 自动闭环 : 🟢 已激活 (AI Autopilot ACTIVE | 48h 周期沉淀与自动提库)"
+		else
+			echo "🤖 AI 自动闭环 : ⚪ 未开启 (日常可用 capctl start ai 开启)"
+		fi
 		echo "📁 保存目录 : $dest_dir"
 		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
 		echo "📦 数据分卷 : $pcap_count 个 cap_*.pcap | $log_count 个 singbox_*.log (上限: ${MAX_SLICES})"
@@ -2628,52 +2664,54 @@ do_menu() {
 	echo " 💽 存储空间: $target_mnt (剩余: $free_human | 占用率: ${usage_pct}%)"
 	echo "------------------------------------------------------------"
 	echo " 请选择操作编号 (直接输入数字后回车):"
-	echo "   1) 开启抓包 (start)         - 轻量报头模式，长期挂机安全无感"
-	echo "   2) 开启全载荷抓包 (full)     - 捕获明文全数据 (Wireshark 深度排障)"
-	echo "   3) 穿透加速抓包 (nonss)      - 临时旁路高通 NSS 加速排查丢包"
-	echo "   4) 平滑重启抓包 (restart)    - 归档当前切片并无缝开启全新抓包会话"
-	echo "   5) 停止抓包 (stop)          - 停止抓包并自动还原硬件加速/日志"
-	echo "   6) 综合故障诊断 (analyze)    - 全链路网络健康、DNS、TCP RST与丢包"
-	echo "   7) 分流漏网审计 (audit)      - 智能检测走代理的国内应用与规则建议"
-	echo "   8) 候选规则挖掘提取 (extract) - 挖掘待同步域名数据 (不写路由不推远程)"
-	echo "   9) 🤖 AI 智能深度研判 (ai)   - Gemini 3.5 Flash Lite 深度研判 (>=2天沉淀)"
-	echo "  10) ⚡ AI 研判并自动入库 (ai-sync) - 深度研判高置信度域名并自动热生效与云端同步"
-	echo "  11) Wi-Fi 射频体检 (wifi)     - 终端信号 RSSI、协商速率与空口质量"
-	echo "  12) 极速健康巡检 (check)     - Sing-Box、Dnsmasq 与核心服务极速巡检"
-	echo "  13) 查看详细状态 (status)    - 查看当前抓包切片与运行时长"
-	echo "  14) 清理历史释放空间 (clean)  - 清理旧的 PCAP 报文与日志归档"
-	echo "  15) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
-	echo "  16) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
+	echo "   1) 开启普通抓包 (start)         - 轻量报头模式，长期挂机安全无感"
+	echo "   2) 开启 AI 闭环抓包 (start ai)  - 挂机抓包 + 🤖 AI 自动研判与全自动提库 (AI Autopilot)"
+	echo "   3) 开启全载荷抓包 (full)        - 捕获明文全数据 (Wireshark 深度排障)"
+	echo "   4) 穿透加速抓包 (nonss)         - 临时旁路高通 NSS 加速排查丢包"
+	echo "   5) 平滑重启抓包 (restart)       - 归档当前切片并无缝开启全新抓包会话"
+	echo "   6) 停止抓包 (stop)             - 停止抓包并自动还原硬件加速/日志"
+	echo "   7) 综合故障诊断 (analyze)       - 全链路网络健康、DNS、TCP RST与丢包"
+	echo "   8) 分流漏网审计 (audit)         - 智能检测走代理的国内应用与规则建议"
+	echo "   9) 候选规则挖掘提取 (extract)    - 挖掘待同步域名数据 (不写路由不推远程)"
+	echo "  10) 🤖 AI 智能深度研判 (ai)      - Gemini 3.5 Flash Lite 深度研判 (>=2天沉淀)"
+	echo "  11) ⚡ AI 研判并自动入库 (ai-sync) - 深度研判高置信度域名并自动热生效与云端同步"
+	echo "  12) Wi-Fi 射频体检 (wifi)        - 终端信号 RSSI、协商速率与空口质量"
+	echo "  13) 极速健康巡检 (check)        - Sing-Box、Dnsmasq 与核心服务极速巡检"
+	echo "  14) 查看详细状态 (status)       - 查看当前抓包切片与运行时长"
+	echo "  15) 清理历史释放空间 (clean)     - 清理旧的 PCAP 报文与日志归档"
+	echo "  16) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
+	echo "  17) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-16]: "
+	printf " 请输入选项编号 [0-17]: "
 	read -r choice
 	echo ""
 	case "$choice" in
 		1) do_start ;;
-		2) do_start full ;;
-		3) do_start nonss ;;
-		4) do_restart ;;
-		5) do_stop ;;
-		6)
+		2) do_start ai ;;
+		3) do_start full ;;
+		4) do_start nonss ;;
+		5) do_restart ;;
+		6) do_stop ;;
+		7)
 			printf " 可选: 请输入要靶向追踪的域名或 IP (直接回车进行全量分析): "
 			read -r kw
 			do_analyze $kw
 			;;
-		7) do_audit ;;
-		8) do_extract ;;
-		9) do_ai_audit ;;
-		10) do_ai_sync ;;
-		11) do_analyze_wifi ;;
-		12) do_doctor ;;
-		13) do_status ;;
-		14) do_cleanup ;;
-		15)
+		8) do_audit ;;
+		9) do_extract ;;
+		10) do_ai_audit ;;
+		11) do_ai_sync ;;
+		12) do_analyze_wifi ;;
+		13) do_doctor ;;
+		14) do_status ;;
+		15) do_cleanup ;;
+		16)
 			printf " 请输入要直连的国内域名 (例如 ctobsnssdk.com): "
 			read -r dom
 			do_add_direct "$dom"
 			;;
-		16) do_config ;;
+		17) do_config ;;
 		0|"") echo "已退出。"; exit 0 ;;
 		*) echo "❌ 无效选项: $choice"; exit 1 ;;
 	esac
@@ -2761,6 +2799,9 @@ case "$ACTION" in
 			-h|--help|help) show_help ;;
 			*) do_ai_sync "$@" ;;
 		esac
+		;;
+	ai-cron)
+		do_ai_cron "$@"
 		;;
 	add-direct|add-rule|sync-rule)
 		case "$1" in
