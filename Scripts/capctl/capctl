@@ -617,7 +617,7 @@ is_running() {
 }
 
 setup_singbox_log_level() {
-	if uci -q get homeproxy.config >/dev/null; then
+	if [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1 && uci -q get homeproxy.config >/dev/null; then
 		local cur_level="$(uci -q get homeproxy.config.log_level)"
 		[ -z "$cur_level" ] && cur_level="warn"
 		echo "$cur_level" > "$STATE_DIR/orig_homeproxy_log_level"
@@ -628,10 +628,12 @@ setup_singbox_log_level() {
 			uci commit homeproxy
 			/etc/init.d/homeproxy reload >/dev/null 2>&1
 			sleep 1
-			echo "🔍 已自动将 Sing-Box 日志级别提升至: debug (原级别: $cur_level，停止抓包后将自动还原)"
+			echo "🔍 已自动将 HomeProxy Sing-Box 日志级别提升至: debug (原级别: $cur_level，停止抓包后将自动还原)"
 		else
-			echo "🔍 Sing-Box 日志级别当前已为: $cur_level (保持现行级别)"
+			echo "🔍 HomeProxy Sing-Box 日志级别当前已为: $cur_level (保持现行级别)"
 		fi
+	else
+		echo "ℹ️  HomeProxy 当前未运行（由其他代理工具接管或处于待机状态），保持抓包独立监听。"
 	fi
 }
 
@@ -643,13 +645,13 @@ restore_singbox_log_level() {
 		orig_level="$(cat "$PERSIST_LEVEL_FILE" 2>/dev/null)"
 	fi
 
-	if [ -n "$orig_level" ] && uci -q get homeproxy.config >/dev/null; then
+	if [ -n "$orig_level" ] && [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1 && uci -q get homeproxy.config >/dev/null; then
 		local cur_level="$(uci -q get homeproxy.config.log_level)"
 		if [ "$cur_level" != "$orig_level" ]; then
 			uci set homeproxy.config.log_level="$orig_level"
 			uci commit homeproxy
 			/etc/init.d/homeproxy reload >/dev/null 2>&1
-			echo "🔄 Sing-Box 日志级别已自动还原为: $orig_level (无任何残留影响)"
+			echo "🔄 HomeProxy Sing-Box 日志级别已自动还原为: $orig_level (无任何残留影响)"
 		fi
 	fi
 	rm -f "$STATE_DIR/orig_homeproxy_log_level" "$PERSIST_LEVEL_FILE" 2>/dev/null
@@ -1880,9 +1882,13 @@ do_add_direct() {
 		else
 			echo "$dom" >> "$direct_file"
 			echo "✅ [本地写入] 成功追加 $dom 至 $direct_file"
-			echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
-			/etc/init.d/homeproxy reload >/dev/null 2>&1
-			echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入直连并由 Sing-Box 内核即刻执行。"
+			if [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1; then
+				echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+				/etc/init.d/homeproxy reload >/dev/null 2>&1
+				echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入直连并由 Sing-Box 内核即刻执行。"
+			else
+				echo "ℹ️  [本地通知] HomeProxy 服务未运行或已关闭，规则已写入静态文件，跳过服务重载。"
+			fi
 		fi
 	else
 		echo "⚠️ 未找到 HomeProxy 本地直连文件 ($direct_file)，跳过本地写入。"
@@ -1917,9 +1923,13 @@ do_add_proxy() {
 		else
 			echo "$dom" >> "$proxy_file"
 			echo "✅ [本地写入] 成功追加 $dom 至 $proxy_file"
-			echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
-			/etc/init.d/homeproxy reload >/dev/null 2>&1
-			echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入代理并由 Sing-Box 内核即刻执行。"
+			if [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1; then
+				echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+				/etc/init.d/homeproxy reload >/dev/null 2>&1
+				echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入代理并由 Sing-Box 内核即刻执行。"
+			else
+				echo "ℹ️  [本地通知] HomeProxy 服务未运行或已关闭，规则已写入静态文件，跳过服务重载。"
+			fi
 		fi
 	else
 		echo "⚠️ 未找到 HomeProxy 本地代理文件 ($proxy_file)，跳过本地写入。"
@@ -2369,9 +2379,13 @@ do_ai_audit() {
 			fi
 
 			if [ $any_local_added -eq 1 ]; then
-				echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
-				/etc/init.d/homeproxy reload >/dev/null 2>&1
-				echo "🎉 [本地重载] HomeProxy 规则已即刻热重载生效！"
+				if [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1; then
+					echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+					/etc/init.d/homeproxy reload >/dev/null 2>&1
+					echo "🎉 [本地重载] HomeProxy 规则已即刻热重载生效！"
+				else
+					echo "ℹ️  [本地通知] HomeProxy 服务未运行或已关闭，规则已持久化至静态文件，跳过服务重载。"
+				fi
 			fi
 
 			# 一次性原子同步远程 Git / GitHub API
@@ -3459,7 +3473,11 @@ do_status() {
 		echo "📦 数据分卷 : $pcap_count 个 cap_*.pcap | $log_count 个 singbox_*.log (上限: ${MAX_SLICES})"
 		echo "💾 当前已存 : $cur_size"
 		echo "💽 分区剩余 : $free_human (当前占用率: ${cur_pct}%，阈值: 50%)"
-		echo "🔍 日志级别 : 当前 $cur_hp_level (启动前原级别: $orig_hp_level，停止时自动还原)"
+		if [ -x /etc/init.d/homeproxy ] && /etc/init.d/homeproxy running >/dev/null 2>&1; then
+			echo "🔍 HomeProxy: 🟢 运行中 (Sing-Box 日志级别: $cur_hp_level，停止抓包时自动还原为: $orig_hp_level)"
+		else
+			echo "🔍 HomeProxy: ⚪ 未运行 (处于待机/未启用状态，保持抓包独立监听)"
+		fi
 		echo "------------------------------------------------------------"
 		echo "🔄 如需重启 : 输入 capctl restart 回车"
 		echo "🛑 如需停止 : 输入 capctl stop 回车"
