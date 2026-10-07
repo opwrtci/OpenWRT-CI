@@ -254,6 +254,19 @@ if [ -d "$CAPCTL_SRC_DIR" ]; then
 	echo "   [OK] CapCtl suite deployed successfully."
 fi
 
+# 固件升级时自动保留 HomeProxy 自定义分流规则与 CapCtl 密钥凭据
+SYSUPGRADE_FILE="./package/base-files/files/etc/sysupgrade.conf"
+mkdir -p "$(dirname "$SYSUPGRADE_FILE")"
+touch "$SYSUPGRADE_FILE"
+grep -q "/etc/homeproxy/diversion/" "$SYSUPGRADE_FILE" || echo "/etc/homeproxy/diversion/" >> "$SYSUPGRADE_FILE"
+grep -q "/etc/capctl/" "$SYSUPGRADE_FILE" || echo "/etc/capctl/" >> "$SYSUPGRADE_FILE"
+
+# 预置 HomeProxy 最新代理与直连规则（即使全新刷机不保留配置也能开箱即用）
+HP_DIVERSION_DIR="./package/base-files/files/etc/homeproxy/diversion"
+mkdir -p "$HP_DIVERSION_DIR"
+curl -fsSL -m 15 https://raw.githubusercontent.com/opwrtci/meta-rules-dat/master/resouces/proxy.txt -o "$HP_DIVERSION_DIR/proxy.txt" 2>/dev/null || true
+curl -fsSL -m 15 https://raw.githubusercontent.com/opwrtci/meta-rules-dat/master/resouces/direct.txt -o "$HP_DIVERSION_DIR/direct.txt" 2>/dev/null || true
+
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
