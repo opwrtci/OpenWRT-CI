@@ -999,10 +999,18 @@ do_extract() {
 			gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0);
 			if ($0 != "" && $0 !~ /^#/) existing_direct[$0] = 1;
 		}
-		# 3. 基础内置已知大厂主域名 (若已正常直连则不作多余提取)
+		# 3. 加载本地已代理域名 (避免重复提取)
+		proxy_file = "/etc/homeproxy/diversion/proxy.txt";
+		while ((getline < proxy_file) > 0) {
+			gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0);
+			if ($0 != "" && $0 !~ /^#/) existing_proxy[$0] = 1;
+		}
+		# 4. 基础内置已知大厂主域名 (若已正常直连则不作多余提取)
 		standard_builtin = "^(taobao\\.com|alipay\\.com|alicdn\\.com|alipayobjects\\.com|qq\\.com|tencent\\.com|baidu\\.com|bilibili\\.com|douyin\\.com|jd\\.com|163\\.com|sina\\.com|weibo\\.com|xiaomi\\.com|mi\\.com|oppomobile\\.com|vivo\\.com|huawei\\.com|honor\\.com|youku\\.com|amap\\.com|ele\\.me|elemecdn\\.com|alibabachengdun\\.com|alibabacorp\\.com|aliyuncs\\.com|aliyun-inc\\.com|pinduoduo\\.com|pinduoduo\\.net)$";
-		# 4. GFW 投毒虚假 IP 库 (严禁将解析到投毒 IP 的境外网站误当国内业务)
+		# 5. GFW 投毒虚假 IP 库 (解析到投毒 IP 的境外网站 100% 必须代理)
 		poison_ips = "^(221\\.228\\.32\\.13|118\\.184\\.78\\.78|203\\.208\\.46\\.200|31\\.13\\.72\\.36|243\\.185\\.187\\.39|37\\.61\\.54\\.158|46\\.82\\.174\\.68|78\\.16\\.49\\.15|93\\.46\\.8\\.89)$";
+		# 6. 核心海外 AI 与跨国关键服务特征 (重点挖掘优先纳入代理名单)
+		ai_foreign_pattern = "(meta\\.ai|openai\\.com|chatgpt\\.com|anthropic\\.com|claude\\.ai|perplexity\\.ai|midjourney\\.com|huggingface\\.co|coze\\.com|cursor\\.com|cursor\\.sh|oaistatic\\.com|oaiusercontent\\.com|poe\\.com|groq\\.com|x\\.ai|grok\\.com|auth0\\.com|supabase\\.co|clerk\\.com|firebaseio\\.com|workers\\.dev|vercel\\.app|telegram\\.org|discord\\.com|notion\\.so|figma\\.com)";
 	}
 	function format_dev(ip) {
 		if (ip in hosts) return ip " (" hosts[ip] ")";
@@ -1030,12 +1038,21 @@ do_extract() {
 	/router: (sniffed .*domain:|found reserve mapped domain:)/ {
 		id = $5; gsub(/[^0-9]/, "", id);
 		dom = $0; sub(/.*domain:[[:space:]]*/, "", dom); sub(/[[:space:],].*/, "", dom);
-		if (dom != "" && !(id in conn_dom)) conn_dom[id] = dom;
+		if (dom != "" && !(id in conn_dom)) {
+			conn_dom[id] = dom;
+			root = get_root_domain(dom);
+			if (dom ~ ai_foreign_pattern && !(root in existing_proxy)) {
+				proxy_cand_hits[root]++;
+				if (!(root in proxy_cand_reason)) proxy_cand_reason[root] = "🤖 境外核心生态/AI服务/跨国API，建议优先加入代理库保障顺畅";
+				if (proxy_cand_subdomains[root] !~ dom) proxy_cand_subdomains[root] = (proxy_cand_subdomains[root] == "" ? "" : proxy_cand_subdomains[root] ", ") dom;
+			}
+		}
 	}
 
 	# 记录已由 geosite-cn 或 direct-out 规则正确分流的域名 (排除无效候选)
 	/rule_set=geosite-cn/ || /route\(china-dns\)/ || /route\(direct-out\)/ || /=> bypass\(\)/ {
 		id = $5; gsub(/[^0-9]/, "", id);
+		routed_direct[id] = 1;
 		dom = conn_dom[id];
 		if (dom != "") {
 			root = get_root_domain(dom);
@@ -1050,7 +1067,7 @@ do_extract() {
 		}
 	}
 
-	# 记录走海外代理出站的连接 (用于与国内特征进行交叉印证)
+	# 记录走海外代理出站的连接 (既用于国内特征漏网印证，也用于出海活跃业务挖掘)
 	/outbound\/[^d].*: outbound (packet )?connection to/ {
 		id = $5; gsub(/[^0-9]/, "", id);
 		dst = $0; sub(/.* to /, "", dst); sub(/[[:space:]].*/, "", dst); sub(/:[0-9]+$/, "", dst);
@@ -1061,6 +1078,14 @@ do_extract() {
 				leaked_to_proxy[root] = 1;
 				if (candidate_subdomains[root] !~ dom) {
 					candidate_subdomains[root] = (candidate_subdomains[root] == "" ? "" : candidate_subdomains[root] ", ") dom;
+				}
+				# 若为境外活跃访问服务且未在本地代理列表中，亦作为重点代理候选审查
+				if (!(root in existing_proxy) && !(root in existing_direct) && root !~ standard_builtin && root !~ /\.cn$/) {
+					if (dom ~ ai_foreign_pattern || root ~ /(\.ai$|\.io$|\.app$|\.dev$|\.co$|google|youtube|twitter|facebook|instagram|whatsapp|tiktok|reddit|medium|docker|github)/) {
+						proxy_cand_hits[root]++;
+						if (!(root in proxy_cand_reason)) proxy_cand_reason[root] = "🌐 活跃海外服务/境外API访问，建议列入代理名单";
+						if (proxy_cand_subdomains[root] !~ dom) proxy_cand_subdomains[root] = (proxy_cand_subdomains[root] == "" ? "" : proxy_cand_subdomains[root] ", ") dom;
+					}
 				}
 			}
 		}
@@ -1094,16 +1119,51 @@ do_extract() {
 		}
 	}
 
+	# 识别 GFW DNS 投毒污染与虚假 IP 响应 (100% 确认阻断，必须走代理)
+	/dns: exchanged A / {
+		if ($NF ~ poison_ips) {
+			q_dom = $0; sub(/.*dns: exchanged A[[:space:]]+/, "", q_dom); sub(/[[:space:]].*/, "", q_dom); sub(/\.+$/, "", q_dom);
+			root = get_root_domain(q_dom);
+			if (!(root in existing_proxy)) {
+				proxy_cand_hits[root]++;
+				proxy_cand_reason[root] = "🚨 铁证：域名遭遇 GFW DNS 投毒污染解析到虚假 IP (" $NF ")，100% 必须走代理";
+				if (proxy_cand_subdomains[root] !~ q_dom) proxy_cand_subdomains[root] = (proxy_cand_subdomains[root] == "" ? "" : proxy_cand_subdomains[root] ", ") q_dom;
+			}
+		}
+	}
+
+	# 直连连接异常 (直连通道遭遇连接被重置或超时失败，必须考虑走代理)
+	/closed: connection reset by peer/ || /read: connection reset by peer/ || /handshake timeout/ || /i\/o timeout/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		if (id in routed_direct && id in conn_dom) {
+			dom = conn_dom[id];
+			root = get_root_domain(dom);
+			if (root !~ /(\.arpa$|\.lan$|localhost$|\.cn$)/ && !(root in existing_proxy) && root !~ standard_builtin) {
+				proxy_cand_hits[root]++;
+				if (!(root in proxy_cand_reason)) proxy_cand_reason[root] = "🚨 铁证：直连通道遭遇连接重置 (TCP RST) 或超时失败，疑似被阻断";
+				if (proxy_cand_subdomains[root] !~ dom) proxy_cand_subdomains[root] = (proxy_cand_subdomains[root] == "" ? "" : proxy_cand_subdomains[root] ", ") dom;
+			}
+		}
+	}
+
 	# 收集所有 DNS 解析事件并研判
 	/dns: exchange/ {
 		id = $5; gsub(/[^0-9]/, "", id);
 		dom = $0; sub(/.*dns: exchange[[:space:]]+(A |AAAA |CNAME )?/, "", dom); sub(/[[:space:]].*/, "", dom); sub(/\.+$/, "", dom);
 		if (dom == "" || dom !~ /\./ || dom ~ /(\.arpa$|\.lan$|localhost$)/) next;
 		dns_queries[id] = dom;
+		root = get_root_domain(dom);
+
+		# 重点监测境外 AI 生态服务
+		if (dom ~ ai_foreign_pattern && !(root in existing_proxy)) {
+			proxy_cand_hits[root]++;
+			if (!(root in proxy_cand_reason)) proxy_cand_reason[root] = "🤖 境外核心生态/AI服务/跨国API，建议优先加入代理库保障顺畅";
+			if (proxy_cand_subdomains[root] !~ dom) proxy_cand_subdomains[root] = (proxy_cand_subdomains[root] == "" ? "" : proxy_cand_subdomains[root] ", ") dom;
+		}
+
 		# 排除海外已知 GMS / GFW 封锁服务与全球公共 CDN
 		if (dom ~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) next;
 
-		root = get_root_domain(dom);
 		if (root == "" || root ~ /\.cn$/) next; # 纯 .cn 默认已被全局直连规则收录
 		if (root in existing_direct || root in already_covered) next; # 已经加入直连列表或已被 geosite-cn 覆盖
 		if (root ~ standard_builtin && !(root in leaked_to_proxy)) next; # 已被基础内置规则库覆盖且未走代理
@@ -1138,15 +1198,15 @@ do_extract() {
 		print header_txt > out_txt;
 
 		json_dom_list = "";
-		if (!is_silent) print "【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】";
-		print "\n【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains)】" >> out_txt;
+		if (!is_silent) print "【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains -> 直连)】";
+		print "\n【1. 挖掘出的国内待入库候选域名 (Candidate Domestic Domains -> 直连)】" >> out_txt;
 		for (r in candidate_hits) {
 			has_candidates = 1;
-			line = sprintf("  ✨ 候选根域名 : %s (出现 %d 次)\n     • 判定依据 : %s\n     • 关联子域名 : %s", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
+			line = sprintf("  🟢 候选直连域名 : %s (出现 %d 次)\n     • 判定依据 : %s\n     • 关联子域名 : %s", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
 			if (!is_silent) print line;
 			print line >> out_txt;
 			
-			entry_json = sprintf("{\"domain\":\"%s\",\"hits\":%d,\"reason\":\"%s\",\"samples\":\"%s\"}", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
+			entry_json = sprintf("{\"domain\":\"%s\",\"type\":\"direct\",\"hits\":%d,\"reason\":\"%s\",\"samples\":\"%s\"}", r, candidate_hits[r], candidate_reason[r], candidate_subdomains[r]);
 			json_dom_list = (json_dom_list == "" ? "" : json_dom_list ",") entry_json;
 		}
 		if (!has_candidates) {
@@ -1155,8 +1215,26 @@ do_extract() {
 			print msg >> out_txt;
 		}
 
-		if (!is_silent) print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】";
-		print "\n【2. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】" >> out_txt;
+		if (!is_silent) print "\n【2. 挖掘出的重点代理待入库候选域名 (Candidate Proxy Domains -> 代理)】";
+		print "\n【2. 挖掘出的重点代理待入库候选域名 (Candidate Proxy Domains -> 代理)】" >> out_txt;
+		has_proxy_cands = 0;
+		for (r in proxy_cand_hits) {
+			has_proxy_cands = 1;
+			line = sprintf("  🔵 候选代理域名 : %s (出现 %d 次)\n     • 判定依据 : %s\n     • 关联子域名 : %s", r, proxy_cand_hits[r], proxy_cand_reason[r], proxy_cand_subdomains[r]);
+			if (!is_silent) print line;
+			print line >> out_txt;
+			
+			entry_json = sprintf("{\"domain\":\"%s\",\"type\":\"proxy\",\"hits\":%d,\"reason\":\"%s\",\"samples\":\"%s\"}", r, proxy_cand_hits[r], proxy_cand_reason[r], proxy_cand_subdomains[r]);
+			json_dom_list = (json_dom_list == "" ? "" : json_dom_list ",") entry_json;
+		}
+		if (!has_proxy_cands) {
+			msg = "  ✅ 当前未发现任何阻断/未收录的境外重点代理域名。";
+			if (!is_silent) print msg;
+			print msg >> out_txt;
+		}
+
+		if (!is_silent) print "\n【3. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】";
+		print "\n【3. 挖掘出的国内 Anycast 待入库 IP (Candidate Anycast CIDRs)】" >> out_txt;
 		has_anycast = 0;
 		json_any_list = "";
 		for (a in anycast_hits) {
@@ -1173,13 +1251,13 @@ do_extract() {
 			print msg >> out_txt;
 		}
 
-		if (!is_silent) print "\n【3. 安全隔离与数据存盘报告 (Safety Status)】";
+		if (!is_silent) print "\n【4. 安全隔离与数据存盘报告 (Safety Status)】";
 		status_msg = sprintf("  🔒 本地路由热写入 : [已跳过 / 保持原样]\n" \
 		                     "  🔒 远程 Git 自动提交 : [已跳过 / 隔离未推送]\n" \
 		                     "  💾 结构化分析文本已保存至 : %s\n" \
 		                     "  💾 自动化待审 JSON 已保存至 : %s", out_txt, out_json);
 		if (!is_silent) print status_msg;
-		print "\n【3. 安全隔离与数据存盘报告】\n" status_msg >> out_txt;
+		print "\n【4. 安全隔离与数据存盘报告】\n" status_msg >> out_txt;
 
 		printf "{\"timestamp\":\"%s\",\"status\":\"isolated_extracted\",\"candidates\":[%s],\"anycast\":[%s]}\n", now_ts, json_dom_list, json_any_list > out_json;
 	}
@@ -1218,6 +1296,10 @@ update_candidate_pool() {
 			if (match($0, /"hits"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); h = s + 0;
 			}
+			typ = "direct";
+			if (match($0, /"type"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); typ = s;
+			}
 			f_seen = today;
 			if (match($0, /"first_seen"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); f_seen = s;
@@ -1235,7 +1317,7 @@ update_candidate_pool() {
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); sm = s;
 			}
 			if (d != "") {
-				pool[d] = 1; hits[d] = h; first_seen[d] = f_seen; last_seen[d] = l_seen; reason[d] = rs; samples[d] = sm;
+				pool[d] = 1; type[d] = typ; hits[d] = h; first_seen[d] = f_seen; last_seen[d] = l_seen; reason[d] = rs; samples[d] = sm;
 			}
 		}
 	}
@@ -1245,6 +1327,10 @@ update_candidate_pool() {
 			h = 1;
 			if (match($0, /"hits"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); h = s + 0;
+			}
+			typ = "direct";
+			if (match($0, /"type"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); typ = s;
 			}
 			rs = "";
 			if (match($0, /"reason"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
@@ -1258,10 +1344,11 @@ update_candidate_pool() {
 				if (d in pool) {
 					hits[d] += h;
 					last_seen[d] = today;
+					if (typ != "") type[d] = typ;
 					if (rs != "" && reason[d] !~ rs) reason[d] = reason[d] "; " rs;
 					if (sm != "" && samples[d] !~ sm) samples[d] = samples[d] ", " sm;
 				} else {
-					pool[d] = 1; hits[d] = h; first_seen[d] = today; last_seen[d] = today; reason[d] = rs; samples[d] = sm;
+					pool[d] = 1; type[d] = typ; hits[d] = h; first_seen[d] = today; last_seen[d] = today; reason[d] = rs; samples[d] = sm;
 				}
 			}
 		}
@@ -1272,8 +1359,8 @@ update_candidate_pool() {
 		for (d in pool) {
 			if (!first) printf ",";
 			first = 0;
-			printf "{\"domain\":\"%s\",\"hits\":%d,\"first_seen\":\"%s\",\"last_seen\":\"%s\",\"reason\":\"%s\",\"samples\":\"%s\"}", \
-				d, hits[d], first_seen[d], last_seen[d], reason[d], samples[d];
+			printf "{\"domain\":\"%s\",\"type\":\"%s\",\"hits\":%d,\"first_seen\":\"%s\",\"last_seen\":\"%s\",\"reason\":\"%s\",\"samples\":\"%s\"}", \
+				d, (type[d] != "" ? type[d] : "direct"), hits[d], first_seen[d], last_seen[d], reason[d], samples[d];
 		}
 		printf "]}\n";
 	}
@@ -1305,6 +1392,10 @@ prune_from_candidate_pool() {
 				if (match($0, /"hits"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); h = s + 0;
 				}
+				typ = "direct";
+				if (match($0, /"type"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); typ = s;
+				}
 				f_seen = today;
 				if (match($0, /"first_seen"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); f_seen = s;
@@ -1321,7 +1412,7 @@ prune_from_candidate_pool() {
 				if (match($0, /"samples"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 					s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); sm = s;
 				}
-				pool[d] = 1; hits[d] = h; first_seen[d] = f_seen; last_seen[d] = l_seen; reason[d] = rs; samples[d] = sm;
+				pool[d] = 1; type[d] = typ; hits[d] = h; first_seen[d] = f_seen; last_seen[d] = l_seen; reason[d] = rs; samples[d] = sm;
 			}
 		}
 	}
@@ -1331,8 +1422,8 @@ prune_from_candidate_pool() {
 		for (d in pool) {
 			if (!first) printf ",";
 			first = 0;
-			printf "{\"domain\":\"%s\",\"hits\":%d,\"first_seen\":\"%s\",\"last_seen\":\"%s\",\"reason\":\"%s\",\"samples\":\"%s\"}", \
-				d, hits[d], first_seen[d], last_seen[d], reason[d], samples[d];
+			printf "{\"domain\":\"%s\",\"type\":\"%s\",\"hits\":%d,\"first_seen\":\"%s\",\"last_seen\":\"%s\",\"reason\":\"%s\",\"samples\":\"%s\"}", \
+				d, (type[d] != "" ? type[d] : "direct"), hits[d], first_seen[d], last_seen[d], reason[d], samples[d];
 		}
 		printf "]}\n";
 	}
@@ -1353,7 +1444,9 @@ get_curl_proxy_opt() {
 	fi
 }
 
-github_api_sync_domain_batch() {
+github_api_sync_rules_batch() {
+	local direct_doms="$1"
+	local proxy_doms="$2"
 	load_credentials
 	[ -z "$GITHUB_TOKEN" ] && return 1
 
@@ -1363,13 +1456,85 @@ github_api_sync_domain_batch() {
 	local proxy_opt="$(get_curl_proxy_opt)"
 	local file1="custom-rules/china-custom-domains.txt"
 	local file2="resouces/direct.txt"
+	local file3="resouces/proxy.txt"
 
 	# 1. 检查各文件当前内容并创建新 Blob
 	local tree_items=""
 	local updated_count=0
-	local domains_added=0
+	local direct_added=0
+	local proxy_added=0
 
-	for fpath in "$file1" "$file2"; do
+	# 1.1 处理直连域名同步 (file1 和 file2)
+	if [ -n "$direct_doms" ]; then
+		for fpath in "$file1" "$file2"; do
+			local get_resp="$(curl -s -m 15 $proxy_opt \
+				-H "Authorization: Bearer $tok" \
+				-H "Accept: application/vnd.github+json" \
+				-H "X-GitHub-Api-Version: 2022-11-28" \
+				"https://api.github.com/repos/$repo/contents/$fpath?ref=$branch")"
+
+			local b64="$(echo "$get_resp" | grep -o -E '"content"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+			if [ -z "$b64" ]; then
+				local err_msg="$(echo "$get_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+				echo "⚠️  [GitHub API] 无法获取 $fpath 的内容: ${err_msg:-未知错误}"
+				continue
+			fi
+
+			local raw_content="$(echo "$b64" | sed 's/\\n//g' | base64 -d 2>/dev/null)"
+			local file_modified=0
+			local updated_content="$raw_content"
+
+			for dom in $direct_doms; do
+				dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+				[ -z "$dom" ] && continue
+				if echo "$updated_content" | grep -Fxq "$dom"; then
+					echo "ℹ️  [GitHub API] $fpath 中已收录 $dom"
+				else
+					if [ -z "$updated_content" ]; then
+						updated_content="$dom"
+					else
+						updated_content="${updated_content}
+${dom}"
+					fi
+					file_modified=1
+					[ "$fpath" = "$file1" ] && direct_added=$((direct_added + 1))
+				fi
+			done
+
+			if [ $file_modified -eq 0 ]; then
+				continue
+			fi
+
+			local updated_b64="$(echo "$updated_content" | base64 | tr -d '\r\n')"
+
+			# 创建 Blob 对象
+			local blob_payload="{\"content\":\"$updated_b64\",\"encoding\":\"base64\"}"
+			local blob_resp="$(curl -s -m 15 $proxy_opt -X POST \
+				-H "Authorization: Bearer $tok" \
+				-H "Accept: application/vnd.github+json" \
+				-H "X-GitHub-Api-Version: 2022-11-28" \
+				-d "$blob_payload" \
+				"https://api.github.com/repos/$repo/git/blobs")"
+
+			local blob_sha="$(echo "$blob_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+			if [ -n "$blob_sha" ]; then
+				local tree_entry="{\"path\":\"$fpath\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}"
+				if [ -z "$tree_items" ]; then
+					tree_items="$tree_entry"
+				else
+					tree_items="${tree_items},${tree_entry}"
+				fi
+				updated_count=$((updated_count + 1))
+			else
+				local err_msg="$(echo "$blob_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+				echo "⚠️  [GitHub API] 创建 $fpath Blob 失败: ${err_msg:-未知错误}"
+			fi
+		done
+	fi
+
+	# 1.2 处理代理域名同步 (file3)
+	if [ -n "$proxy_doms" ]; then
+		local fpath="$file3"
 		local get_resp="$(curl -s -m 15 $proxy_opt \
 			-H "Authorization: Bearer $tok" \
 			-H "Accept: application/vnd.github+json" \
@@ -1380,59 +1545,54 @@ github_api_sync_domain_batch() {
 		if [ -z "$b64" ]; then
 			local err_msg="$(echo "$get_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
 			echo "⚠️  [GitHub API] 无法获取 $fpath 的内容: ${err_msg:-未知错误}"
-			continue
-		fi
-
-		local raw_content="$(echo "$b64" | sed 's/\\n//g' | base64 -d 2>/dev/null)"
-		local file_modified=0
-		local updated_content="$raw_content"
-
-		for dom in "$@"; do
-			dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-			[ -z "$dom" ] && continue
-			if echo "$updated_content" | grep -Fxq "$dom"; then
-				echo "ℹ️  [GitHub API] $fpath 中已收录 $dom"
-			else
-				if [ -z "$updated_content" ]; then
-					updated_content="$dom"
-				else
-					updated_content="${updated_content}
-${dom}"
-				fi
-				file_modified=1
-				domains_added=$((domains_added + 1))
-			fi
-		done
-
-		if [ $file_modified -eq 0 ]; then
-			continue
-		fi
-
-		local updated_b64="$(echo "$updated_content" | base64 | tr -d '\r\n')"
-
-		# 创建 Blob 对象
-		local blob_payload="{\"content\":\"$updated_b64\",\"encoding\":\"base64\"}"
-		local blob_resp="$(curl -s -m 15 $proxy_opt -X POST \
-			-H "Authorization: Bearer $tok" \
-			-H "Accept: application/vnd.github+json" \
-			-H "X-GitHub-Api-Version: 2022-11-28" \
-			-d "$blob_payload" \
-			"https://api.github.com/repos/$repo/git/blobs")"
-
-		local blob_sha="$(echo "$blob_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
-		if [ -n "$blob_sha" ]; then
-			local tree_entry="{\"path\":\"$fpath\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}"
-			if [ -z "$tree_items" ]; then
-				tree_items="$tree_entry"
-			else
-				tree_items="${tree_items},${tree_entry}"
-			fi
-			updated_count=$((updated_count + 1))
 		else
-			local err_msg="$(echo "$blob_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
-			echo "⚠️  [GitHub API] 创建 $fpath Blob 失败: ${err_msg:-未知错误}"
+			local raw_content="$(echo "$b64" | sed 's/\\n//g' | base64 -d 2>/dev/null)"
+			local file_modified=0
+			local updated_content="$raw_content"
+
+			for dom in $proxy_doms; do
+				dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+				[ -z "$dom" ] && continue
+				if echo "$updated_content" | grep -Fxq "$dom"; then
+					echo "ℹ️  [GitHub API] $fpath 中已收录 $dom"
+				else
+					if [ -z "$updated_content" ]; then
+						updated_content="$dom"
+					else
+						updated_content="${updated_content}
+${dom}"
+					fi
+					file_modified=1
+					proxy_added=$((proxy_added + 1))
+				fi
+			done
+
+			if [ $file_modified -eq 1 ]; then
+				local updated_b64="$(echo "$updated_content" | base64 | tr -d '\r\n')"
+				local blob_payload="{\"content\":\"$updated_b64\",\"encoding\":\"base64\"}"
+				local blob_resp="$(curl -s -m 15 $proxy_opt -X POST \
+					-H "Authorization: Bearer $tok" \
+					-H "Accept: application/vnd.github+json" \
+					-H "X-GitHub-Api-Version: 2022-11-28" \
+					-d "$blob_payload" \
+					"https://api.github.com/repos/$repo/git/blobs")"
+
+				local blob_sha="$(echo "$blob_resp" | grep -o -E '"sha"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n 1 | cut -d'"' -f4)"
+				if [ -n "$blob_sha" ]; then
+					local tree_entry="{\"path\":\"$fpath\",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"$blob_sha\"}"
+					if [ -z "$tree_items" ]; then
+						tree_items="$tree_entry"
+					else
+						tree_items="${tree_items},${tree_entry}"
+					fi
+					updated_count=$((updated_count + 1))
+				else
+					local err_msg="$(echo "$blob_resp" | sed -n 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+					echo "⚠️  [GitHub API] 创建 $fpath Blob 失败: ${err_msg:-未知错误}"
+				fi
+			fi
 		fi
-	done
+	fi
 
 	if [ $updated_count -eq 0 ] || [ -z "$tree_items" ]; then
 		echo "ℹ️  [GitHub API] 远程规则库所有目标文件中已均收录所请求域名，无需重复提交。"
@@ -1483,11 +1643,13 @@ ${dom}"
 	fi
 
 	# 4. 创建唯一 Commit
-	local commit_msg
-	if [ $# -eq 1 ]; then
-		commit_msg="feat(rules): sync domestic domain $1 via capctl AI"
-	else
-		commit_msg="feat(rules): sync domestic domains ($*) via capctl AI"
+	local commit_msg="feat(rules): sync rules via capctl AI"
+	if [ $direct_added -gt 0 ] && [ $proxy_added -gt 0 ]; then
+		commit_msg="feat(rules): sync direct ($direct_doms) and proxy ($proxy_doms) via capctl AI"
+	elif [ $direct_added -gt 0 ]; then
+		commit_msg="feat(rules): sync domestic domains ($direct_doms) via capctl AI"
+	elif [ $proxy_added -gt 0 ]; then
+		commit_msg="feat(rules): sync proxy domains ($proxy_doms) via capctl AI"
 	fi
 	local new_commit_payload="{\"message\":\"$commit_msg\",\"tree\":\"$new_tree_sha\",\"parents\":[\"$head_sha\"]}"
 	local new_commit_resp="$(curl -s -m 15 $proxy_opt -X POST \
@@ -1523,7 +1685,13 @@ ${dom}"
 	fi
 }
 
+github_api_sync_domain_batch() {
+	github_api_sync_rules_batch "$*" ""
+}
+
 sync_to_github_repo() {
+	local direct_doms="$1"
+	local proxy_doms="$2"
 	load_credentials
 	local git_repo="/home/joefom/Public/gitpro/meta-rules-dat"
 
@@ -1532,30 +1700,50 @@ sync_to_github_repo() {
 		echo "🔍 [远程联动] 检测到本地 meta-rules-dat Git 仓库，准备自动同步..."
 		local c_domains="$git_repo/custom-rules/china-custom-domains.txt"
 		local r_direct="$git_repo/resouces/direct.txt"
+		local r_proxy="$git_repo/resouces/proxy.txt"
 		local changed=0
+		local d_added=0
+		local p_added=0
 
-		for dom in "$@"; do
-			dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-			[ -z "$dom" ] && continue
-			if [ -f "$c_domains" ] && ! grep -Fxq "$dom" "$c_domains"; then
-				echo "$dom" >> "$c_domains"
-				changed=1
-			fi
-			if [ -f "$r_direct" ] && ! grep -Fxq "$dom" "$r_direct"; then
-				echo "$dom" >> "$r_direct"
-				changed=1
-			fi
-		done
+		if [ -n "$direct_doms" ]; then
+			for dom in $direct_doms; do
+				dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+				[ -z "$dom" ] && continue
+				if [ -f "$c_domains" ] && ! grep -Fxq "$dom" "$c_domains"; then
+					echo "$dom" >> "$c_domains"
+					changed=1; d_added=$((d_added + 1))
+				fi
+				if [ -f "$r_direct" ] && ! grep -Fxq "$dom" "$r_direct"; then
+					echo "$dom" >> "$r_direct"
+					changed=1
+				fi
+			done
+		fi
+
+		if [ -n "$proxy_doms" ]; then
+			for dom in $proxy_doms; do
+				dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+				[ -z "$dom" ] && continue
+				if [ -f "$r_proxy" ] && ! grep -Fxq "$dom" "$r_proxy"; then
+					echo "$dom" >> "$r_proxy"
+					changed=1; p_added=$((p_added + 1))
+				fi
+			done
+		fi
 
 		if [ $changed -eq 1 ]; then
 			(
 				cd "$git_repo" || exit 1
-				git add custom-rules/china-custom-domains.txt resouces/direct.txt
-				if [ $# -eq 1 ]; then
-					git commit -m "feat(rules): sync domestic domain $1 via capctl"
-				else
-					git commit -m "feat(rules): sync domestic domains ($*) via capctl"
+				git add custom-rules/china-custom-domains.txt resouces/direct.txt resouces/proxy.txt 2>/dev/null
+				local c_msg="feat(rules): sync rules via capctl AI"
+				if [ $d_added -gt 0 ] && [ $p_added -gt 0 ]; then
+					c_msg="feat(rules): sync direct ($d_added) and proxy ($p_added) domains via capctl AI"
+				elif [ $d_added -gt 0 ]; then
+					c_msg="feat(rules): sync domestic domains ($direct_doms) via capctl AI"
+				elif [ $p_added -gt 0 ]; then
+					c_msg="feat(rules): sync proxy domains ($proxy_doms) via capctl AI"
 				fi
+				git commit -m "$c_msg"
 				git push origin master >/dev/null 2>&1
 			)
 			echo "🎉 [远程同步] 本地 Git 仓库已提交并推送到 GitHub master！"
@@ -1565,7 +1753,7 @@ sync_to_github_repo() {
 	elif [ -n "$GITHUB_TOKEN" ]; then
 		echo "------------------------------------------------------------"
 		echo "🐙 [远程联动] 通过 GitHub Git Database API 原子聚合提交至 opwrtci/meta-rules-dat..."
-		github_api_sync_domain_batch "$@"
+		github_api_sync_rules_batch "$direct_doms" "$proxy_doms"
 		echo "🎉 [远程同步] 云端单 Commit 聚合同步完成！云端规则编译将自动触发。"
 	else
 		echo "ℹ️  [远程联动] 未检测到本地 Git 仓库或 GITHUB_TOKEN，跳过远程提交 (运行 capctl config 可随时配置 Token)。"
@@ -1605,7 +1793,44 @@ do_add_direct() {
 	fi
 
 	# 第二步：联动远程 Git 仓库 / GitHub REST API
-	sync_to_github_repo "$dom"
+	sync_to_github_repo "$dom" ""
+	echo "============================================================"
+}
+
+do_add_proxy() {
+	local dom="$1"
+	if [ -z "$dom" ]; then
+		echo "用法: capctl add-proxy <域名>"
+		echo "示例: capctl add-proxy meta.ai"
+		return 1
+	fi
+
+	dom="$(echo "$dom" | tr '[:upper:]' '[:lower:]' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+	echo "============================================================"
+	echo "   🚀 CapCtl 一键代理入库与多端联动 (Add Proxy Rule)         "
+	echo "============================================================"
+	echo "目标域名: $dom"
+	echo "------------------------------------------------------------"
+
+	# 第一步：本地秒级生效
+	local proxy_file="/etc/homeproxy/diversion/proxy.txt"
+	if [ -f "$proxy_file" ]; then
+		if grep -Fxq "$dom" "$proxy_file"; then
+			echo "ℹ️  [本地检查] 域名 $dom 已存在于本地代理列表 ($proxy_file)，无需重复追加。"
+		else
+			echo "$dom" >> "$proxy_file"
+			echo "✅ [本地写入] 成功追加 $dom 至 $proxy_file"
+			echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
+			/etc/init.d/homeproxy reload >/dev/null 2>&1
+			echo "🎉 [第一步完成] 本地秒级生效已完成！$dom 已加入代理并由 Sing-Box 内核即刻执行。"
+		fi
+	else
+		echo "⚠️ 未找到 HomeProxy 本地代理文件 ($proxy_file)，跳过本地写入。"
+	fi
+
+	# 第二步：联动远程 Git 仓库 / GitHub REST API
+	sync_to_github_repo "" "$dom"
 	echo "============================================================"
 }
 
@@ -1693,7 +1918,7 @@ do_ai_audit() {
 		echo "============================================================"
 		echo "      🤖 CapCtl AI 智能审计 (Gemini 3.5 Flash Lite)        "
 		echo "============================================================"
-		echo "✅ 当前长效候选池为空，暂无新发现的国内漏网域名！"
+		echo "✅ 当前长效候选池为空，暂无新发现的待研判域名（国内直连/海外代理）！"
 		echo "============================================================"
 		return 0
 	fi
@@ -1703,8 +1928,8 @@ do_ai_audit() {
 	echo "============================================================"
 	echo "📊 累积候选域名 : $cand_count 个 (已跨天聚合样本与频次)"
 	echo "🤖 调用推理模型 : ${GEMINI_MODEL:-gemini-3.5-flash-lite}"
-	echo "🧠 研判安全准则 : 零误判原则 (Deep Chain-of-Thought / 高 Token 深度推理)"
-	echo "⏳ 正在提交大模型进行商业主体、CNAME 拓扑、跨国风险与冗余性深度审查..."
+	echo "🧠 研判安全准则 : 双向分流研判 (国内直连 + 境外重点代理 / 深度 Chain-of-Thought)"
+	echo "⏳ 正在提交大模型进行商业主体、CNAME 拓扑、跨国风险、境外AI及阻断特征深度审查..."
 	echo "------------------------------------------------------------"
 
 	local req_file="/tmp/capctl_gemini_req.json"
@@ -1712,7 +1937,7 @@ do_ai_audit() {
 
 	awk '
 	BEGIN {
-		printf "{\"contents\":[{\"parts\":[{\"text\":\"You are a Principal Network Architect and DNS/BGP Infrastructure Specialist for Chinese Internet, Sing-Box routing, and CDN edge topology. Your core objective is ABSOLUTE ZERO FALSE POSITIVES. It is far better to mark SKIP or KEEP_PROXY than to mistakenly whitelist an overseas or foreign-dependent service.\\n\\nCandidate domains collected from router live traffic:\\n"
+		printf "{\"contents\":[{\"parts\":[{\"text\":\"You are a Principal Network Architect and Sing-Box routing specialist for China/Global split-horizon routing, DNS/BGP topology, and edge CDN infrastructure. Your core objective is to analyze router live traffic candidate domains and classify them with zero false positives.\\n\\nCandidate domains collected from router live traffic (includes traffic metadata such as hits, samples, reason, traffic type):\\n"
 	}
 	{
 		line = $0;
@@ -1722,7 +1947,7 @@ do_ai_audit() {
 		printf "%s ", line;
 	}
 	END {
-		printf "\\n\\nTo guarantee extreme accuracy, perform a comprehensive deep-dive Chain-of-Thought analysis for each candidate domain before reaching a conclusion:\\n1. Corporate Ownership & Service Purpose: Identify true parent company (e.g. Alibaba, Tencent, ByteDance, Sina, Baidu, Meituan) and business function.\\n2. Network Architecture & CNAME Topology: Analyze CDN CNAME pointers and domestic datacenter hosting.\\n3. Overseas & Cross-Border Risk Assessment: Is this domain dual-homed, Anycast, international ad attribution (e.g. Appier, Adjust), or Google/Apple telemetry?\\n4. Redundancy Check: Is it a common top-level root domain (e.g. aliyun.com, qq.com, baidu.com) already globally covered by upstream geosite:cn rulesets?\\n5. Final Verdict:\\n   - ADD_DIRECT: Pure Mainland China domestic cloud/app/SDK infrastructure. Whitelisting it avoids proxy lag and is 100%% safe. Confidence >= 92.\\n   - SKIP_INCLUDED: Common root domain already covered upstream. Adding is redundant.\\n   - KEEP_PROXY: International, foreign CDN, ad attribution, or cross-border tool that must remain proxied.\\n   - UNCERTAIN: Ambiguous or uncertain ownership.\\n\\nSpend adequate tokens to thoroughly reason and explain. Respond ONLY in valid JSON matching this schema:\\n{\\\"results\\\":[{\\\"domain\\\":\\\"example.com\\\",\\\"decision\\\":\\\"ADD_DIRECT|SKIP_INCLUDED|KEEP_PROXY|UNCERTAIN\\\",\\\"confidence\\\":95,\\\"company\\\":\\\"Company Name\\\",\\\"rationale\\\":\\\"Comprehensive detailed technical reason\\\"}]}\"}]}],\"generationConfig\":{\"temperature\":0.1,\"maxOutputTokens\":8192,\"responseMimeType\":\"application/json\"}}\n"
+		printf "\\n\\nTo guarantee extreme accuracy, perform a comprehensive deep-dive Chain-of-Thought analysis for each candidate domain before reaching a conclusion:\\n1. Corporate Ownership & Service Purpose: Identify true parent company (e.g. Meta, OpenAI, Google, Anthropic, ByteDance, Alibaba, Tencent, Baidu, Meituan) and business function.\\n2. Network Architecture & CNAME Topology: Analyze CDN CNAME pointers, overseas vs domestic datacenter hosting.\\n3. Access & GFW Status: Does this domain fail direct connection (TCP RST/timeout), suffer DNS poisoning, or require overseas IP/proxy to function properly (e.g. Meta AI, OpenAI, Claude, foreign OAuth/auth endpoints, foreign app APIs)?\\n4. Redundancy Check: Is it a common top-level root domain already globally covered by upstream geosite:cn or geosite:geolocation-!cn?\\n5. Final Verdict:\\n   - ADD_DIRECT: Pure Mainland China domestic cloud/app/SDK infrastructure. Whitelisting it avoids proxy lag and is 100%% safe. Confidence >= 90.\\n   - ADD_PROXY: Overseas service, foreign AI/LLM API (e.g. meta.ai, openai, anthropic, claude), blocked/censored service, foreign authentication/API endpoint, or experiencing GFW RST/poisoning that should be explicitly routed to proxy. Confidence >= 90.\\n   - SKIP_INCLUDED: Common root domain already covered upstream. Adding is redundant.\\n   - KEEP_DIRECT: Already direct and operating normally.\\n   - KEEP_PROXY: International or foreign service, already routed through proxy as intended.\\n   - UNCERTAIN: Ambiguous or uncertain ownership/routing.\\n\\nSpend adequate tokens to thoroughly reason and explain. Respond ONLY in valid JSON matching this schema:\\n{\\\"results\\\":[{\\\"domain\\\":\\\"example.com\\\",\\\"decision\\\":\\\"ADD_DIRECT|ADD_PROXY|SKIP_INCLUDED|KEEP_DIRECT|KEEP_PROXY|UNCERTAIN\\\",\\\"confidence\\\":95,\\\"company\\\":\\\"Company Name\\\",\\\"rationale\\\":\\\"Comprehensive detailed technical reason\\\"}]}\"}]}],\"generationConfig\":{\"temperature\":0.1,\"maxOutputTokens\":8192,\"responseMimeType\":\"application/json\"}}\n"
 	}
 	' "$source_file" > "$req_file"
 
@@ -1746,7 +1971,7 @@ do_ai_audit() {
 			api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}"
 			awk '
 			BEGIN {
-				printf "{\"contents\":[{\"parts\":[{\"text\":\"You are a Principal Network Architect and DNS/BGP Infrastructure Specialist for Chinese Internet. Evaluate these candidate domains with zero false positives. Respond ONLY with valid JSON schema: {\\\"results\\\":[{\\\"domain\\\":\\\"example.com\\\",\\\"decision\\\":\\\"ADD_DIRECT|SKIP_INCLUDED|KEEP_PROXY|UNCERTAIN\\\",\\\"confidence\\\":95,\\\"company\\\":\\\"Company Name\\\",\\\"rationale\\\":\\\"Detailed rationale\\\"}]}. Candidates:\\n"
+				printf "{\"contents\":[{\"parts\":[{\"text\":\"You are a Principal Network Architect and Sing-Box routing specialist. Evaluate these candidate domains with zero false positives. Decisions: ADD_DIRECT, ADD_PROXY, SKIP_INCLUDED, KEEP_DIRECT, KEEP_PROXY, UNCERTAIN. Respond ONLY with valid JSON schema: {\\\"results\\\":[{\\\"domain\\\":\\\"example.com\\\",\\\"decision\\\":\\\"ADD_DIRECT|ADD_PROXY|SKIP_INCLUDED|KEEP_DIRECT|KEEP_PROXY|UNCERTAIN\\\",\\\"confidence\\\":95,\\\"company\\\":\\\"Company Name\\\",\\\"rationale\\\":\\\"Detailed rationale\\\"}]}. Candidates:\\n"
 			}
 			{
 				line = $0; gsub(/\\/, "\\\\\\\\", line); gsub(/"/, "\\\\\"", line); gsub(/\r/, "", line); printf "%s ", line;
@@ -1853,7 +2078,9 @@ do_ai_audit() {
 	echo "------------------------------------------------------------"
 
 	local approved_domains=""
+	local approved_proxy=""
 	local direct_count=0
+	local proxy_add_count=0
 	local skip_count=0
 	local proxy_count=0
 
@@ -1871,6 +2098,7 @@ do_ai_audit() {
 		local ev_hits="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"hits\":/){sub(/.*\"hits\":/,"",$i);gsub(/[^0-9]/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
 		local ev_sample="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"samples\":/){sub(/.*\"samples\":\"?/,"",$i);sub(/\"$/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
 		local ev_reason="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"reason\":/){sub(/.*\"reason\":\"?/,"",$i);sub(/\"$/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
+		local ev_type="$(awk -v dom="$f_dom" 'BEGIN{RS="}";FS=","} $0 ~ "\"domain\":\"" dom "\"" {for(i=1;i<=NF;i++){if($i~/\"type\":/){sub(/.*\"type\":\"?/,"",$i);sub(/\"$/,"",$i);print $i;exit}}}' "$source_file" 2>/dev/null)"
 		[ -z "$ev_hits" ] && ev_hits="1"
 
 		local action_log=""
@@ -1883,7 +2111,20 @@ do_ai_audit() {
 				if [ "$f_conf" -ge 90 ] 2>/dev/null; then
 					approved_domains="${approved_domains} $f_dom"
 					direct_count=$((direct_count + 1))
-					action_log="QUALIFIED (置信度达标 >=90%，列入直连候选)"
+					action_log="QUALIFIED_DIRECT (置信度达标 >=90%，列入直连候选)"
+				else
+					action_log="CONFIDENCE_LOW (置信度未达90%，暂缓入库)"
+				fi
+				;;
+			ADD_PROXY)
+				echo "  🔵 [建议代理] $f_dom (置信度: ${f_conf}%)"
+				echo "     • 所属主体: $f_comp"
+				echo "     • 流量线索: 累计命中 ${ev_hits} 次${ev_sample:+ | 样本: $ev_sample}${ev_reason:+ | 归因: $ev_reason}"
+				echo "     • 深度研判: $f_rat"
+				if [ "$f_conf" -ge 90 ] 2>/dev/null; then
+					approved_proxy="${approved_proxy} $f_dom"
+					proxy_add_count=$((proxy_add_count + 1))
+					action_log="QUALIFIED_PROXY (置信度达标 >=90%，列入代理候选)"
 				else
 					action_log="CONFIDENCE_LOW (置信度未达90%，暂缓入库)"
 				fi
@@ -1901,7 +2142,13 @@ do_ai_audit() {
 				echo "     • 所属主体: $f_comp"
 				echo "     • 深度研判: $f_rat"
 				proxy_count=$((proxy_count + 1))
-				action_log="KEPT_PROXY (境外/第三方依赖，保持代理)"
+				action_log="KEPT_PROXY (境外/第三方依赖，已在代理分流正常)"
+				;;
+			KEEP_DIRECT)
+				echo "  ⚪ [保持直连] $f_dom (置信度: ${f_conf}%)"
+				echo "     • 所属主体: $f_comp"
+				echo "     • 深度研判: $f_rat"
+				action_log="KEPT_DIRECT (国内服务，当前直连正常)"
 				;;
 			*)
 				echo "  ⚪ [存疑待定] $f_dom"
@@ -1913,7 +2160,7 @@ do_ai_audit() {
 		# 写入细粒度审计日志供定位准/不准原因
 		local detail_log="[研判记录] 域名: $f_dom | 决议: $f_dec (${f_conf}%)
   • 主体识别: $f_comp
-  • 流量线索: 命中 ${ev_hits} 次${ev_sample:+ | 样本: $ev_sample}${ev_reason:+ | 特征: $ev_reason}
+  • 流量线索: 类型: ${ev_type:-unknown} | 命中 ${ev_hits} 次${ev_sample:+ | 样本: $ev_sample}${ev_reason:+ | 特征: $ev_reason}
   • 决策推导: $f_rat
   • 状态动作: $action_log"
 
@@ -1924,36 +2171,56 @@ do_ai_audit() {
 	IFS="$old_ifs"
 
 	echo "------------------------------------------------------------"
-	echo "📊 研判汇总: 建议直连 $direct_count 个 | 建议忽略 $skip_count 个 | 保持代理 $proxy_count 个 (本次消耗: ${t_tok} Tokens)"
+	echo "📊 研判汇总: 建议直连 $direct_count 个 | 建议代理 $proxy_add_count 个 | 建议忽略 $skip_count 个 | 保持代理 $proxy_count 个 (本次消耗: ${t_tok} Tokens)"
 	show_ai_usage_stats "   "
 
-	local summary_log="[会话总结] 建议直连: $direct_count 个 | 规则冗余: $skip_count 个 | 保持代理: $proxy_count 个
+	local summary_log="[会话总结] 建议直连: $direct_count 个 | 建议代理: $proxy_add_count 个 | 规则冗余: $skip_count 个 | 保持代理: $proxy_count 个
 ================================================================================"
 	echo "$summary_log" >> "$ai_log_file" 2>/dev/null || true
 	[ -d "$base_dir" ] && echo "$summary_log" >> "$ai_vault_log" 2>/dev/null || true
 
 	if [ $auto_sync -eq 1 ]; then
-		if [ -n "$approved_domains" ]; then
+		if [ -n "$approved_domains" ] || [ -n "$approved_proxy" ]; then
 			echo "============================================================"
 			echo "   ⚡ 正在自动将高置信度域名执行本地热生效与远程同步...      "
 			echo "============================================================"
 			local direct_file="/etc/homeproxy/diversion/direct.txt"
+			local proxy_file="/etc/homeproxy/diversion/proxy.txt"
 			local any_local_added=0
 
-			for adom in $approved_domains; do
-				if [ -f "$direct_file" ]; then
-					if ! grep -Fxq "$adom" "$direct_file"; then
-						echo "$adom" >> "$direct_file"
-						echo "✅ [本地生效] 已将 $adom 写入 $direct_file"
-						any_local_added=1
-					else
-						echo "ℹ️  [本地检查] $adom 已存在于本地直连列表"
+			if [ -n "$approved_domains" ]; then
+				for adom in $approved_domains; do
+					if [ -f "$direct_file" ]; then
+						if ! grep -Fxq "$adom" "$direct_file"; then
+							echo "$adom" >> "$direct_file"
+							echo "✅ [本地直连] 已将 $adom 写入 $direct_file"
+							any_local_added=1
+						else
+							echo "ℹ️  [本地检查] $adom 已存在于本地直连列表"
+						fi
 					fi
-				fi
-				prune_from_candidate_pool "$adom"
-				echo "[[$session_ts] 自动生效同步] 域名 $adom 已加入直连" >> "$ai_log_file" 2>/dev/null || true
-				[ -d "$base_dir" ] && echo "[[$session_ts] 自动生效同步] 域名 $adom 已加入直连" >> "$ai_vault_log" 2>/dev/null || true
-			done
+					prune_from_candidate_pool "$adom"
+					echo "[$session_ts 自动生效同步] 域名 $adom 已加入直连" >> "$ai_log_file" 2>/dev/null || true
+					[ -d "$base_dir" ] && echo "[$session_ts 自动生效同步] 域名 $adom 已加入直连" >> "$ai_vault_log" 2>/dev/null || true
+				done
+			fi
+
+			if [ -n "$approved_proxy" ]; then
+				for apdom in $approved_proxy; do
+					if [ -f "$proxy_file" ]; then
+						if ! grep -Fxq "$apdom" "$proxy_file"; then
+							echo "$apdom" >> "$proxy_file"
+							echo "🔵 [本地代理] 已将 $apdom 写入 $proxy_file"
+							any_local_added=1
+						else
+							echo "ℹ️  [本地检查] $apdom 已存在于本地代理列表"
+						fi
+					fi
+					prune_from_candidate_pool "$apdom"
+					echo "[$session_ts 自动生效同步] 域名 $apdom 已加入代理" >> "$ai_log_file" 2>/dev/null || true
+					[ -d "$base_dir" ] && echo "[$session_ts 自动生效同步] 域名 $apdom 已加入代理" >> "$ai_vault_log" 2>/dev/null || true
+				done
+			fi
 
 			if [ $any_local_added -eq 1 ]; then
 				echo "⏳ [本地重载] 正在重载 HomeProxy 生效规则..."
@@ -1962,13 +2229,13 @@ do_ai_audit() {
 			fi
 
 			# 一次性原子同步远程 Git / GitHub API
-			sync_to_github_repo $approved_domains
+			sync_to_github_repo "$approved_domains" "$approved_proxy"
 		else
 			echo "ℹ️  当前没有达到置信阈值 (>=90%) 的待入库域名，无需执行同步。"
 		fi
 	else
-		if [ -n "$approved_domains" ]; then
-			echo "💡 提示: 运行 capctl ai-sync 可一键将上述高置信度域名自动应用生效。"
+		if [ -n "$approved_domains" ] || [ -n "$approved_proxy" ]; then
+			echo "💡 提示: 运行 capctl ai-sync 可一键将上述高置信度直连与代理域名自动应用生效。"
 		fi
 	fi
 	echo "============================================================"
@@ -3229,6 +3496,12 @@ show_help() {
       秒级写入 HomeProxy direct.txt 并热重载，同时通过 GitHub REST API 或本地 Git 提交到远程规则仓库。
       处理完毕后自动从沉淀池中剔除，避免重复审查。
 
+  ★ capctl add-direct <domain>
+      一键将指定国内域名加入 HomeProxy 直连名单并原子同步至 GitHub 远程规则库。
+
+  ★ capctl add-proxy <domain>
+      一键将指定境外/AI服务域名（如 meta.ai）加入 HomeProxy 代理名单并原子同步至 GitHub 远程规则库。
+
   ★ capctl usage (或 capctl ai-status)
       查看 Gemini 3.5 Flash Lite 智能模型配额用量看板，包括当日请求量、当日剩余额度、
       当月请求量、当月剩余额度及每次调用消耗的 Tokens 统计。
@@ -3342,10 +3615,11 @@ do_menu() {
 	echo "  15) 查看详细状态 (status)       - 查看当前抓包切片与运行时长"
 	echo "  16) 清理历史释放空间 (clean)     - 清理旧的 PCAP 报文与日志归档"
 	echo "  17) 一键直连入库与联动 (add-direct) - 快速将漏网国内域名生效并提交"
-	echo "  18) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
+	echo "  18) 一键代理入库与联动 (add-proxy)  - 快速将关键境外/AI域名生效并提交"
+	echo "  19) 🔐 配置 AI 与云端密钥 (config) - 安全管理本地私有 Gemini 密钥与 GitHub Token"
 	echo "   0) 退出"
 	echo "============================================================"
-	printf " 请输入选项编号 [0-18]: "
+	printf " 请输入选项编号 [0-19]: "
 	read -r choice
 	echo ""
 	case "$choice" in
@@ -3384,7 +3658,12 @@ do_menu() {
 			read -r dom
 			do_add_direct "$dom"
 			;;
-		18) do_config ;;
+		18)
+			printf " 请输入要代理的境外/AI域名 (例如 meta.ai): "
+			read -r dom
+			do_add_proxy "$dom"
+			;;
+		19) do_config ;;
 		0|"") echo "已退出。"; exit 0 ;;
 		*) echo "❌ 无效选项: $choice"; exit 1 ;;
 	esac
@@ -3402,6 +3681,7 @@ case "$INVOKED_CMD" in
 	ai-cap)                ACTION="ai" ;;
 	ailog-cap)             ACTION="ai-log" ;;
 	aisync-cap)            ACTION="ai-sync" ;;
+	addproxy-cap)          ACTION="add-proxy" ;;
 	config-cap)            ACTION="config" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
@@ -3491,6 +3771,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_add_direct "$@" ;;
+		esac
+		;;
+	add-proxy)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_add_proxy "$@" ;;
 		esac
 		;;
 	config|cred)
