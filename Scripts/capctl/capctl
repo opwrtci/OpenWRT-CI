@@ -3085,6 +3085,12 @@ EOF_ALERT
 		return 1
 	fi
 
+	if ! command -v tcpdump >/dev/null 2>&1; then
+		echo "❌ 错误: 系统缺少核心抓包依赖 tcpdump！"
+		echo "💡 请先运行命令安装: opkg update && opkg install tcpdump"
+		return 1
+	fi
+
 	# Clean previous alert if now safe
 	rm -f "$ALERT_FILE" 2>/dev/null
 
