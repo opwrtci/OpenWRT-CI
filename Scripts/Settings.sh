@@ -160,6 +160,9 @@ net.netfilter.nf_conntrack_tcp_timeout_established=7200
 net.netfilter.nf_conntrack_tcp_timeout_close_wait=60
 net.netfilter.nf_conntrack_tcp_timeout_fin_wait=30
 net.netfilter.nf_conntrack_tcp_timeout_time_wait=30
+# 固化默认 TCP 拥塞控制为 BBR (随 74-tcp-bbr 模块加载后自动生效)
+net.ipv4.tcp_congestion_control=bbr
+net.core.default_qdisc=fq_codel
 EOF
 
 #修改默认NTP服务器：移除存在DNS重绑定风险的cn.ntp.org.cn，增补微软及Cloudflare权威授时源
@@ -207,22 +210,49 @@ exit 0
 EOF
 chmod +x "$CLASHOO_DEF"
 
-#预置HomeProxy规则源为OpWrtCI（原生集成阿里Anycast/AMDC直连，无需在UI中维护长列表）
+#预置HomeProxy规则源为OpWrtCI，优化国内DNS为低延迟UDP，放行国内直连QUIC
 HP_CIDR_DEF="./package/base-files/files/etc/uci-defaults/996_set-homeproxy-ruleset.sh"
 mkdir -p "$(dirname "$HP_CIDR_DEF")"
 cat << 'EOF' > "$HP_CIDR_DEF"
 #!/bin/sh
 # SPDX-License-Identifier: MIT
-# 预置规则源为 opwrtci，原生集成 Anycast 直连，保持 LuCI 界面整洁
+# 预置规则源为 opwrtci，直连国内 DNS 采用极速 UDP 223.5.5.5，仅拦截代理出站 QUIC 解绑国内大带宽直连
 
 if [ -f /etc/config/homeproxy ]; then
 	uci -q set homeproxy.config=homeproxy
 	uci -q set homeproxy.config.ruleset_provider='opwrtci'
+	uci -q set homeproxy.config.china_dns_server='223.5.5.5'
+	uci -q set homeproxy.config.kernel_block_quic='0'
+	uci -q set homeproxy.config.block_proxy_quic='1'
 	uci -q commit homeproxy
 fi
 exit 0
 EOF
 chmod +x "$HP_CIDR_DEF"
+
+#增补网络与无线高敏性能优化脚本（LAN IGMP Snooping、Wi-Fi U-APSD 节能与组播转单播）
+SYS_NET_DEF="./package/base-files/files/etc/uci-defaults/997_optimize-network-wireless.sh"
+mkdir -p "$(dirname "$SYS_NET_DEF")"
+cat << 'EOF' > "$SYS_NET_DEF"
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# 启用 LAN IGMP Snooping 防广播风暴，开启 Wi-Fi U-APSD 节能与组播单播化提速
+
+if [ -f /etc/config/network ]; then
+	uci -q set network.lan.igmp_snooping='1'
+	uci -q commit network
+fi
+
+if [ -f /etc/config/wireless ]; then
+	for iface in $(uci -q show wireless | grep '=wifi-iface' | cut -d'.' -f2 | cut -d'=' -f1); do
+		uci -q set wireless.${iface}.multicast_to_unicast='1'
+		uci -q set wireless.${iface}.uapsd='1'
+	done
+	uci -q commit wireless
+fi
+exit 0
+EOF
+chmod +x "$SYS_NET_DEF"
 
 #预置docker用户组，消除dockerd启动时group docker not found警告
 GROUP_FILE="./package/base-files/files/etc/group"
