@@ -221,9 +221,10 @@ cat << 'EOF' > "$HP_CIDR_DEF"
 if [ -f /etc/config/homeproxy ]; then
 	uci -q set homeproxy.config=homeproxy
 	uci -q set homeproxy.config.ruleset_provider='opwrtci'
+	uci -q set homeproxy.config.dns_server='tcp://8.8.8.8'
 	uci -q set homeproxy.config.china_dns_server='223.5.5.5'
 	uci -q set homeproxy.config.kernel_block_quic='1'
-	uci -q set homeproxy.config.block_proxy_quic='1'
+	uci -q set homeproxy.config.block_proxy_quic='0'
 	uci -q commit homeproxy
 fi
 exit 0
