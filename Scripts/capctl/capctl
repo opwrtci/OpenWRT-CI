@@ -1109,7 +1109,7 @@ do_extract() {
 			close(audited_file);
 		}
 		# 4. 基础内置已知大厂主域名 (若已正常直连则不作多余提取)
-		standard_builtin = "^(taobao\\.com|alipay\\.com|alicdn\\.com|alipayobjects\\.com|qq\\.com|tencent\\.com|baidu\\.com|bilibili\\.com|douyin\\.com|jd\\.com|163\\.com|sina\\.com|weibo\\.com|xiaomi\\.com|mi\\.com|oppomobile\\.com|vivo\\.com|huawei\\.com|honor\\.com|youku\\.com|amap\\.com|ele\\.me|elemecdn\\.com|alibabachengdun\\.com|alibabacorp\\.com|aliyuncs\\.com|aliyun-inc\\.com|pinduoduo\\.com|pinduoduo\\.net)$";
+		standard_builtin = "^(alibaba\\.com|aliyun\\.com|alibabadns\\.com|alipaydns\\.com|taobao\\.com|alipay\\.com|alicdn\\.com|alipayobjects\\.com|qq\\.com|tencent\\.com|baidu\\.com|bilibili\\.com|douyin\\.com|jd\\.com|163\\.com|sina\\.com|weibo\\.com|xiaomi\\.com|mi\\.com|oppomobile\\.com|vivo\\.com|huawei\\.com|honor\\.com|youku\\.com|amap\\.com|ele\\.me|elemecdn\\.com|alibabachengdun\\.com|alibabacorp\\.com|aliyuncs\\.com|aliyun-inc\\.com|pinduoduo\\.com|pinduoduo\\.net)$";
 		# 5. GFW 投毒虚假 IP 库 (解析到投毒 IP 的境外网站 100% 必须代理)
 		poison_ips = "^(221\\.228\\.32\\.13|118\\.184\\.78\\.78|203\\.208\\.46\\.200|31\\.13\\.72\\.36|243\\.185\\.187\\.39|37\\.61\\.54\\.158|46\\.82\\.174\\.68|78\\.16\\.49\\.15|93\\.46\\.8\\.89)$";
 		# 6. 核心海外 AI 与跨国关键服务特征 (重点挖掘优先纳入代理名单)
@@ -1171,10 +1171,9 @@ do_extract() {
 		}
 	}
 
-	# 记录已由 geosite-cn 或 direct-out 规则正确分流的域名 (排除无效候选)
-	/rule_set=geosite-cn/ || /route\(china-dns\)/ || /route\(direct-out\)/ || /=> bypass\(\)/ {
+	# 记录已由 geosite-cn 或 domain-direct / direct-out 原生分流规则覆盖的域名 (排除无效候选)
+	/rule_set=geosite-cn/ || /rule_set=domain-direct/ || /route\(direct-out\)/ {
 		id = $5; gsub(/[^0-9]/, "", id);
-		routed_direct[id] = 1;
 		dom = conn_dom[id];
 		if (dom != "") {
 			root = get_root_domain(dom);
@@ -1191,6 +1190,12 @@ do_extract() {
 				already_covered[root] = 1;
 			}
 		}
+	}
+
+	# 记录走直连出站的连接 (用于后续检测直连通道异常/RST)
+	/route\(direct-out\)/ || /=> bypass\(\)/ || /outbound\/direct.*: outbound/ {
+		id = $5; gsub(/[^0-9]/, "", id);
+		routed_direct[id] = 1;
 	}
 
 	# 记录走海外代理出站的连接 (既用于国内特征漏网印证，也用于出海活跃业务挖掘)
@@ -1224,7 +1229,7 @@ do_extract() {
 	/dns: exchanged CNAME/ {
 		q_dom = $0; sub(/.*exchanged CNAME[[:space:]]+/, "", q_dom); sub(/[[:space:]].*/, "", q_dom); sub(/\.+$/, "", q_dom);
 		t_dom = $0; sub(/.*IN CNAME[[:space:]]+/, "", t_dom); sub(/[[:space:]].*/, "", t_dom); sub(/\.+$/, "", t_dom);
-		if (t_dom ~ /(\.w\.alikunlun\.com|alibabadns\.com|alipaydns\.com|alicdn\.com|tbcache\.com|\.dnsv1\.com|\.kunlun.*\.com|queniuak\.com|huaweicloud\.com|chinacache\.net|qiniucdn\.com|baidupcs\.com|ourwebcdn\.com|txcloudcdn\.com|tencent-cloud\.net|bytedance\.net|bytedns[0-9]*\.com|cdnbuild\.net|volces\.com|volccdn\.com)/) {
+		if (t_dom ~ /(\.w\.alikunlun\.com|alibabadns\.com|alipaydns\.com|alicdn\.com|aliyuncs\.com|aliyun(-inc)?\.com|tbcache\.com|\.dnsv1\.com|\.kunlun.*\.com|queniuak\.com|huaweicloud\.com|hwclouds\.com|myhuaweicloud\.com|chinacache\.net|qiniucdn\.com|baidupcs\.com|bcebos\.com|baidubce\.com|ourwebcdn\.com|txcloudcdn\.com|tencent-cloud\.net|qcloud\.com|myqcloud\.com|bytedance\.net|bytedns[0-9]*\.com|cdnbuild\.net|volces\.com|volccdn\.com)/) {
 			cname_dom[q_dom] = "CNAME 递归命中国内主流云厂商/CDN 节点 (" t_dom ")";
 			root = get_root_domain(q_dom);
 			if (root != "" && root !~ /(\.arpa$|\.lan$|localhost$)/ && root !~ /(google|facebook|twitter|telegram|apple|openai|github|cloudflare|fastly|akamai|akadns|gvt1|doubleclick|crashlytics|googlesyndication|app-measurement|gstatic|ntp\.org|voip|stun)/) {
@@ -1233,7 +1238,7 @@ do_extract() {
 						candidate_hits[root]++;
 						if (root in leaked_to_proxy) {
 							candidate_reason[root] = "🚨 铁证：确认命中国内云厂商 CNAME (" t_dom ") 但实际连接错误泄漏走海外代理出站 (漏网)";
-						} else if (!(root in candidate_reason)) {
+						} else {
 							candidate_reason[root] = cname_dom[q_dom];
 						}
 						if (candidate_subdomains[root] !~ q_dom) {
@@ -1298,8 +1303,8 @@ do_extract() {
 		reason = "";
 		if (dom in cname_dom) {
 			reason = cname_dom[dom];
-		} else if (dom ~ /(aliapp|effirst|id6\.me|easytomessage|anythinktech|appier|snssdk|ctobsnssdk|cmpassport|gdtimg|tanx|mmstat|talkingdata|gepush|igexin|10086|10010|189|pinduoduo|unionpay|12306|ccb|icbc|cmb|95598|sgcc|volcengine)/) {
-			reason = "命中国内运营商认证 / 核心大厂第三方 SDK 签名特征";
+		} else if (dom ~ /(alipay|mpaas|antgroup|aliapp|alicloud|alibaba|taobao|tmall|amap|dingtalk|meituan|dianping|jd|bilibili|xiaomi|huawei|honor|oppo|vivo|weibo|sina|sohu|163|qq|tencent|wechat|weixin|douyin|bytedance|volcengine|kuaishou|baidu|effirst|id6\.me|easytomessage|anythinktech|appier|snssdk|ctobsnssdk|cmpassport|gdtimg|tanx|mmstat|talkingdata|gepush|igexin|10086|10010|189|pinduoduo|unionpay|12306|ccb|icbc|cmb|95598|sgcc)/) {
+			reason = "命中国内运营商认证 / 核心大厂第三方 SDK 与业务特征";
 		}
 
 		if (reason != "") {
