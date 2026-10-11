@@ -314,6 +314,13 @@ if [ -f "$GROUP_FILE" ]; then
 	grep -q "^docker:" "$GROUP_FILE" || echo "docker:x:1000:docker" >> "$GROUP_FILE"
 fi
 
+#设置系统默认登录语言为 UTF-8，并将 root 默认 Shell 升级为原生支持中文与语法补全的 bash
+sed -i 's/\/bin\/ash/\/bin\/bash/g' ./package/base-files/files/etc/passwd 2>/dev/null || true
+SYS_PROFILE="./package/base-files/files/etc/profile"
+if [ -f "$SYS_PROFILE" ]; then
+	grep -q "zh_CN.UTF-8" "$SYS_PROFILE" || sed -i '$a export LANG="zh_CN.UTF-8"\nexport LC_ALL="zh_CN.UTF-8"' "$SYS_PROFILE"
+fi
+
 #部署全量抓包与 Sing-Box 实时决策流排障取证系统 (CapCtl)
 CAPCTL_SRC_DIR="$GITHUB_WORKSPACE/Scripts/capctl"
 [ -d "$CAPCTL_SRC_DIR" ] || CAPCTL_SRC_DIR="$(dirname "$0")/capctl"
