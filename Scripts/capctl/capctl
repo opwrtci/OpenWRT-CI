@@ -51,20 +51,31 @@ load_credentials() {
 						export GEMINI_MODEL="$raw_m"
 					fi
 					;;
+				GEMINI_TIER=*)
+					if [ -z "$GEMINI_TIER" ]; then
+						local raw_tr="${line#GEMINI_TIER=}"
+						raw_tr="${raw_tr#\"}"; raw_tr="${raw_tr%\"}"; raw_tr="${raw_tr#\'}"; raw_tr="${raw_tr%\'}"
+						export GEMINI_TIER="$raw_tr"
+					fi
+					;;
 			esac
 		done < "$CRED_FILE"
 	fi
 	[ -z "$GEMINI_MODEL" ] && export GEMINI_MODEL="gemini-3.5-flash-lite"
+	[ -z "$GEMINI_TIER" ] && export GEMINI_TIER="free"
 }
 
 save_credentials() {
 	local g_key="$1"
 	local gh_tok="$2"
 	local g_mod="${3:-gemini-3.5-flash-lite}"
+	local g_tier="${4:-${GEMINI_TIER:-free}}"
 
 	g_key="${g_key#\"}"; g_key="${g_key%\"}"; g_key="${g_key#\'}"; g_key="${g_key%\'}"
 	gh_tok="${gh_tok#\"}"; gh_tok="${gh_tok%\"}"; gh_tok="${gh_tok#\'}"; gh_tok="${gh_tok%\'}"
 	g_mod="${g_mod#\"}"; g_mod="${g_mod%\"}"; g_mod="${g_mod#\'}"; g_mod="${g_mod%\'}"
+	g_tier="${g_tier#\"}"; g_tier="${g_tier%\"}"; g_tier="${g_tier#\'}"; g_tier="${g_tier%\'}"
+	[ -z "$g_tier" ] && g_tier="free"
 
 	local target_conf="/etc/capctl/capctl.env"
 	if [ ! -d "/etc/capctl" ]; then
@@ -77,17 +88,44 @@ save_credentials() {
 		echo "GEMINI_API_KEY=\"$g_key\""
 		echo "GITHUB_TOKEN=\"$gh_tok\""
 		echo "GEMINI_MODEL=\"$g_mod\""
+		echo "GEMINI_TIER=\"$g_tier\""
 	} > "$target_conf"
 	chmod 600 "$target_conf"
 
 	export GEMINI_API_KEY="$g_key"
 	export GITHUB_TOKEN="$gh_tok"
 	export GEMINI_MODEL="$g_mod"
+	export GEMINI_TIER="$g_tier"
 	CRED_FILE="$target_conf"
 
 	local usage_file="$(get_ai_usage_file)"
 	if [ -f "$usage_file" ]; then
 		sed -i -E "s/\"model\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"model\": \"$g_mod\"/g" "$usage_file" 2>/dev/null || true
+		sed -i -E "s/\"tier\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"tier\": \"$g_tier\"/g" "$usage_file" 2>/dev/null || true
+		if [ "$g_tier" = "paid" ]; then
+			sed -i -E "s/\"quota_rpd\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpd\": 0/g" "$usage_file" 2>/dev/null || true
+			sed -i -E "s/\"quota_rpm\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpm\": 1000/g" "$usage_file" 2>/dev/null || true
+			sed -i -E "s/\"quota_monthly\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_monthly\": 0/g" "$usage_file" 2>/dev/null || true
+		else
+			local new_rpd=20; local new_rpm=5; local new_qm=600
+			case "$g_mod" in
+				*3.5-flash-lite*|*3.1-flash-lite*|*flash-lite-latest*)
+					new_rpd=500; new_rpm=15; new_qm=15000 ;;
+				*2.5-flash-lite*)
+					new_rpd=20; new_rpm=10; new_qm=600 ;;
+				*pro*|*omni*|*gemini-2.0*|*gemini-2-*)
+					new_rpd=0; new_rpm=0; new_qm=0 ;;
+				*gemma*)
+					new_rpd=14400; new_rpm=30; new_qm=432000 ;;
+				*flash*)
+					new_rpd=20; new_rpm=5; new_qm=600 ;;
+				*)
+					new_rpd=20; new_rpm=5; new_qm=600 ;;
+			esac
+			sed -i -E "s/\"quota_rpd\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpd\": $new_rpd/g" "$usage_file" 2>/dev/null || true
+			sed -i -E "s/\"quota_rpm\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpm\": $new_rpm/g" "$usage_file" 2>/dev/null || true
+			sed -i -E "s/\"quota_monthly\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_monthly\": $new_qm/g" "$usage_file" 2>/dev/null || true
+		fi
 	fi
 }
 
@@ -218,6 +256,29 @@ get_or_init_ai_usage() {
 	local cur_month="$(date +%Y-%m)"
 	local model="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 	model="${model#\"}"; model="${model%\"}"; model="${model#\'}"; model="${model%\'}"
+	local tier="${GEMINI_TIER:-free}"
+	tier="${tier#\"}"; tier="${tier%\"}"; tier="${tier#\'}"; tier="${tier%\'}"
+	[ -z "$tier" ] && tier="free"
+
+	local init_rpd=20; local init_rpm=5; local init_qm=600
+	if [ "$tier" = "paid" ]; then
+		init_rpd=0; init_rpm=1000; init_qm=0
+	else
+		case "$model" in
+			*3.5-flash-lite*|*3.1-flash-lite*|*flash-lite-latest*)
+				init_rpd=500; init_rpm=15; init_qm=15000 ;;
+			*2.5-flash-lite*)
+				init_rpd=20; init_rpm=10; init_qm=600 ;;
+			*pro*|*omni*|*gemini-2.0*|*gemini-2-*)
+				init_rpd=0; init_rpm=0; init_qm=0 ;;
+			*gemma*)
+				init_rpd=14400; init_rpm=30; init_qm=432000 ;;
+			*flash*)
+				init_rpd=20; init_rpm=5; init_qm=600 ;;
+			*)
+				init_rpd=20; init_rpm=5; init_qm=600 ;;
+		esac
+	fi
 
 	if [ ! -f "$usage_file" ]; then
 		local target_mnt="$(get_largest_mount)"
@@ -239,9 +300,10 @@ get_or_init_ai_usage() {
 		cat << EOF > "$usage_file"
 {
   "model": "$model",
-  "quota_rpd": 1500,
-  "quota_rpm": 15,
-  "quota_monthly": 45000,
+  "tier": "$tier",
+  "quota_rpd": $init_rpd,
+  "quota_rpm": $init_rpm,
+  "quota_monthly": $init_qm,
   "today_date": "$today",
   "today_requests": $hist_today,
   "today_tokens": $((hist_today * 1840)),
@@ -255,6 +317,10 @@ get_or_init_ai_usage() {
 EOF
 	else
 		sed -i -E "s/\"model\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"model\": \"$model\"/g" "$usage_file" 2>/dev/null || true
+		sed -i -E "s/\"tier\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"tier\": \"$tier\"/g" "$usage_file" 2>/dev/null || true
+		sed -i -E "s/\"quota_rpd\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpd\": $init_rpd/g" "$usage_file" 2>/dev/null || true
+		sed -i -E "s/\"quota_rpm\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_rpm\": $init_rpm/g" "$usage_file" 2>/dev/null || true
+		sed -i -E "s/\"quota_monthly\"[[:space:]]*:[[:space:]]*[0-9]+/\"quota_monthly\": $init_qm/g" "$usage_file" 2>/dev/null || true
 	fi
 
 	# 跨日 / 跨月检查
@@ -275,23 +341,31 @@ EOF
 	' "$usage_file" 2>/dev/null
 
 	if [ $? -eq 10 ]; then
-		awk -v today="$today" -v month="$cur_month" -v mod="$model" '
+		awk -v today="$today" -v month="$cur_month" -v mod="$model" -v cur_tier="$tier" '
 		BEGIN { RS="}"; FS="," }
 		{
 			if ($0 !~ /"model"/) next;
-			rpd = 1500; rpm = 15; q_m = 45000;
+			rpd = 500; rpm = 15; q_m = 15000;
 			t_req = 0; t_tok = 0;
 			m_req = 0; m_tok = 0;
 			last_u = "暂无调用"; last_tok = 0; last_cand = 0; old_m = "";
 
-			if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
-			}
-			if (match($0, /"quota_rpm"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpm = s + 0;
-			}
-			if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+			if (cur_tier == "paid") {
+				rpd = 0; rpm = 1000; q_m = 0;
+			} else {
+				if (mod ~ /gemini-3\.[15]-flash-lite/ || mod ~ /gemini-flash-lite-latest/) {
+					rpd = 500; rpm = 15; q_m = 15000;
+				} else if (mod ~ /gemini-2\.5-flash-lite/) {
+					rpd = 20; rpm = 10; q_m = 600;
+				} else if (mod ~ /pro/ || mod ~ /gemini-2(\.0)?-flash/ || mod ~ /omni/) {
+					rpd = 0; rpm = 0; q_m = 0;
+				} else if (mod ~ /gemma/) {
+					rpd = 14400; rpm = 30; q_m = 432000;
+				} else if (mod ~ /flash/) {
+					rpd = 20; rpm = 5; q_m = 600;
+				} else {
+					rpd = 20; rpm = 5; q_m = 600;
+				}
 			}
 			if (match($0, /"month_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_m = s;
@@ -314,7 +388,7 @@ EOF
 				s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_cand = s + 0;
 			}
 
-			printf "{\n  \"model\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": 0,\n  \"today_tokens\": 0,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, rpd, rpm, q_m, today, month, m_req, m_tok, last_u, last_tok, last_cand;
+			printf "{\n  \"model\": \"%s\",\n  \"tier\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": 0,\n  \"today_tokens\": 0,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, cur_tier, rpd, rpm, q_m, today, month, m_req, m_tok, last_u, last_tok, last_cand;
 			exit 0;
 		}
 		' "$usage_file" > "${usage_file}.tmp" 2>/dev/null && mv -f "${usage_file}.tmp" "$usage_file"
@@ -335,25 +409,36 @@ record_ai_usage() {
 	local now_ts="$(date '+%Y-%m-%d %H:%M:%S')"
 	local today="$(date +%Y-%m-%d)"
 	local cur_month="$(date +%Y-%m)"
+	local tier="${GEMINI_TIER:-free}"
+	tier="${tier#\"}"; tier="${tier%\"}"; tier="${tier#\'}"; tier="${tier%\'}"
+	[ -z "$tier" ] && tier="free"
 
 	awk -v now_ts="$now_ts" -v today="$today" -v month="$cur_month" \
-	    -v mod="$mod" -v cand="$cand_count" -v tok="$total_tok" '
+	    -v mod="$mod" -v cur_tier="$tier" -v cand="$cand_count" -v tok="$total_tok" '
 	BEGIN { RS="}"; FS="," }
 	{
 		if ($0 !~ /"model"/) next;
-		rpd = 1500; rpm = 15; q_m = 45000;
+		rpd = 500; rpm = 15; q_m = 15000;
 		t_req = 0; t_tok = 0;
 		m_req = 0; m_tok = 0;
 		old_day = ""; old_m = "";
 
-		if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
-		}
-		if (match($0, /"quota_rpm"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpm = s + 0;
-		}
-		if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+		if (cur_tier == "paid") {
+			rpd = 0; rpm = 1000; q_m = 0;
+		} else {
+			if (mod ~ /gemini-3\.[15]-flash-lite/ || mod ~ /gemini-flash-lite-latest/) {
+				rpd = 500; rpm = 15; q_m = 15000;
+			} else if (mod ~ /gemini-2\.5-flash-lite/) {
+				rpd = 20; rpm = 10; q_m = 600;
+			} else if (mod ~ /pro/ || mod ~ /gemini-2(\.0)?-flash/ || mod ~ /omni/) {
+				rpd = 0; rpm = 0; q_m = 0;
+			} else if (mod ~ /gemma/) {
+				rpd = 14400; rpm = 30; q_m = 432000;
+			} else if (mod ~ /flash/) {
+				rpd = 20; rpm = 5; q_m = 600;
+			} else {
+				rpd = 20; rpm = 5; q_m = 600;
+			}
 		}
 		if (match($0, /"today_date"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); old_day = s;
@@ -383,7 +468,7 @@ record_ai_usage() {
 		m_req = m_req + 1;
 		m_tok = m_tok + tok;
 
-		printf "{\n  \"model\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": %d,\n  \"today_tokens\": %d,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, rpd, rpm, q_m, today, t_req, t_tok, month, m_req, m_tok, now_ts, tok, cand;
+		printf "{\n  \"model\": \"%s\",\n  \"tier\": \"%s\",\n  \"quota_rpd\": %d,\n  \"quota_rpm\": %d,\n  \"quota_monthly\": %d,\n  \"today_date\": \"%s\",\n  \"today_requests\": %d,\n  \"today_tokens\": %d,\n  \"month_date\": \"%s\",\n  \"month_requests\": %d,\n  \"month_tokens\": %d,\n  \"last_used\": \"%s\",\n  \"last_tokens\": %d,\n  \"last_candidates\": %d\n}\n", mod, cur_tier, rpd, rpm, q_m, today, t_req, t_tok, month, m_req, m_tok, now_ts, tok, cand;
 		exit 0;
 	}
 	' "$usage_file" > "${usage_file}.tmp" 2>/dev/null && mv -f "${usage_file}.tmp" "$usage_file"
@@ -396,11 +481,14 @@ show_ai_usage_stats() {
 
 	local active_mod="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
 	active_mod="${active_mod#\"}"; active_mod="${active_mod%\"}"; active_mod="${active_mod#\'}"; active_mod="${active_mod%\'}"
+	local active_tier="${GEMINI_TIER:-free}"
+	active_tier="${active_tier#\"}"; active_tier="${active_tier%\"}"; active_tier="${active_tier#\'}"; active_tier="${active_tier%\'}"
+	[ -z "$active_tier" ] && active_tier="free"
 
 	local usage_file="$(get_ai_usage_file)"
 	get_or_init_ai_usage
 
-	awk -v pfx="$prefix" -v cur_mod="$active_mod" '
+	awk -v pfx="$prefix" -v cur_mod="$active_mod" -v cur_tier="$active_tier" '
 	function fmt_num(n) {
 		if (n >= 1000) {
 			k = int(n / 1000);
@@ -413,7 +501,7 @@ show_ai_usage_stats() {
 	{
 		if ($0 !~ /"model"/) next;
 		mod = (cur_mod != "") ? cur_mod : "gemini-3.5-flash-lite";
-		rpd = 1500; rpm = 15; q_m = 45000;
+		tier = (cur_tier != "") ? cur_tier : "free";
 		t_req = 0; t_tok = 0;
 		m_req = 0; m_tok = 0;
 		last_u = "暂无调用"; last_tok = 0; last_cand = 0;
@@ -423,13 +511,7 @@ show_ai_usage_stats() {
 		} else if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); mod = s;
 		}
-		if (mod ~ /lite/) {
-			rpd = 500; rpm = 15; q_m = 15000; tpm_str = "25万";
-		} else if (mod ~ /pro/) {
-			rpd = 20; rpm = 2; q_m = 600; tpm_str = "3.2万";
-		} else {
-			rpd = 20; rpm = 5; q_m = 600; tpm_str = "25万";
-		}
+
 		if (match($0, /"today_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_req = s + 0;
 		}
@@ -452,18 +534,45 @@ show_ai_usage_stats() {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); last_cand = s + 0;
 		}
 
-		t_rem = rpd - t_req;
-		if (t_rem < 0) t_rem = 0;
-		t_pct = (rpd > 0) ? (t_req * 100.0 / rpd) : 0;
+		if (tier == "paid") {
+			printf "%s• 核心模型 : %s (Paid Tier: 绑卡按量计费 | 无 RPD 上限 | 1,000+ RPM | 400万+ TPM)\n", pfx, mod;
+			printf "%s• 当日用量 : %d 次请求 (按量计费无每日上限 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(t_tok);
+			printf "%s• 当月用量 : %d 次请求 (消耗 %s Tokens)\n", pfx, m_req, fmt_num(m_tok);
+		} else {
+			rpd = 500; rpm = 15; q_m = 15000; tpm_str = "25万";
+			if (mod ~ /gemini-3\.[15]-flash-lite/ || mod ~ /gemini-flash-lite-latest/) {
+				rpd = 500; rpm = 15; q_m = 15000; tpm_str = "25万";
+			} else if (mod ~ /gemini-2\.5-flash-lite/) {
+				rpd = 20; rpm = 10; q_m = 600; tpm_str = "25万";
+			} else if (mod ~ /pro/ || mod ~ /gemini-2(\.0)?-flash/ || mod ~ /omni/) {
+				rpd = 0; rpm = 0; q_m = 0; tpm_str = "0";
+			} else if (mod ~ /gemma/) {
+				rpd = 14400; rpm = 30; q_m = 432000; tpm_str = "1.6万";
+			} else if (mod ~ /flash/) {
+				rpd = 20; rpm = 5; q_m = 600; tpm_str = "25万";
+			} else {
+				rpd = 20; rpm = 5; q_m = 600; tpm_str = "25万";
+			}
 
-		m_rem = q_m - m_req;
-		if (m_rem < 0) m_rem = 0;
-		m_pct = (q_m > 0) ? (m_req * 100.0 / q_m) : 0;
+			if (rpd == 0) {
+				printf "%s• 核心模型 : %s (Free Tier: 0 RPM | 0 RPD | 🚫 免费层无配额不可用)\n", pfx, mod;
+				printf "%s• 当日用量 : %d / 0 次请求 (⚠️ 免费层配额为 0，调用将报 429/RESOURCE_EXHAUSTED | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(t_tok);
+				printf "%s• 当月用量 : %d / 0 次请求 (⚠️ 免费层无配额 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(m_tok);
+			} else {
+				t_rem = rpd - t_req;
+				if (t_rem < 0) t_rem = 0;
+				t_pct = (rpd > 0) ? (t_req * 100.0 / rpd) : 0;
 
-		tpm_str = (mod ~ /pro/) ? "3.2万" : "25万";
-		printf "%s• 核心模型 : %s (Free Tier: %d RPM | %s RPD | %s TPM)\n", pfx, mod, rpm, fmt_num(rpd), tpm_str;
-		printf "%s• 当日用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(rpd), t_pct, fmt_num(t_rem), fmt_num(t_tok);
-		printf "%s• 当月用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(q_m), m_pct, fmt_num(m_rem), fmt_num(m_tok);
+				m_rem = q_m - m_req;
+				if (m_rem < 0) m_rem = 0;
+				m_pct = (q_m > 0) ? (m_req * 100.0 / q_m) : 0;
+
+				printf "%s• 核心模型 : %s (Free Tier: %d RPM | %s RPD | %s TPM)\n", pfx, mod, rpm, fmt_num(rpd), tpm_str;
+				printf "%s• 当日用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(rpd), t_pct, fmt_num(t_rem), fmt_num(t_tok);
+				printf "%s• 当月用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(q_m), m_pct, fmt_num(m_rem), fmt_num(m_tok);
+			}
+		}
+
 		if (last_u != "无" && last_u != "暂无调用") {
 			printf "%s• 最近调用 : %s (消耗 %s Tokens | 研判 %d 个候选域名)\n", pfx, last_u, fmt_num(last_tok), last_cand;
 		}
@@ -565,13 +674,14 @@ do_switch_model() {
 	if [ -z "$model_list" ]; then
 		echo "⚠️  无法从云端动态获取（网络超时或接口异常），载入常用推荐模型列表..."
 		model_list="gemini-3.5-flash-lite
-gemini-3.5-flash
+gemini-3.1-flash-lite
 gemini-3.8-flash
+gemini-3.7-flash
 gemini-flash-lite-latest
 gemini-flash-latest
 gemini-2.5-flash
 gemini-2.5-pro
-gemini-pro-latest"
+gemini-3.1-pro"
 	else
 		echo "✅ 成功从 Google 官方实时拉取到最新可用模型列表！"
 	fi
@@ -579,6 +689,7 @@ gemini-pro-latest"
 	echo "------------------------------------------------------------"
 	local idx=1
 	local cur_model="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+	local cur_tier="${GEMINI_TIER:-free}"
 
 	local old_ifs="$IFS"
 	IFS='
@@ -590,14 +701,28 @@ gemini-pro-latest"
 		if [ "$m" = "$cur_model" ]; then
 			tag=" 🌟 [当前使用]"
 		fi
-		if [ "$m" = "gemini-3.5-flash-lite" ]; then
-			tag="$tag (官方首选: 500 RPD 宽裕)"
-		elif echo "$m" | grep -q "lite"; then
-			tag="$tag (500 RPD 宽裕)"
-		elif echo "$m" | grep -qE "pro"; then
-			tag="$tag (⚠️ 20 RPD 极低额度)"
-		elif echo "$m" | grep -qE "flash"; then
-			tag="$tag (⚠️ 20 RPD 极低额度)"
+		if [ "$cur_tier" = "paid" ]; then
+			if echo "$m" | grep -qE '^gemma'; then
+				tag="$tag (极宽裕 | 开源模型)"
+			elif [ "$m" = "gemini-3.5-flash-lite" ] || [ "$m" = "gemini-3.1-flash-lite" ]; then
+				tag="$tag (极速低成本 | 推荐)"
+			elif echo "$m" | grep -qE "pro"; then
+				tag="$tag (深度推理旗舰 | 复杂协议研判推荐)"
+			elif echo "$m" | grep -qE "flash"; then
+				tag="$tag (均衡首选 | 推荐)"
+			fi
+		else
+			if echo "$m" | grep -qE '^gemma'; then
+				tag="$tag (14,400 RPD 极宽裕 | 30 RPM)"
+			elif [ "$m" = "gemini-3.5-flash-lite" ] || [ "$m" = "gemini-3.1-flash-lite" ] || [ "$m" = "gemini-flash-lite-latest" ]; then
+				tag="$tag (官方首选: 500 RPD 宽裕 | 15 RPM)"
+			elif [ "$m" = "gemini-2.5-flash-lite" ]; then
+				tag="$tag (⚠️ 20 RPD 极低额度 | 10 RPM)"
+			elif echo "$m" | grep -qE "pro|omni|gemini-2(\.0)?-"; then
+				tag="$tag (🚫 0 RPD 免费层无配额不可用)"
+			elif echo "$m" | grep -qE "flash"; then
+				tag="$tag (⚠️ 20 RPD 极低额度 | 5 RPM)"
+			fi
 		fi
 		printf "  %2d) %-30s%s\n" "$idx" "$m" "$tag"
 		eval "m_${idx}=\"$m\""
@@ -622,7 +747,7 @@ gemini-pro-latest"
 			read -r custom_mod
 			custom_mod="$(echo "$custom_mod" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 			if [ -n "$custom_mod" ]; then
-				save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$custom_mod"
+				save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$custom_mod" "$cur_tier"
 				echo "🎉 模型已成功更新为: $custom_mod"
 			else
 				echo "⚠️  输入为空，取消操作。"
@@ -632,7 +757,20 @@ gemini-pro-latest"
 			if echo "$m_choice" | grep -Eq '^[0-9]+$' && [ "$m_choice" -ge 1 ] && [ "$m_choice" -le "$total_models" ]; then
 				eval "chosen_mod=\"\$m_${m_choice}\""
 				if [ -n "$chosen_mod" ]; then
-					save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$chosen_mod"
+					if [ "$cur_tier" = "free" ]; then
+						if echo "$chosen_mod" | grep -qE "pro|omni|gemini-2(\.0)?-"; then
+							echo "⚠️  【警告】模型 $chosen_mod 在 Google AI Studio 免费层级中配额为 0 (不可用)！"
+							printf "强行切换后调用可能报 429/RESOURCE_EXHAUSTED 错误，确定继续切换吗? [y/N]: "
+							read -r confirm_zero
+							if [ "$confirm_zero" != "y" ] && [ "$confirm_zero" != "Y" ]; then
+								echo "ℹ️  已取消切换，保持当前模型: $cur_model"
+								return 0
+							fi
+						elif echo "$chosen_mod" | grep -qE "flash" && [ "$chosen_mod" != "gemini-3.5-flash-lite" ] && [ "$chosen_mod" != "gemini-3.1-flash-lite" ] && [ "$chosen_mod" != "gemini-flash-lite-latest" ]; then
+							echo "💡 提示: 模型 $chosen_mod 在免费层每日仅限 20 次请求 (5 RPM)，配额极紧凑，建议首选 gemini-3.5-flash-lite (500 RPD)。"
+						fi
+					fi
+					save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$chosen_mod" "$cur_tier"
 					echo "🎉 模型已成功切换为: $chosen_mod"
 				fi
 			else
@@ -656,9 +794,12 @@ do_config() {
 	if [ -n "$GITHUB_TOKEN" ]; then
 		mask_github="$(echo "$GITHUB_TOKEN" | awk '{if(length($0)>12) print substr($0,1,8) "****************" substr($0,length($0)-3); else print "已配置(已隐藏)"}')"
 	fi
+	local tier_str="免费层级 (Free Tier)"
+	[ "$GEMINI_TIER" = "paid" ] && tier_str="付费计费层级 (Paid Tier / Pay-as-you-go)"
 	echo "🔑 Gemini API Key : $mask_gemini"
 	echo "🐙 GitHub Token   : $mask_github"
 	echo "🤖 AI 模型名称    : ${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+	echo "💳 API 计费层级   : $tier_str"
 	echo "------------------------------------------------------------"
 	show_ai_usage_stats "  "
 	echo "------------------------------------------------------------"
@@ -666,29 +807,43 @@ do_config() {
 	echo "  1) 更新/设置 Gemini API Key"
 	echo "  2) 更新/设置 GitHub Token (用于远程规则仓库自动提交)"
 	echo "  3) 切换 Gemini 模型 (当前: ${GEMINI_MODEL:-gemini-3.5-flash-lite})"
-	echo "  4) 清空本地所有已存凭据"
+	echo "  4) 切换 API 计费层级 (当前: $tier_str)"
+	echo "  5) 清空本地所有已存凭据"
 	echo "  0) 返回/退出"
 	echo "------------------------------------------------------------"
-	printf "请输入选项 [0-4]: "
+	printf "请输入选项 [0-5]: "
 	read -r cfg_choice
 	case "$cfg_choice" in
 		1)
 			printf "请输入全新的 Gemini API Key: "
 			read -r new_g_key
-			[ -n "$new_g_key" ] && save_credentials "$new_g_key" "$GITHUB_TOKEN" "$GEMINI_MODEL" && echo "✅ Gemini API Key 已更新！"
+			[ -n "$new_g_key" ] && save_credentials "$new_g_key" "$GITHUB_TOKEN" "$GEMINI_MODEL" "$GEMINI_TIER" && echo "✅ Gemini API Key 已更新！"
 			;;
 		2)
 			printf "请输入全新的 GitHub Token: "
 			read -r new_gh_tok
-			[ -n "$new_gh_tok" ] && save_credentials "$GEMINI_API_KEY" "$new_gh_tok" "$GEMINI_MODEL" && echo "✅ GitHub Token 已更新！"
+			[ -n "$new_gh_tok" ] && save_credentials "$GEMINI_API_KEY" "$new_gh_tok" "$GEMINI_MODEL" "$GEMINI_TIER" && echo "✅ GitHub Token 已更新！"
 			;;
 		3)
 			do_switch_model
 			;;
 		4)
+			echo "当前 API 计费层级: $tier_str"
+			echo "  1) 免费层级 (Free Tier: 500 RPD / 20 RPD 速率受限，免费但有限额)"
+			echo "  2) 付费计费层级 (Paid Tier: 绑卡按量计费，无 RPD 每日限额，Pro 模型全开)"
+			printf "请选择 [1-2 / 0 取消]: "
+			read -r tier_choice
+			case "$tier_choice" in
+				1) save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$GEMINI_MODEL" "free" && echo "✅ 已切换为: 免费层级 (Free Tier)！" ;;
+				2) save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$GEMINI_MODEL" "paid" && echo "✅ 已切换为: 付费计费层级 (Paid Tier / Pay-as-you-go)！" ;;
+				*) echo "保持当前设置。" ;;
+			esac
+			;;
+		5)
 			rm -f "$CRED_FILE" 2>/dev/null
 			export GEMINI_API_KEY=""
 			export GITHUB_TOKEN=""
+			export GEMINI_TIER="free"
 			echo "🧹 本地私有凭据已彻底清空！"
 			;;
 		*) echo "已退出配置。" ;;
@@ -2319,9 +2474,9 @@ do_ai_audit() {
 
 	# 模型不可用时的回退机制
 	if grep -q '"error"' "$resp_file" && grep -q 'NOT_FOUND' "$resp_file"; then
-		if [ "$model" != "gemini-2.5-flash" ]; then
-			echo "🔄 检测到模型 $model 不可用，平滑切换至 gemini-2.5-flash 重试..."
-			model="gemini-2.5-flash"
+		if [ "$model" != "gemini-3.5-flash-lite" ]; then
+			echo "🔄 检测到模型 $model 不可用，平滑切换至官方推荐 gemini-3.5-flash-lite 重试..."
+			model="gemini-3.5-flash-lite"
 			api_url="https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}"
 			awk '
 			BEGIN {
@@ -2345,7 +2500,12 @@ do_ai_audit() {
 	# 检查报错
 	if grep -q '"error"' "$resp_file" 2>/dev/null; then
 		local err_msg="$(grep -o -E '"message"[[:space:]]*:[[:space:]]*"[^"]+"' "$resp_file" | head -n 1 | cut -d'"' -f4)"
-		echo "❌ Gemini API 调用失败: ${err_msg:-请检查 API Key 或网络连通性}"
+		if grep -q 'RESOURCE_EXHAUSTED' "$resp_file" 2>/dev/null; then
+			echo "❌ Gemini API 配额已耗尽 (RESOURCE_EXHAUSTED / 429)！"
+			echo "💡 提示: 若当前为免费层级，可运行 capctl config 切换为高额度模型 (如 gemini-3.5-flash-lite 500 RPD) 或付费层级。"
+		else
+			echo "❌ Gemini API 调用失败: ${err_msg:-请检查 API Key 或网络连通性}"
+		fi
 		rm -f "$resp_file" "$filtered_json"
 		return 1
 	fi
