@@ -2730,7 +2730,18 @@ do_analyze() {
 	local keyword=""
 	local force_refresh=0
 
-	if [ -n "$arg1" ] && [ -d "$arg1" ]; then
+	if [ "$arg1" = "last" ] || [ "$arg1" = "prev" ]; then
+		local last_info="/var/run/capctl_last_session"
+		[ ! -f "$last_info" ] && last_info="$(get_largest_mount)/pcap_vault/.last_session_info"
+		if [ -f "$last_info" ]; then
+			target_dir="$(grep 'LAST_DEST_DIR=' "$last_info" 2>/dev/null | cut -d'"' -f2)"
+		fi
+		if [ "$arg2" = "--refresh" ] || [ "$arg2" = "-f" ]; then
+			force_refresh=1
+		else
+			keyword="$arg2"
+		fi
+	elif [ -n "$arg1" ] && [ -d "$arg1" ]; then
 		target_dir="$arg1"
 		if [ "$arg2" = "--refresh" ] || [ "$arg2" = "-f" ]; then
 			force_refresh=1
