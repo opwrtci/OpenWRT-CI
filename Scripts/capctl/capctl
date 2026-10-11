@@ -84,6 +84,11 @@ save_credentials() {
 	export GITHUB_TOKEN="$gh_tok"
 	export GEMINI_MODEL="$g_mod"
 	CRED_FILE="$target_conf"
+
+	local usage_file="$(get_ai_usage_file)"
+	if [ -f "$usage_file" ]; then
+		sed -i -E "s/\"model\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"model\": \"$g_mod\"/g" "$usage_file" 2>/dev/null || true
+	fi
 }
 
 rotate_ai_log() {
@@ -248,6 +253,8 @@ get_or_init_ai_usage() {
   "last_candidates": $last_cand
 }
 EOF
+	else
+		sed -i -E "s/\"model\"[[:space:]]*:[[:space:]]*\"[^\"]+\"/\"model\": \"$model\"/g" "$usage_file" 2>/dev/null || true
 	fi
 
 	# 跨日 / 跨月检查
@@ -387,10 +394,13 @@ show_ai_usage_stats() {
 	load_credentials
 	[ -z "$GEMINI_API_KEY" ] && return 0
 
+	local active_mod="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+	active_mod="${active_mod#\"}"; active_mod="${active_mod%\"}"; active_mod="${active_mod#\'}"; active_mod="${active_mod%\'}"
+
 	local usage_file="$(get_ai_usage_file)"
 	get_or_init_ai_usage
 
-	awk -v pfx="$prefix" '
+	awk -v pfx="$prefix" -v cur_mod="$active_mod" '
 	function fmt_num(n) {
 		if (n >= 1000) {
 			k = int(n / 1000);
@@ -402,13 +412,15 @@ show_ai_usage_stats() {
 	BEGIN { RS="}"; FS="," }
 	{
 		if ($0 !~ /"model"/) next;
-		mod = "gemini-3.5-flash-lite";
+		mod = (cur_mod != "") ? cur_mod : "gemini-3.5-flash-lite";
 		rpd = 1500; rpm = 15; q_m = 45000;
 		t_req = 0; t_tok = 0;
 		m_req = 0; m_tok = 0;
 		last_u = "暂无调用"; last_tok = 0; last_cand = 0;
 
-		if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
+		if (cur_mod != "") {
+			mod = cur_mod;
+		} else if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); mod = s;
 		}
 		if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
