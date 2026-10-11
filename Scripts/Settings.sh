@@ -321,29 +321,7 @@ if [ -f "$SYS_PROFILE" ]; then
 	grep -q "zh_CN.UTF-8" "$SYS_PROFILE" || sed -i '$a export LANG="zh_CN.UTF-8"\nexport LC_ALL="zh_CN.UTF-8"' "$SYS_PROFILE"
 fi
 
-#部署全量抓包与 Sing-Box 实时决策流排障取证系统 (CapCtl)
-CAPCTL_SRC_DIR="$GITHUB_WORKSPACE/Scripts/capctl"
-[ -d "$CAPCTL_SRC_DIR" ] || CAPCTL_SRC_DIR="$(dirname "$0")/capctl"
-if [ -d "$CAPCTL_SRC_DIR" ]; then
-	echo "-> Deploying CapCtl suite to package/base-files/files/..."
-	mkdir -p ./package/base-files/files/usr/bin
-	mkdir -p ./package/base-files/files/usr/lib/capctl
-	mkdir -p ./package/base-files/files/etc/profile.d
 
-	cp -f "$CAPCTL_SRC_DIR/capctl" ./package/base-files/files/usr/bin/
-	cp -f "$CAPCTL_SRC_DIR/capctl-rotate" ./package/base-files/files/usr/lib/capctl/
-	cp -f "$CAPCTL_SRC_DIR/capctl-singbox" ./package/base-files/files/usr/lib/capctl/
-	cp -f "$CAPCTL_SRC_DIR/capctl-rotate-singbox" ./package/base-files/files/usr/lib/capctl/
-	cp -f "$CAPCTL_SRC_DIR/99-capctl-alert.sh" ./package/base-files/files/etc/profile.d/
-
-	chmod +x ./package/base-files/files/usr/bin/capctl*
-	chmod +x ./package/base-files/files/usr/lib/capctl/*
-	chmod +x ./package/base-files/files/etc/profile.d/99-capctl-alert.sh
-
-	# 统一命令入口: capctl 与超短别名 cap
-	ln -sf capctl ./package/base-files/files/usr/bin/cap
-	echo "   [OK] CapCtl suite deployed successfully."
-fi
 
 # 固件升级时自动保留 HomeProxy 自定义分流规则与 CapCtl 密钥凭据
 SYSUPGRADE_FILE="./package/base-files/files/etc/sysupgrade.conf"
