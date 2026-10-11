@@ -3609,9 +3609,10 @@ do_stop() {
 			do_analyze "$dest_dir"
 		else
 			echo "💡 提示: 抓包与 Sing-Box 日志已安全封卷归档，系统状态与硬件加速已完全复原。"
-			echo "📊 诊断体检 : 随时输入 capctl analyze (或 capctl audit) 查看深度体检报告"
-			echo "⛏️ 规则挖掘 : 随时输入 capctl extract 查看最新候选分流规则"
-			echo "⚡ 停止并体检: 如需停止后立即查看体检报告，可使用: capctl stop -a"
+			echo "📄 硬盘体检报告 : $dest_dir/triage_summary.txt (可直接 cat/less 查看)"
+			echo "📊 极速命令查看 : 随时输入 capctl analyze (或 capctl analyze last) 0.5秒秒开"
+			echo "⛏️ 规则挖掘集   : $dest_dir/candidate_rules_latest.txt"
+			echo "⚡ 停止并打印   : 下次如需停止后直接在屏幕输出报告，可使用: capctl stop -a"
 			echo "============================================================"
 		fi
 
@@ -3700,6 +3701,13 @@ do_status() {
 			fi
 		fi
 		echo "📁 保存目录 : $dest_dir"
+		local last_info_file="/var/run/capctl_last_session"
+		if [ -f "$last_info_file" ]; then
+			local last_dest="$(grep 'LAST_DEST_DIR=' "$last_info_file" 2>/dev/null | cut -d'"' -f2)"
+			if [ -n "$last_dest" ] && [ -f "$last_dest/triage_summary.txt" ]; then
+				echo "📄 上次体检报告 : $last_dest/triage_summary.txt (可直接 cat/less 查看)"
+			fi
+		fi
 		echo "📦 单卷限额 : ${CHUNK_SIZE_MB} MB (抓包与 Sing-Box 日志独立切片)"
 		echo "📦 数据分卷 : $pcap_count 个 cap_*.pcap | $log_count 个 singbox_*.log (上限: ${MAX_SLICES})"
 		echo "💾 当前已存 : $cur_size"
@@ -3732,6 +3740,9 @@ do_status() {
 			echo "          ⚪ 抓包看门狗当前未运行 (Capture Inactive)         "
 			echo "============================================================"
 			echo "📁 上次保存目录 : $LAST_DEST_DIR"
+			if [ -f "$LAST_DEST_DIR/triage_summary.txt" ]; then
+				echo "📄 硬盘体检报告 : $LAST_DEST_DIR/triage_summary.txt (可直接 cat/less 查看)"
+			fi
 			echo "⏰ 上次启动时间 : $LAST_START_TIME"
 			echo "🛑 上次停止时间 : $LAST_STOP_TIME"
 			echo "⏱️  上次运行时长 : $LAST_DURATION"
@@ -3750,7 +3761,10 @@ do_status() {
 			echo "💡 常用操作指引 :"
 			echo "   • capctl start           : 立即开启全新轻量抓包会话"
 			echo "   • capctl restart         : 平滑重新开启抓包"
-			echo "   • capctl analyze         : 对上次抓包数据运行综合诊断"
+			echo "   • capctl analyze         : 对上次抓包数据运行综合诊断 (0.5秒秒开)"
+			if [ -f "$LAST_DEST_DIR/triage_summary.txt" ]; then
+				echo "   • cat $LAST_DEST_DIR/triage_summary.txt : 直接阅读硬盘体检报告"
+			fi
 			echo "   • capctl audit           : 专项审计分流漏网与直连建议"
 			echo "============================================================"
 		else
@@ -3979,6 +3993,15 @@ do_menu() {
 		[ -f "$STATE_DIR/ai_autopilot" ] && ai_tag="🟢 已开启 (24h 周期沉淀与自动提交)"
 		echo " 🟢 抓包状态: [正在运行 (PID: $pid)] | 模式: $mode"
 		echo " 🤖 AI 闭环 : $ai_tag"
+		local cur_dest="$(cat "$STATE_DIR/current_dest_dir" 2>/dev/null)"
+		[ -n "$cur_dest" ] && echo " 📁 当前目录: $cur_dest"
+		local last_info_file="/var/run/capctl_last_session"
+		if [ -f "$last_info_file" ]; then
+			local last_dest="$(grep 'LAST_DEST_DIR=' "$last_info_file" 2>/dev/null | cut -d'"' -f2)"
+			if [ -n "$last_dest" ] && [ -f "$last_dest/triage_summary.txt" ]; then
+				echo " 📄 上次体检: $last_dest/triage_summary.txt (cat 查看)"
+			fi
+		fi
 	else
 		echo " ⚪ 抓包状态: [待机中 / 未运行]"
 		local last_info_file="/var/run/capctl_last_session"
@@ -3987,6 +4010,12 @@ do_menu() {
 			ai_last_tag="⚪ 待机中 (上次会话曾开启)"
 		fi
 		echo " 🤖 AI 闭环 : $ai_last_tag"
+		if [ -f "$last_info_file" ]; then
+			local last_dest="$(grep 'LAST_DEST_DIR=' "$last_info_file" 2>/dev/null | cut -d'"' -f2)"
+			if [ -n "$last_dest" ] && [ -f "$last_dest/triage_summary.txt" ]; then
+				echo " 📄 硬盘体检: $last_dest/triage_summary.txt (cat 查看)"
+			fi
+		fi
 	fi
 	local target_mnt="$(get_largest_mount)"
 	local usage_pct="$(df -k "$target_mnt" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')"
