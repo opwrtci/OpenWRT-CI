@@ -423,10 +423,12 @@ show_ai_usage_stats() {
 		} else if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); mod = s;
 		}
-		if (mod ~ /pro/) {
-			rpd = 50; rpm = 2; q_m = 1500;
+		if (mod ~ /lite/) {
+			rpd = 500; rpm = 15; q_m = 15000; tpm_str = "25万";
+		} else if (mod ~ /pro/) {
+			rpd = 20; rpm = 2; q_m = 600; tpm_str = "3.2万";
 		} else {
-			rpd = 1500; rpm = 15; q_m = 45000;
+			rpd = 20; rpm = 5; q_m = 600; tpm_str = "25万";
 		}
 		if (match($0, /"today_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_req = s + 0;
@@ -458,7 +460,7 @@ show_ai_usage_stats() {
 		if (m_rem < 0) m_rem = 0;
 		m_pct = (q_m > 0) ? (m_req * 100.0 / q_m) : 0;
 
-		tpm_str = (mod ~ /pro/) ? "3.2万" : "100万";
+		tpm_str = (mod ~ /pro/) ? "3.2万" : "25万";
 		printf "%s• 核心模型 : %s (Free Tier: %d RPM | %s RPD | %s TPM)\n", pfx, mod, rpm, fmt_num(rpd), tpm_str;
 		printf "%s• 当日用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(rpd), t_pct, fmt_num(t_rem), fmt_num(t_tok);
 		printf "%s• 当月用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(q_m), m_pct, fmt_num(m_rem), fmt_num(m_tok);
@@ -587,10 +589,15 @@ gemini-pro-latest"
 		local tag=""
 		if [ "$m" = "$cur_model" ]; then
 			tag=" 🌟 [当前使用]"
-		elif [ "$m" = "gemini-3.5-flash-lite" ]; then
-			tag=" (官方高性价比推荐)"
-		elif [ "$m" = "gemini-2.5-flash" ]; then
-			tag=" (稳定基准版本)"
+		fi
+		if [ "$m" = "gemini-3.5-flash-lite" ]; then
+			tag="$tag (官方首选: 500 RPD 宽裕)"
+		elif echo "$m" | grep -q "lite"; then
+			tag="$tag (500 RPD 宽裕)"
+		elif echo "$m" | grep -qE "pro"; then
+			tag="$tag (⚠️ 20 RPD 极低额度)"
+		elif echo "$m" | grep -qE "flash"; then
+			tag="$tag (⚠️ 20 RPD 极低额度)"
 		fi
 		printf "  %2d) %-30s%s\n" "$idx" "$m" "$tag"
 		eval "m_${idx}=\"$m\""
