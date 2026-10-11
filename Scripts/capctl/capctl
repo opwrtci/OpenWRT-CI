@@ -511,6 +511,115 @@ ensure_gemini_key() {
 	return 0
 }
 
+do_switch_model() {
+	load_credentials
+	echo "============================================================"
+	echo "        🤖 Google Gemini 模型在线选择与切换 (Model)        "
+	echo "============================================================"
+	if [ -z "$GEMINI_API_KEY" ]; then
+		echo "⚠️  尚未配置 Gemini API Key，无法连接云端拉取模型列表。"
+		echo "请先在主菜单选择 1) 设置 Gemini API Key。"
+		return 1
+	fi
+
+	echo "🔍 正在连接 Google API 动态获取当前可用的 Gemini 模型列表..."
+	local api_key="${GEMINI_API_KEY#\"}"; api_key="${api_key%\"}"; api_key="${api_key#\'}"; api_key="${api_key%\'}"
+	local proxy_opt="$(get_curl_proxy_opt)"
+	local api_url="https://generativelanguage.googleapis.com/v1beta/models?key=${api_key}"
+	local resp="$(curl -s -m 12 $proxy_opt "$api_url" 2>/dev/null)"
+	local model_list=""
+
+	if [ -n "$resp" ] && ! echo "$resp" | grep -q '"error"'; then
+		model_list="$(echo "$resp" | awk '
+		/"name":/ {
+			sub(/.*"models\//, ""); sub(/"[[:space:]]*,?/, ""); m = $0;
+		}
+		/"supportedGenerationMethods":/ { has_gen = 0; }
+		/"generateContent"/ { has_gen = 1; }
+		/}/ {
+			if (m != "" && has_gen && m ~ /^gemini/ && m !~ /(tts|image|embedding|transcribe|computer-use|robotics|nano|customtools)/) {
+				if (!seen[m]++) print m;
+			}
+			m = ""; has_gen = 0;
+		}')"
+	fi
+
+	# 若云端拉取失败（如网络超时或受阻），回退到预置的常用推荐列表
+	if [ -z "$model_list" ]; then
+		echo "⚠️  无法从云端动态获取（网络超时或接口异常），载入常用推荐模型列表..."
+		model_list="gemini-3.5-flash-lite
+gemini-3.5-flash
+gemini-3.8-flash
+gemini-flash-lite-latest
+gemini-flash-latest
+gemini-2.5-flash
+gemini-2.5-pro
+gemini-pro-latest"
+	else
+		echo "✅ 成功从 Google 官方实时拉取到最新可用模型列表！"
+	fi
+
+	echo "------------------------------------------------------------"
+	local idx=1
+	local cur_model="${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+
+	local old_ifs="$IFS"
+	IFS='
+'
+	for m in $model_list; do
+		m="$(echo "$m" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+		[ -z "$m" ] && continue
+		local tag=""
+		if [ "$m" = "$cur_model" ]; then
+			tag=" 🌟 [当前使用]"
+		elif [ "$m" = "gemini-3.5-flash-lite" ]; then
+			tag=" (官方高性价比推荐)"
+		elif [ "$m" = "gemini-2.5-flash" ]; then
+			tag=" (稳定基准版本)"
+		fi
+		printf "  %2d) %-30s%s\n" "$idx" "$m" "$tag"
+		eval "m_${idx}=\"$m\""
+		idx=$((idx + 1))
+	done
+	IFS="$old_ifs"
+	local total_models=$((idx - 1))
+
+	echo "   C) 手动输入其它自定义模型名称"
+	echo "   0) 返回上一级 (保持当前: $cur_model)"
+	echo "------------------------------------------------------------"
+	printf "请输入选项编号 [1-%d / C / 0]: " "$total_models"
+	read -r m_choice
+
+	case "$m_choice" in
+		0|"")
+			echo "ℹ️  已取消切换，保持当前模型: $cur_model"
+			return 0
+			;;
+		c|C)
+			printf "请输入自定义模型名称: "
+			read -r custom_mod
+			custom_mod="$(echo "$custom_mod" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+			if [ -n "$custom_mod" ]; then
+				save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$custom_mod"
+				echo "🎉 模型已成功更新为: $custom_mod"
+			else
+				echo "⚠️  输入为空，取消操作。"
+			fi
+			;;
+		*)
+			if echo "$m_choice" | grep -Eq '^[0-9]+$' && [ "$m_choice" -ge 1 ] && [ "$m_choice" -le "$total_models" ]; then
+				eval "chosen_mod=\"\$m_${m_choice}\""
+				if [ -n "$chosen_mod" ]; then
+					save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$chosen_mod"
+					echo "🎉 模型已成功切换为: $chosen_mod"
+				fi
+			else
+				echo "❌ 无效编号: $m_choice，取消切换。"
+			fi
+			;;
+	esac
+}
+
 do_config() {
 	load_credentials
 	echo "============================================================"
@@ -552,9 +661,7 @@ do_config() {
 			[ -n "$new_gh_tok" ] && save_credentials "$GEMINI_API_KEY" "$new_gh_tok" "$GEMINI_MODEL" && echo "✅ GitHub Token 已更新！"
 			;;
 		3)
-			printf "请输入模型名称 (默认: gemini-3.5-flash-lite): "
-			read -r new_mod
-			[ -n "$new_mod" ] && save_credentials "$GEMINI_API_KEY" "$GITHUB_TOKEN" "$new_mod" && echo "✅ 模型已更新为: $new_mod"
+			do_switch_model
 			;;
 		4)
 			rm -f "$CRED_FILE" 2>/dev/null
@@ -3766,6 +3873,9 @@ show_help() {
       安全凭据管理器。配置本地私有 Gemini API Key 与 GitHub Token (权限 600)。
       密钥严格保留在本地，绝不提交至代码仓库，绝不同步公网。
 
+  ★ capctl model (或 capctl switch-model)
+      在线连接 Google 官方 API 获取最新可用 Gemini 文本/推理模型列表，提供一键数字序号切换。
+
   ★ capctl wifi
       深度体检 OpenWrt Wi-Fi 射频、终端信号(RSSI)、调制协商(MCS)、空口丢帧(tx failed)与多频负载均衡。
 
@@ -3941,6 +4051,7 @@ case "$INVOKED_CMD" in
 	aisync-cap)            ACTION="ai-sync" ;;
 	addproxy-cap)          ACTION="add-proxy" ;;
 	config-cap)            ACTION="config" ;;
+	model-cap)             ACTION="model" ;;
 	check-cap|doctor-cap)  ACTION="doctor" ;;
 	*)
 		if [ $# -eq 0 ]; then
@@ -4045,6 +4156,12 @@ case "$ACTION" in
 		case "$1" in
 			-h|--help|help) show_help ;;
 			*) do_config "$@" ;;
+		esac
+		;;
+	model|switch-model)
+		case "$1" in
+			-h|--help|help) show_help ;;
+			*) do_switch_model "$@" ;;
 		esac
 		;;
 	doctor|check) do_doctor "$@" ;;
