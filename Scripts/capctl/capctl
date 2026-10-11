@@ -423,11 +423,10 @@ show_ai_usage_stats() {
 		} else if (match($0, /"model"[[:space:]]*:[[:space:]]*"[^"]+"/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*"/, "", s); sub(/"$/, "", s); mod = s;
 		}
-		if (match($0, /"quota_rpd"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); rpd = s + 0;
-		}
-		if (match($0, /"quota_monthly"[[:space:]]*:[[:space:]]*[0-9]+/)) {
-			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); q_m = s + 0;
+		if (mod ~ /pro/) {
+			rpd = 50; rpm = 2; q_m = 1500;
+		} else {
+			rpd = 1500; rpm = 15; q_m = 45000;
 		}
 		if (match($0, /"today_requests"[[:space:]]*:[[:space:]]*[0-9]+/)) {
 			s = substr($0, RSTART, RLENGTH); sub(/.*:[[:space:]]*/, "", s); t_req = s + 0;
@@ -459,7 +458,8 @@ show_ai_usage_stats() {
 		if (m_rem < 0) m_rem = 0;
 		m_pct = (q_m > 0) ? (m_req * 100.0 / q_m) : 0;
 
-		printf "%s• 核心模型 : %s (Free Tier: 15 RPM | %s RPD | 100万 TPM)\n", pfx, mod, fmt_num(rpd);
+		tpm_str = (mod ~ /pro/) ? "3.2万" : "100万";
+		printf "%s• 核心模型 : %s (Free Tier: %d RPM | %s RPD | %s TPM)\n", pfx, mod, rpm, fmt_num(rpd), tpm_str;
 		printf "%s• 当日用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, t_req, fmt_num(rpd), t_pct, fmt_num(t_rem), fmt_num(t_tok);
 		printf "%s• 当月用量 : %d / %s 次请求 (已用 %.1f%%，剩余 %s 次 | 消耗 %s Tokens)\n", pfx, m_req, fmt_num(q_m), m_pct, fmt_num(m_rem), fmt_num(m_tok);
 		if (last_u != "无" && last_u != "暂无调用") {
