@@ -14,6 +14,11 @@ elif [ -f "/var/run/capctl/tcpdump.pid" ] || [ -f "/var/run/capctl/singbox.pid" 
 	mode="$(cat /var/run/capctl/capture_mode 2>/dev/null || echo "轻量报头模式")"
 	printf "\033[1;36m[capctl] 🟢 自动全量抓包与 Sing-Box 实时日志看门狗正在后台运行\033[0m\n"
 	printf "\033[1;36m[capctl] 🎯 模式: %s | 单卷: 100MB | 阈值: 50%%\033[0m\n" "$mode"
+	if [ -f "/var/run/capctl/ai_autopilot" ]; then
+		printf "\033[1;32m[capctl] 🤖 AI 闭环: 🟢 已开启 (AI Autopilot: 24h 周期沉淀与自动提交)\033[0m\n"
+	else
+		printf "\033[1;33m[capctl] 🤖 AI 闭环: ⚪ 未开启 (输入 'capctl ai on' 可随时开启)\033[0m\n"
+	fi
 	printf "\033[1;36m[capctl] 📁 目录: %s\033[0m\n" "$dest"
 	printf "\033[1;33m[capctl] 💡 命令: capctl (进入交互菜单) | capctl stop (停止) | capctl analyze (诊断) | capctl audit (审计)\033[0m\n\n"
 fi
