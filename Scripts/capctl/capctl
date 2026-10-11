@@ -2728,10 +2728,17 @@ do_analyze() {
 	local arg2="$2"
 	local target_dir=""
 	local keyword=""
+	local force_refresh=0
 
 	if [ -n "$arg1" ] && [ -d "$arg1" ]; then
 		target_dir="$arg1"
-		keyword="$arg2"
+		if [ "$arg2" = "--refresh" ] || [ "$arg2" = "-f" ]; then
+			force_refresh=1
+		else
+			keyword="$arg2"
+		fi
+	elif [ "$arg1" = "--refresh" ] || [ "$arg1" = "-f" ]; then
+		force_refresh=1
 	else
 		keyword="$arg1"
 	fi
@@ -2761,6 +2768,14 @@ do_analyze() {
 		latest_pcap="$(find "$target_dir" -maxdepth 1 -name 'cap_*.pcap' 2>/dev/null | sort | tail -n 1)"
 	fi
 
+	# 检查缓存：若抓包已停止且无专项关键词检索，且未要求强制刷新，若已存在历史诊断文件则秒级直出
+	if [ $is_live -eq 0 ] && [ -z "$keyword" ] && [ $force_refresh -eq 0 ] && [ -s "$summary_file" ]; then
+		cat "$summary_file"
+		echo ""
+		echo "💡 [缓存直出] 以上为本次抓包会话归档体检报告 (如需重新计算深度分析，请运行: capctl analyze --refresh)"
+		return 0
+	fi
+
 	local log_files=""
 	if [ $is_live -eq 1 ] && [ -s "$target_dir/.recording_singbox.log" ]; then
 		log_files="$target_dir/.recording_singbox.log"
@@ -2768,6 +2783,8 @@ do_analyze() {
 		log_files="$(find "$target_dir" -maxdepth 1 -name 'singbox_*.log' 2>/dev/null | sort | tail -n 1)"
 		[ -z "$log_files" ] && log_files="$(ls "$target_dir"/singbox_*.log "$target_dir"/.recording_singbox.log 2>/dev/null)"
 	fi
+
+	echo "🔍 正在对抓包数据与 Sing-Box 日志进行深度体检分析，请稍候..."
 
 	{
 		echo "============================================================"
@@ -3388,15 +3405,21 @@ EOF_ALERT
 	echo "⏳ 自动清理 : 超过 3 天的历史数据包与日志将自动清空"
 	echo "💽 分区余量 : $free_human 可用 (当前占用率: ${usage_pct}%)"
 	echo "------------------------------------------------------------"
-	echo "🛑 停止方式 : 输入 capctl stop 回车即可一键停止并打印诊断摘要"
+	echo "🛑 停止方式 : 输入 capctl stop 回车即可一键秒级停止 (或 capctl stop -a 停止并打印体检报告)"
 	echo "============================================================"
 }
 
 do_stop() {
 	local is_emergency=0
 	local is_quick=0
-	[ "$1" = "emergency" ] && is_emergency=1
-	[ "$1" = "quick" ] || [ "$1" = "restart" ] && is_quick=1
+	local run_analysis=0
+	for arg in "$@"; do
+		case "$arg" in
+			emergency) is_emergency=1 ;;
+			quick|restart) is_quick=1 ;;
+			analyze|--analyze|-a) run_analysis=1 ;;
+		esac
+	done
 
 	if ! is_running; then
 		if [ $is_emergency -eq 0 ] && [ $is_quick -eq 0 ]; then
@@ -3570,19 +3593,30 @@ do_stop() {
 		fi
 		echo "------------------------------------------------------------"
 
-		# 9. Run automated Triage Diagnostic Summary
-		do_analyze "$dest_dir"
+		if [ $run_analysis -eq 1 ]; then
+			echo "🔍 正在对当前会话数据执行网络故障诊断..."
+			do_analyze "$dest_dir"
+		else
+			echo "💡 提示: 抓包与 Sing-Box 日志已安全封卷归档，系统状态与硬件加速已完全复原。"
+			echo "📊 诊断体检 : 随时输入 capctl analyze (或 capctl audit) 查看深度体检报告"
+			echo "⛏️ 规则挖掘 : 随时输入 capctl extract 查看最新候选分流规则"
+			echo "⚡ 停止并体检: 如需停止后立即查看体检报告，可使用: capctl stop -a"
+			echo "============================================================"
+		fi
 
-		# 10. 静默刷新最新候选规则数据集 (保持终端清爽，不冗长打印)
-		do_extract "$dest_dir" silent >/dev/null 2>&1
-		if [ -f "$dest_dir/candidate_rules_latest.txt" ]; then
-			echo ""
-			echo "💡 候选规则最新挖掘数据集已自动刷新存盘: $dest_dir/candidate_rules_latest.txt"
-			echo "   (随时运行 cap extract 可查看完整报告，安全隔离：未写入本地路由/未推送远程)"
+		# 后台异步静默刷新最新候选规则数据集 (低优先级运行，绝不阻塞前台终端)
+		if [ -n "$dest_dir" ] && [ -d "$dest_dir" ]; then
+			local nice_cmd=""
+			command -v nice >/dev/null 2>&1 && nice_cmd="nice -n 19"
+			( $nice_cmd "$0" extract "$dest_dir" silent >/dev/null 2>&1 & )
 		fi
 	else
-		# 快速/重启模式下刷新候选规则但跳过冗长 Triage 分析打印
-		do_extract "$dest_dir" silent >/dev/null 2>&1
+		# 快速/重启模式下后台异步刷新候选规则
+		if [ -n "$dest_dir" ] && [ -d "$dest_dir" ]; then
+			local nice_cmd=""
+			command -v nice >/dev/null 2>&1 && nice_cmd="nice -n 19"
+			( $nice_cmd "$0" extract "$dest_dir" silent >/dev/null 2>&1 & )
+		fi
 	fi
 
 	rm -rf "$STATE_DIR" 2>/dev/null
@@ -3784,7 +3818,7 @@ show_help() {
 --------------------------------------------------------------------------------
   • capctl start [full] [nonss] [BPF]  : 开启抓包 (默认轻量防爆模式)
   • capctl restart [full] [nonss]      : 平滑重启抓包 (归档当前切片并无缝开跑)
-  • capctl stop                       : 停止抓包并恢复加速与日志级别
+  • capctl stop [-a|--analyze]        : 停止抓包并恢复加速与日志级别 (加 -a 顺带打印诊断体检)
   • capctl status                     : 查看抓包状态、运行时长、数据切片与存储余量
   • capctl analyze [关键词/设备IP]     : 综合故障诊断、DNS 慢解析与链路重传
   • capctl audit                      : 分流漏网专项审计 (自动揪出走代理的国内应用)
@@ -3808,6 +3842,10 @@ show_help() {
   ★ capctl start
       默认轻量报头模式 (-s 128)。仅截取 IP/TCP/UDP 首部与 TLS ClientHello/DNS，
       节省 90% 存储与 CPU，完全杜绝 4K 视频测速刷爆硬盘。
+
+  ★ capctl stop [-a|--analyze]
+      一键秒级停止抓包与日志采集，立即恢复 NSS 硬件加速与日志级别（耗时 < 1 秒，即停即走）。
+      默认不阻塞前台终端；若需在停止时立即查看《网络故障快速诊断摘要》，可加 -a 或 --analyze。
 
   ★ capctl restart [full] [nonss]
       平滑重启抓包看门狗。若当前有抓包任务正在运行，会自动对当前正在录制的切片
