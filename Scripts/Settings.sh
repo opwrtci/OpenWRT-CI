@@ -11,6 +11,50 @@ find ./feeds/luci/modules/luci-mod-system/ -type f -name "flash.js" -exec sed -i
 #添加编译日期标识
 find ./feeds/luci/modules/luci-mod-status/ -type f -name "10_system.js" -exec sed -i "s/(\(luciversion || ''\))/(\1) + (' \/ $WRT_MARK-$WRT_DATE')/g" {} +
 
+#在 LuCI 原生系统属性页面增补 TCP 拥塞控制算法可视化切换（默认 Cubic，可纯鼠标一键切换 BBR）
+SYS_JS_FILE=$(find ./feeds/luci/modules/luci-mod-system/ -type f -name "system.js" 2>/dev/null | head -n 1)
+if [ -n "$SYS_JS_FILE" ] && [ -f "$SYS_JS_FILE" ]; then
+	python3 - << 'PYEOF' "$SYS_JS_FILE"
+import sys
+f = sys.argv[1]
+content = open(f).read()
+target = "o.value('h23', _('24-Hour Clock'));"
+addition = '''\
+\t\to = s.taboption('general', form.ListValue, 'tcp_congestion_control', _('TCP Congestion Control'), _('TCP 拥塞控制算法。Cubic 为原厂标准稳健算法；BBR 适合高延迟抗丢包优化。'));
+\t\to.value('cubic', _('Cubic (原版默认 / 稳定优先)'));
+\t\to.value('bbr', _('BBR (高吞吐 / 抗丢包优化)'));
+\t\to.default = 'cubic';
+\t\to.rmempty = false;'''
+if target in content and 'tcp_congestion_control' not in content:
+    content = content.replace(target, target + '\n' + addition)
+    open(f, 'w').write(content)
+PYEOF
+fi
+
+#注入 /etc/init.d/system 支持根据 UCI tcp_congestion_control 动态热切换与开机生效
+INIT_SYS_FILE="./package/base-files/files/etc/init.d/system"
+if [ -f "$INIT_SYS_FILE" ]; then
+	python3 - << 'PYEOF' "$INIT_SYS_FILE"
+import sys
+f = sys.argv[1]
+content = open(f).read()
+
+target_val = "\t\t'zonename:string:UTC'"
+add_val = "\t\t'zonename:string:UTC' \\\n\t\t'tcp_congestion_control:string:cubic'"
+
+target_cfg = "\thwclock -u --systz"
+add_cfg = '''\thwclock -u --systz\n\n\t# apply tcp congestion control\n\t[ -n "$tcp_congestion_control" ] && {\n\t\t[ "$tcp_congestion_control" = "bbr" ] && modprobe tcp_bbr 2>/dev/null\n\t\tsysctl -w net.ipv4.tcp_congestion_control="$tcp_congestion_control" >/dev/null 2>&1\n\t}'''
+
+if target_val in content and 'tcp_congestion_control' not in content:
+    content = content.replace(target_val, add_val)
+    content = content.replace(target_cfg, add_cfg)
+    open(f, 'w').write(content)
+PYEOF
+fi
+
+#避免 kmod-tcp-bbr 安装脚本强制覆盖系统默认拥塞控制算法为 bbr
+find ./package/kernel/linux/ -type f -name "sysctl-tcp-bbr.conf" -exec sed -i 's/^net.ipv4.tcp_congestion_control=bbr/# net.ipv4.tcp_congestion_control=bbr/g' {} + 2>/dev/null || true
+
 WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 if [ -f "$WIFI_UC" ]; then
 	#修改WIFI名称
@@ -154,8 +198,7 @@ net.netfilter.nf_conntrack_tcp_timeout_established=7200
 net.netfilter.nf_conntrack_tcp_timeout_close_wait=60
 net.netfilter.nf_conntrack_tcp_timeout_fin_wait=30
 net.netfilter.nf_conntrack_tcp_timeout_time_wait=30
-# 固化默认 TCP 拥塞控制为 BBR (随 74-tcp-bbr 模块加载后自动生效)
-net.ipv4.tcp_congestion_control=bbr
+# 默认队列调度优化 (与 Cubic/BBR 算法兼容)
 net.core.default_qdisc=fq_codel
 EOF
 
@@ -248,6 +291,22 @@ fi
 exit 0
 EOF
 chmod +x "$SYS_NET_DEF"
+
+#增补TCP拥塞控制默认配置（默认保持原厂稳定Cubic，在Web UI中支持纯鼠标无缝切换BBR）
+SYS_TCP_DEF="./package/base-files/files/etc/uci-defaults/998_set-tcp-congestion.sh"
+mkdir -p "$(dirname "$SYS_TCP_DEF")"
+cat << 'EOF' > "$SYS_TCP_DEF"
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# 确保系统默认 TCP 拥塞控制算法为稳定的 cubic（可在 LuCI 系统属性中随时鼠标切换 BBR）
+
+if ! uci -q get system.@system[0].tcp_congestion_control >/dev/null; then
+	uci -q set system.@system[0].tcp_congestion_control='cubic'
+	uci -q commit system
+fi
+exit 0
+EOF
+chmod +x "$SYS_TCP_DEF"
 
 #预置docker用户组，消除dockerd启动时group docker not found警告
 GROUP_FILE="./package/base-files/files/etc/group"
