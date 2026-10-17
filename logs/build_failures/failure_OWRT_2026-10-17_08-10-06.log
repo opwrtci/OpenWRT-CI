@@ -1,0 +1,2347 @@
+Build Failure Diagnostic Report - 2026-10-17_08-10-06
+Target Config: IPQ60XX-WIFI-NO
+Commit SHA: 96b6077858b2c2a4a8c0b9e623d1c849bb0efc78
+=========================================================
+--- 🚨 CRITICAL ERROR SUMMARY (罪魁祸首摘要表) 🚨 ---
+make[3]: *** [Makefile:131: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11/.prepared_d1af0a8653f2403324549ded3b8744aa_6664517399ebbbc92a37c5bb081b5c53] Error 1
+make[2]: *** [package/Makefile:255: package/feeds/packages/miniupnpd/compile] Error 1
+make[1]: *** [package/Makefile:251: /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.package_compile] Error 2
+make: *** [/mnt/build_wrt/include/toplevel.mk:268: world] Error 2
+=========================================================
+
+--- VERBOSE BUILD OUTPUT (LAST 500 LINES) ---
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.configured_*
+rm -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.luci-app-fullconenat-sonic_installed
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.configured_98715a68001fc082a2454d67bd205c32
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.built
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.built_check
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic; echo "$V_Package_luci_app_fullconenat_sonic_postinst" > postinst-pkg; chmod 0755 postinst-pkg;)
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-fullconenat-sonic"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-fullconenat-sonic"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-app-fullconenat-sonic.list && mv /mnt/build_wrt/tmp/luci-app-fullconenat-sonic.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL/conffiles ]; then echo $(IDIR_luci-app-fullconenat-sonic)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/lib/apk/packages/luci-app-fullconenat-sonic.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-app-fullconenat-sonic" --info "version:20260917-r13" --info "tags:openwrt:section=luci" --info "description:LuCI support for SONiC full cone NAT" --info "arch:noarch" --info "license:GPL-2.0-only" --info "origin:feeds/base/emortal/luci-app-fullconenat-sonic" --info "url:https://github.com/openwrt/luci" --info "maintainer:OpenWrt LuCI community" --info "provides:luci-app-fullconenat-sonic-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-app-fullconenat-sonic/pre-deinstall" --info "depends:libc fullconenat-sonic luci-app-firewall" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-app-fullconenat-sonic" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-fullconenat-sonic-20260917-r13.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/etc/uci-defaults/luci-i18n-fullconenat-sonic-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/package/emortal/luci-app-fullconenat-sonic/po/zh_Hans/fullconenat-sonic.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/usr/lib/lua/luci/i18n/fullconenat-sonic.zh-cn.lmo;
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn; )
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-fullconenat-sonic-zh-cn"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-fullconenat-sonic-zh-cn"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-i18n-fullconenat-sonic-zh-cn.list && mv /mnt/build_wrt/tmp/luci-i18n-fullconenat-sonic-zh-cn.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL/conffiles ]; then echo $(IDIR_luci-i18n-fullconenat-sonic-zh-cn)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/lib/apk/packages/luci-i18n-fullconenat-sonic-zh-cn.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-i18n-fullconenat-sonic-zh-cn" --info "version:20260917-r13" --info "tags:openwrt:section=luci" --info "description:Translation for luci-app-fullconenat-sonic - 简体中文 (Simplified Chinese)" --info "arch:noarch" --info "license:GPL-2.0-only" --info "origin:feeds/base/emortal/luci-app-fullconenat-sonic" --info "url:" --info "maintainer:" --info "provides:luci-i18n-fullconenat-sonic-zh-cn-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/apk-all/luci-i18n-fullconenat-sonic-zh-cn/pre-deinstall" --info "depends:libc luci-app-fullconenat-sonic" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/ipkg-all/luci-i18n-fullconenat-sonic-zh-cn" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-fullconenat-sonic-zh-cn-20260917-r13.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-app-fullconenat-sonic/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-app-fullconenat-sonic_installed
+echo "luci-app-fullconenat-sonic" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-fullconenat-sonic.default.install
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn/etc/uci-defaults/luci-i18n-fullconenat-sonic-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/package/emortal/luci-app-fullconenat-sonic/po/zh_Hans/fullconenat-sonic.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn/usr/lib/lua/luci/i18n/fullconenat-sonic.zh-cn.lmo;
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-fullconenat-sonic/.pkgdir/luci-i18n-fullconenat-sonic-zh-cn/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-i18n-fullconenat-sonic-zh-cn_installed
+echo "luci-i18n-fullconenat-sonic-zh-cn" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-fullconenat-sonic.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/emortal/luci-app-fullconenat-sonic'
+time: package/emortal/luci-app-fullconenat-sonic/compile#0.14#0.23#0.35
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/applications/luci-app-package-manager'
+echo "luci-app-package-manager" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-package-manager.default.install
+echo "luci-i18n-package-manager-zh-cn" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-package-manager.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/applications/luci-app-package-manager'
+time: package/feeds/luci/luci-app-package-manager/compile#0.14#0.22#0.35
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/libs/luci-lib-uqr'
+echo "luci-lib-uqr" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-lib-uqr.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/libs/luci-lib-uqr'
+time: package/feeds/luci/luci-lib-uqr/compile#0.06#0.09#0.15
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-network'
+echo "luci-mod-network" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-mod-network.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-network'
+time: package/feeds/luci/luci-mod-network/compile#0.05#0.09#0.15
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-status'
+echo "luci-mod-status" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-mod-status.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-status'
+time: package/feeds/luci/luci-mod-status/compile#0.07#0.12#0.19
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-system'
+echo "luci-mod-system" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-mod-system.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-system'
+time: package/feeds/luci/luci-mod-system/compile#0.06#0.09#0.15
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-admin-full'
+echo "luci-mod-admin-full" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-mod-admin-full.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/modules/luci-mod-admin-full'
+time: package/feeds/luci/luci-mod-admin-full/compile#0.14#0.11#0.25
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/protocols/luci-proto-ppp'
+echo "luci-proto-ppp" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-proto-ppp.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/protocols/luci-proto-ppp'
+time: package/feeds/luci/luci-proto-ppp/compile#0.07#0.08#0.15
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/libs/rpcd-mod-rrdns'
+echo "rpcd-mod-rrdns" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/rpcd-mod-rrdns.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/libs/rpcd-mod-rrdns'
+time: package/feeds/luci/rpcd-mod-rrdns/compile#0.04#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/package/luci-theme-aurora'
+echo "luci-theme-aurora" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-theme-aurora.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/luci-theme-aurora'
+time: package/luci-theme-aurora/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/package/libs/openssl'
+Package/openssl/add-module 1='provider'; 2='legacy'; 3='/usr/lib/ossl-modules' 4=''
+MOD_TYPE='provider'; MOD_NAME='legacy'; MOD_DIR='/usr/lib/ossl-modules' OSSL_PKG='libopenssl-legacy'
+Package/openssl/add-module 1='engine'; 2='afalg'; 3='/usr/lib/engines-3' 4=''
+MOD_TYPE='engine'; MOD_NAME='afalg'; MOD_DIR='/usr/lib/engines-3' OSSL_PKG='libopenssl-afalg'
+Package/openssl/add-module 1='engine'; 2='devcrypto'; 3='/usr/lib/engines-3' 4=''
+MOD_TYPE='engine'; MOD_NAME='devcrypto'; MOD_DIR='/usr/lib/engines-3' OSSL_PKG='libopenssl-devcrypto'
+Package/openssl/add-module 1='engine'; 2='padlock'; 3='/usr/lib/engines-3' 4=''
+MOD_TYPE='engine'; MOD_NAME='padlock'; MOD_DIR='/usr/lib/engines-3' OSSL_PKG='libopenssl-padlock'
+echo "libopenssl" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/openssl.default.install
+echo "libopenssl-conf" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/openssl.default.install
+echo "libopenssl-legacy" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/openssl.default.install
+echo "openssl-util" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/openssl.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/openssl'
+time: package/libs/openssl/compile#0.06#0.09#0.15
+make[3]: Entering directory '/mnt/build_wrt/package/libs/ustream-ssl'
+echo "libustream-openssl" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/ustream-ssl.openssl.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/ustream-ssl'
+time: package/libs/ustream-ssl/openssl/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/package/network/services/uhttpd'
+echo "uhttpd" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/uhttpd.default.install
+echo "uhttpd-mod-ubus" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/uhttpd.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/network/services/uhttpd'
+time: package/network/services/uhttpd/compile#0.04#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/protocols/luci-proto-ipv6'
+echo "luci-proto-ipv6" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-proto-ipv6.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/protocols/luci-proto-ipv6'
+time: package/feeds/luci/luci-proto-ipv6/compile#0.06#0.08#0.15
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/collections/luci-light'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.prepared_7fe1f815d033df5e3ec629f98ea6e9f9_6664517399ebbbc92a37c5bb081b5c53_check
+for d in luasrc ucode htdocs root src; do if [ -d ./$d ]; then mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/$d; cp -fpR ./$d/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/$d/; fi; done
+true
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.prepared_7fe1f815d033df5e3ec629f98ea6e9f9_6664517399ebbbc92a37c5bb081b5c53
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.configured_*
+rm -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.luci-light_installed
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.configured_98715a68001fc082a2454d67bd205c32
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.built
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.built_check
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light; echo "$V_Package_luci_light_postinst" > postinst-pkg; chmod 0755 postinst-pkg;)
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-light"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-light"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-light.list && mv /mnt/build_wrt/tmp/luci-light.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL/conffiles ]; then echo $(IDIR_luci-light)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/lib/apk/packages/luci-light.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-light" --info "version:26.288.69563~17f97c0" --info "tags:openwrt:section=luci" --info "description:Light OpenWrt set including admin support and the default Bootstrap theme" --info "arch:noarch" --info "license:Apache-2.0" --info "origin:feeds/luci/collections/luci-light" --info "url:https://github.com/openwrt/luci" --info "maintainer:OpenWrt LuCI community" --info "provides:luci-light-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/apk-all/luci-light/pre-deinstall" --info "depends:libc luci-proto-ipv6 luci-app-firewall luci-mod-admin-full luci-proto-ppp luci-theme-aurora rpcd-mod-rrdns uhttpd uhttpd-mod-ubus" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/ipkg-all/luci-light" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-light-26.288.69563~17f97c0.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.pkgdir/luci-light.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.pkgdir/luci-light
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.pkgdir/luci-light
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.pkgdir/luci-light.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-light/.pkgdir/luci-light/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-light_installed
+echo "luci-light" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-light.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/collections/luci-light'
+time: package/feeds/luci/luci-light/compile#0.19#0.17#0.36
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/collections/luci'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.prepared_f9ed15dd7e62b9f8037e47e36146a80f_6664517399ebbbc92a37c5bb081b5c53_check
+for d in luasrc ucode htdocs root src; do if [ -d ./$d ]; then mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/$d; cp -fpR ./$d/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/$d/; fi; done
+true
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.prepared_f9ed15dd7e62b9f8037e47e36146a80f_6664517399ebbbc92a37c5bb081b5c53
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.configured_*
+rm -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.luci_installed
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.configured_98715a68001fc082a2454d67bd205c32
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.built
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.built_check
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci
+/mnt/build_wrt/scripts/ipkg-remove luci /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-athena-led-1.0-r20260610.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-aurora-config-1.2.5-r20260920.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-fullconenat-sonic-20260917-r13.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-gecoosac-20260812-r4.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-mini-diskmanager-1.0.29-r20260215.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-partexp-2.0.5-r20260318.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-app-wolultra-20260812-r3.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-athena-led-zh-cn-26.279.67051~eb3c2fe.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-aurora-config-zh-cn-26.262.61284~a5299ce.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-fullconenat-sonic-zh-cn-20260917-r13.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-gecoosac-zh-cn-20260812-r4.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-mini-diskmanager-zh-cn-26.055.40085~4b2b733.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-partexp-zh-cn-26.088.58914~236187c.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-i18n-wolultra-zh-cn-20260812-r3.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/base/luci-theme-aurora-1.4.0-r20260920.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-app-autoreboot-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-app-firewall-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-app-package-manager-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-base-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-compat-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-i18n-autoreboot-zh-cn-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-i18n-base-zh-cn-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-i18n-firewall-zh-cn-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-i18n-package-manager-zh-cn-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-base-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-ip-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-ipkg-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-jsonc-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-nixio-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lib-uqr-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-light-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-lua-runtime-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-mod-admin-full-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-mod-network-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-mod-status-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-mod-system-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-proto-ipv6-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-proto-ppp-26.288.69563~17f97c0.apk /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-proto-relay-26.288.69563~17f97c0.apk
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci; echo "$V_Package_luci_postinst" > postinst-pkg; chmod 0755 postinst-pkg;)
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci.list && mv /mnt/build_wrt/tmp/luci.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL/conffiles ]; then echo $(IDIR_luci)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/lib/apk/packages/luci.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci" --info "version:26.288.69563~17f97c0" --info "tags:openwrt:section=luci" --info "description:Standard OpenWrt set including package management and attended sysupgrades support" --info "arch:noarch" --info "license:Apache-2.0" --info "origin:feeds/luci/collections/luci" --info "url:https://github.com/openwrt/luci" --info "maintainer:OpenWrt LuCI community" --info "provides:luci-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/apk-all/luci/pre-deinstall" --info "depends:libc luci-light luci-app-package-manager" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/ipkg-all/luci" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-26.288.69563~17f97c0.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.pkgdir/luci.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.pkgdir/luci
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.pkgdir/luci
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.pkgdir/luci.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci/.pkgdir/luci/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci_installed
+echo "luci" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/collections/luci'
+time: package/feeds/luci/luci/compile#0.23#0.27#0.45
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/applications/luci-app-autoreboot'
+echo "luci-app-autoreboot" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-autoreboot.default.install
+echo "luci-i18n-autoreboot-zh-cn" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-autoreboot.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/applications/luci-app-autoreboot'
+time: package/feeds/luci/luci-app-autoreboot/compile#0.05#0.09#0.15
+make[3]: Entering directory '/mnt/build_wrt/package/devel/gperf'
+make[3]: Leaving directory '/mnt/build_wrt/package/devel/gperf'
+time: package/devel/gperf/host-compile#0.05#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/package/libs/gnulib-l10n'
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/gnulib-l10n'
+time: package/libs/gnulib-l10n/host-compile#0.05#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libiconv-full'
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libiconv-full'
+time: package/libs/libiconv-full/host-compile#0.06#0.03#0.10
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libunistring'
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libunistring'
+time: package/libs/libunistring/host-compile#0.05#0.05#0.11
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libxml2'
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libxml2'
+time: package/libs/libxml2/host-compile#0.03#0.04#0.08
+make[3]: Entering directory '/mnt/build_wrt/package/libs/gettext-full'
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/gettext-full'
+time: package/libs/gettext-full/host-compile#0.09#0.11#0.20
+make[3]: Entering directory '/mnt/build_wrt/package/libs/gmp'
+echo "libgmp" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/gmp.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/gmp'
+time: package/libs/gmp/compile#0.06#0.05#0.12
+make[3]: Entering directory '/mnt/build_wrt/package/libs/nettle'
+echo "libnettle" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/nettle.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/nettle'
+time: package/libs/nettle/compile#0.03#0.04#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/gnutls'
+echo "libgnutls" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/gnutls.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/gnutls'
+time: package/feeds/packages/gnutls/compile#0.05#0.05#0.10
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libtasn1'
+echo "libtasn1" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libtasn1.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libtasn1'
+time: package/feeds/packages/libtasn1/compile#0.05#0.04#0.10
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libtasn1'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libtasn1'
+time: package/feeds/packages/libtasn1/host-compile#0.04#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libtirpc'
+echo "libtirpc" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libtirpc.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libtirpc'
+time: package/feeds/packages/libtirpc/compile#0.05#0.04#0.10
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/perl'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/perl'
+time: package/feeds/packages/perl/host-compile#0.10#0.09#0.20
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/perl/perl-parse-yapp'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/perl/perl-parse-yapp'
+time: package/feeds/packages/perl/perl-parse-yapp/host-compile#0.03#0.01#0.05
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libffi'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libffi'
+time: package/feeds/packages/libffi/host-compile#0.05#0.03#0.09
+make[3]: Entering directory '/mnt/build_wrt/package/utils/bzip2'
+make[3]: Leaving directory '/mnt/build_wrt/package/utils/bzip2'
+time: package/utils/bzip2/host-compile#0.04#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/lang/python/python3'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/lang/python/python3'
+time: package/feeds/packages/python3/host-compile#0.10#0.07#0.18
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/rpcsvc-proto'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/rpcsvc-proto'
+time: package/feeds/packages/rpcsvc-proto/host-compile#0.06#0.05#0.12
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/net/samba4'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/net/samba4'
+time: package/feeds/packages/samba4/host-compile#0.07#0.10#0.17
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libcap'
+echo "libcap" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libcap.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libcap'
+time: package/libs/libcap/compile#0.04#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/package/libs/popt'
+echo "libpopt" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/popt.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/popt'
+time: package/libs/popt/compile#0.04#0.02#0.06
+make[3]: Entering directory '/mnt/build_wrt/package/libs/readline'
+echo "libreadline" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/readline.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/readline'
+time: package/libs/readline/compile#0.05#0.03#0.09
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/liburing'
+echo "liburing" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/liburing.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/liburing'
+time: package/feeds/packages/liburing/compile#0.04#0.02#0.07
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/utils/attr'
+echo "attr" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/attr.default.install
+echo "libattr" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/attr.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/utils/attr'
+time: package/feeds/packages/attr/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/expat'
+echo "libexpat" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/expat.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/expat'
+time: package/feeds/packages/expat/compile#0.04#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/gdbm'
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/gdbm'
+time: package/feeds/packages/gdbm/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libdaemon'
+echo "libdaemon" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libdaemon.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libdaemon'
+time: package/feeds/packages/libdaemon/compile#0.04#0.02#0.06
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/utils/dbus'
+echo "libdbus" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/dbus.default.install
+echo "dbus" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/dbus.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/utils/dbus'
+time: package/feeds/packages/dbus/compile#0.04#0.04#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/avahi'
+echo "libavahi-client" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/avahi.dbus.install
+echo "libavahi-dbus-support" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/avahi.dbus.install
+echo "avahi-dbus-daemon" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/avahi.dbus.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/avahi'
+time: package/feeds/packages/avahi/dbus/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/net/samba4'
+echo "samba4-libs" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/samba4.default.install
+echo "samba4-server" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/samba4.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/net/samba4'
+time: package/feeds/packages/samba4/compile#0.10#0.09#0.20
+make[3]: Entering directory '/mnt/build_wrt/feeds/luci/applications/luci-app-samba4'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.prepared_4b899a05b1f66001d7554b63b38b8fe6_6664517399ebbbc92a37c5bb081b5c53_check
+for d in luasrc ucode htdocs root src; do if [ -d ./$d ]; then mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/$d; cp -fpR ./$d/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/$d/; fi; done
+true
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4 -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.prepared_4b899a05b1f66001d7554b63b38b8fe6_6664517399ebbbc92a37c5bb081b5c53
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.configured_*
+rm -f /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.luci-app-samba4_installed
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.configured_98715a68001fc082a2454d67bd205c32
+rm -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.built
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.built_check
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.built
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4 /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4 -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4; echo "$V_Package_luci_app_samba4_postinst" > postinst-pkg; chmod 0755 postinst-pkg;)
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-samba4"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-app-samba4"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4 && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-app-samba4.list && mv /mnt/build_wrt/tmp/luci-app-samba4.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL/conffiles ]; then echo $(IDIR_luci-app-samba4)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/lib/apk/packages/luci-app-samba4.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-app-samba4" --info "version:26.288.69563~17f97c0" --info "tags:openwrt:section=luci" --info "description:Network Shares - Samba 4 SMB/CIFS fileserver" --info "arch:noarch" --info "license:Apache-2.0" --info "origin:feeds/luci/applications/luci-app-samba4" --info "url:https://github.com/openwrt/luci" --info "maintainer:OpenWrt LuCI community" --info "provides:luci-app-samba4-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-app-samba4/pre-deinstall" --info "depends:libc luci-base samba4-server" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-app-samba4" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-app-samba4-26.288.69563~17f97c0.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn
+mkdir -p /mnt/build_wrt/bin/targets/qualcommax/ipq60xx/packages /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/etc/uci-defaults/luci-i18n-samba4-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/feeds/luci/applications/luci-app-samba4/po/zh_Hans/samba4.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/usr/lib/lua/luci/i18n/samba4.zh-cn.lmo;
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn -name '.svn' -o -name '.#*' -o -name '*~'| xargs -r rm -rf
+export CROSS="aarch64-openwrt-linux-musl-"  NO_RENAME=1 ; NM="aarch64-openwrt-linux-musl-nm" STRIP="/mnt/build_wrt/staging_dir/host/bin/sstrip -z" STRIP_KMOD="/mnt/build_wrt/scripts/strip-kmod.sh" PATCHELF="/mnt/build_wrt/staging_dir/host/bin/patchelf" /mnt/build_wrt/scripts/rstrip.sh /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn
+install -d -m0755 /mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn; )
+( echo "#!/bin/sh"; echo "[ \"\${IPKG_NO_SCRIPT}\" = \"1\" ] && exit 0"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-samba4-zh-cn"'; echo "add_group_and_user"; echo "default_postinst"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/postinst-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/postinst-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-install;
+( echo "#!/bin/sh"; echo 'export PKG_UPGRADE=1'; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-install ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-install"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-upgrade;
+( echo "#!/bin/sh"; echo "[ -s "\${IPKG_INSTROOT}/lib/functions.sh" ] || exit 0"; echo ". \${IPKG_INSTROOT}/lib/functions.sh"; echo 'export root="${IPKG_INSTROOT}"'; echo 'export pkgname="luci-i18n-samba4-zh-cn"'; echo "default_prerm"; [ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/prerm-pkg ] || sed '/^\s*#!/d' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/prerm-pkg"; ) > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/pre-deinstall;
+[ ! -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/postrm ] || sed -zi 's/^\s*#!/#!/' "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/postrm";
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.rusers; fi;
+if [ -n "" ]; then echo  > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.alternatives; fi;
+(cd /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn && find . -type f,l -printf "/%P\n" | sort > /mnt/build_wrt/tmp/luci-i18n-samba4-zh-cn.list && mv /mnt/build_wrt/tmp/luci-i18n-samba4-zh-cn.list /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.list)
+# Move conffiles to IDIR and build conffiles_static with csums
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/conffiles ]; then mv -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/conffiles /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.conffiles_static; done; fi
+# Some package (base-files) manually append stuff to conffiles
+# Append stuff from it and delete the CONTROL directory since everything else should be migrated
+if [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL/conffiles ]; then echo $(IDIR_luci-i18n-samba4-zh-cn)/CONTROL/conffiles >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.conffiles; for file in $(cat /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL/conffiles); do [ -f /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/$file ] || continue; csum=$(/mnt/build_wrt/staging_dir/host/bin/mkhash sha256 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/$file); echo $file $csum >> /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/lib/apk/packages/luci-i18n-samba4-zh-cn.conffiles_static; done; rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL/conffiles; fi
+if [ -z "$(ls -A /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL 2>/dev/null)" ]; then rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL; else echo "CONTROL directory /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn/CONTROL is not empty! This is not right and should be checked!" >&2; exit 1; fi
+SOURCE_DATE_EPOCH=0 /mnt/build_wrt/staging_dir/host/bin/fakeroot /mnt/build_wrt/staging_dir/host/bin/apk mkpkg --info "name:luci-i18n-samba4-zh-cn" --info "version:26.288.69563~17f97c0" --info "tags:openwrt:section=luci" --info "description:Translation for luci-app-samba4 - 简体中文 (Simplified Chinese)" --info "arch:noarch" --info "license:Apache-2.0" --info "origin:feeds/luci/applications/luci-app-samba4" --info "url:" --info "maintainer:Andy Walsh <andy.walsh44+github@gmail.com>" --info "provides:luci-i18n-samba4-zh-cn-any"  --script "post-install:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-install" --script "post-upgrade:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/post-upgrade" --script "pre-deinstall:/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/apk-all/luci-i18n-samba4-zh-cn/pre-deinstall" --info "depends:libc luci-app-samba4" --files "/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/ipkg-all/luci-i18n-samba4-zh-cn" --sign /mnt/build_wrt/private-key.pem --output "/mnt/build_wrt/bin/packages/aarch64_cortex-a53/luci/luci-i18n-samba4-zh-cn-26.288.69563~17f97c0.apk"
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/www
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/htdocs/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/www/
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/www/ -type f -name '*.js' | while read src; do if jsmin < "$src" > "$src.o"; then mv "$src.o" "$src"; fi; done
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/www/ -type f -name '*.css' | while read src; do if csstidy "$src" --template=highest --remove_last_semicolon=true "$src.o"; then mv "$src.o" "$src"; fi; done
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/
+cp -pR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/root/* /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-app-samba4/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-app-samba4_installed
+echo "luci-app-samba4" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-samba4.default.install
+rm -rf /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn.installed /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn
+mkdir -p /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn/etc/uci-defaults
+echo "uci set luci.languages.zh_cn='简体中文 (Simplified Chinese)'; uci commit luci" > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn/etc/uci-defaults/luci-i18n-samba4-zh-cn
+install -d -m0755 /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn/usr/lib/lua/luci/i18n
+po2lmo /mnt/build_wrt/feeds/luci/applications/luci-app-samba4/po/zh_Hans/samba4.po /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn/usr/lib/lua/luci/i18n/samba4.zh-cn.lmo;
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn.installed
+mkdir -p /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp
+SHELL= flock /mnt/build_wrt/tmp/.root-copy.flock -c 'cp -fpR /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/luci-app-samba4/.pkgdir/luci-i18n-samba4-zh-cn/. /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/'
+touch /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/root-qualcommax/stamp/.luci-i18n-samba4-zh-cn_installed
+echo "luci-i18n-samba4-zh-cn" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/luci-app-samba4.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/luci/applications/luci-app-samba4'
+time: package/feeds/luci/luci-app-samba4/compile#0.25#0.37#0.62
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/libs/libcap-ng'
+echo "libcap-ng" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libcap-ng.default.install
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/libs/libcap-ng'
+time: package/feeds/packages/libcap-ng/compile#0.05#0.04#0.10
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libnfnetlink'
+echo "libnfnetlink" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libnfnetlink.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libnfnetlink'
+time: package/libs/libnfnetlink/compile#0.03#0.03#0.06
+make[3]: Entering directory '/mnt/build_wrt/package/libs/libnetfilter-conntrack'
+echo "libnetfilter-conntrack" >> /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/pkginfo/libnetfilter-conntrack.default.install
+make[3]: Leaving directory '/mnt/build_wrt/package/libs/libnetfilter-conntrack'
+time: package/libs/libnetfilter-conntrack/compile#0.03#0.03#0.07
+make[3]: Entering directory '/mnt/build_wrt/package/network/utils/iptables'
+make[3]: Leaving directory '/mnt/build_wrt/package/network/utils/iptables'
+time: package/network/utils/iptables/compile#0.04#0.03#0.08
+make[3]: Entering directory '/mnt/build_wrt/feeds/packages/net/miniupnpd'
+touch /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11/.prepared_d1af0a8653f2403324549ded3b8744aa_6664517399ebbbc92a37c5bb081b5c53_check
+. /mnt/build_wrt/include/shell.sh; /mnt/build_wrt/staging_dir/host/bin/libdeflate-gzip -dc /mnt/build_wrt/dl/miniupnpd-2.3.11.tar.gz | tar -C /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11/.. -xf -
+find /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11 -mindepth 1 -type f -not -name '.*' -not -name 'version.date' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -n | tail -n1 > /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11/version.date
+[ ! -d ./src/ ] || cp -fpR ./src/. /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11
+
+Applying /mnt/build_wrt/feeds/packages/net/miniupnpd/patches/010-upnp-igdv2-compat.patch using plaintext: 
+patching file upnphttp.c
+Hunk #1 succeeded at 307 (offset 4 lines).
+patching file upnpsoap.c
+Hunk #1 succeeded at 920 (offset 66 lines).
+Hunk #2 succeeded at 1216 (offset 84 lines).
+
+Applying /mnt/build_wrt/feeds/packages/net/miniupnpd/patches/020-descr-filter-fix.patch using plaintext: 
+patching file upnppermissions.c
+Hunk #1 succeeded at 35 with fuzz 1 (offset 6 lines).
+Hunk #2 succeeded at 202 with fuzz 1 (offset 105 lines).
+Hunk #3 FAILED at 183.
+Hunk #4 FAILED at 203.
+Hunk #5 FAILED at 296.
+Hunk #6 FAILED at 465.
+Hunk #7 FAILED at 511.
+5 out of 7 hunks FAILED -- saving rejects to file upnppermissions.c.rej
+patching file upnppermissions.h
+Hunk #1 FAILED at 43.
+Hunk #2 FAILED at 72.
+2 out of 2 hunks FAILED -- saving rejects to file upnppermissions.h.rej
+Patch failed!  Please fix /mnt/build_wrt/feeds/packages/net/miniupnpd/patches/020-descr-filter-fix.patch!
+make[3]: *** [Makefile:131: /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/miniupnpd-nftables/miniupnpd-2.3.11/.prepared_d1af0a8653f2403324549ded3b8744aa_6664517399ebbbc92a37c5bb081b5c53] Error 1
+make[3]: Leaving directory '/mnt/build_wrt/feeds/packages/net/miniupnpd'
+time: package/feeds/packages/miniupnpd/nftables/compile#0.03#0.04#0.09
+    ERROR: package/feeds/packages/miniupnpd failed to build (build variant: nftables).
+make[2]: *** [package/Makefile:255: package/feeds/packages/miniupnpd/compile] Error 1
+make[2]: Leaving directory '/mnt/build_wrt'
+make[1]: *** [package/Makefile:251: /mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/stamp/.package_compile] Error 2
+make[1]: Leaving directory '/mnt/build_wrt'
+make: *** [/mnt/build_wrt/include/toplevel.mk:268: world] Error 2
+
+--- RECENT ERROR LOGS IN BUILD DIR ---
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5/third_party/heimdal/lib/hcrypto/libtommath/logs/expt_2k.log ===
+   521    533515
+   607    675230
+  1279   2560713
+  2203   7468422
+  3217  17314246
+  4253  33899969
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5/third_party/heimdal/lib/hcrypto/libtommath/logs/expt.log ===
+   513    446633
+   769   1110301
+  1025   2414927
+  2049  14870787
+  2561  26299761
+  3073  44323310
+  4097  98934292
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5/bin/config.log ===
+/* #undef HAVE_DARWIN_INITGROUPS */
+#define HAVE_UTIMBUF 1
+#define HAVE_STRUCT_SIGEVENT 1
+#define HAVE_STRUCT_SIGEVENT_SIGEV_VALUE_SIVAL_PTR 1
+/* #undef HAVE_STRUCT_SIGEVENT_SIGEV_VALUE_SIGVAL_PTR */
+#define HAVE_SYS_KERNEL_PROC_CORE_PATTERN 1
+#define __TIME_T_MAX 1
+#define TIME_T_MAX 67768036191676799ll
+#define HAVE_MAKEDEV 1
+#define REALPATH_TAKES_NULL 1
+#define HAVE_FTRUNCATE_EXTEND 1
+#define HAVE_BROKEN_READLINK 1
+#define HAVE_SYS_SENDFILE_H 1
+#define _HAVE_SENDFILE 1
+#define HAVE_SENDFILE 1
+#define LINUX_SENDFILE_API 1
+#define GETCWD_TAKES_NULL 1
+#define HAVE_GETSPNAM 1
+#define HAVE_SCHED_H 1
+#define HAVE_UNSHARE_CLONE_FS 1
+#define HAVE_LINUX_FS_H 1
+#define HAVE_DECL_FS_IOC_GETFLAGS 1
+#define HAVE_DECL_FS_COMPR_FL 1
+#define HAVE_LINUX_IOCTL 1
+/* #undef HAVE_GLUSTERFS */
+#define HAVE_URING 1
+#define HAVE_LIBURING_H 1
+#define HAVE_LIBURING 1
+#define HAVE_IO_URING_RING_DONTFORK 1
+#define HAVE_IO_URING_PREP_WRITEV2 1
+#define HAVE_LIBURING_COMPAT_H 1
+/* #undef HAVE_STRUCT_OPEN_HOW_LIBURING_COMPAT_H */
+#define HAVE_FTW_H 1
+#define HAVE_NFTW 1
+#define HAVE_LIBCRYPTO 1
+#define HAVE_DES_PCBC_ENCRYPT 1
+#define WITH_WSP 1
+#define HAVE_RPC_TYPES_H 1
+#define HAVE_RPC_XDR_H 1
+/* #undef HAVE_NSCD_FLUSH_CACHE */
+#define STRING_STATIC_MODULES "vfs_default vfs_not_implemented auth_builtin auth_sam auth_unix pdb_smbpasswd pdb_tdbsam"
+#define STRING_SHARED_MODULES "auth_script vfs_io_uring vfs_fruit vfs_shadow_copy2 vfs_recycle vfs_fake_perms vfs_readonly vfs_cap vfs_offline vfs_crossrename vfs_catia vfs_streams_xattr vfs_xattr_tdb vfs_widelinks vfs_btrfs"
+#define static_decl_vfs extern NTSTATUS vfs_default_init(TALLOC_CTX *mem_ctx);  extern NTSTATUS vfs_not_implemented_init(TALLOC_CTX *mem_ctx); 
+#define static_init_vfs(mem_ctx) { vfs_default_init((mem_ctx));  vfs_not_implemented_init((mem_ctx)); }
+#define vfs_io_uring_init samba_init_module
+#define vfs_fruit_init samba_init_module
+#define vfs_shadow_copy2_init samba_init_module
+#define vfs_recycle_init samba_init_module
+#define vfs_fake_perms_init samba_init_module
+#define vfs_readonly_init samba_init_module
+#define vfs_cap_init samba_init_module
+#define vfs_offline_init samba_init_module
+#define vfs_crossrename_init samba_init_module
+#define vfs_catia_init samba_init_module
+#define vfs_streams_xattr_init samba_init_module
+#define vfs_xattr_tdb_init samba_init_module
+#define vfs_widelinks_init samba_init_module
+#define vfs_btrfs_init samba_init_module
+#define static_decl_pdb extern NTSTATUS pdb_smbpasswd_init(TALLOC_CTX *mem_ctx);  extern NTSTATUS pdb_tdbsam_init(TALLOC_CTX *mem_ctx); 
+#define static_init_pdb(mem_ctx) { pdb_smbpasswd_init((mem_ctx));  pdb_tdbsam_init((mem_ctx)); }
+#define static_decl_auth extern NTSTATUS auth_builtin_init(TALLOC_CTX *mem_ctx);  extern NTSTATUS auth_sam_init(TALLOC_CTX *mem_ctx);  extern NTSTATUS auth_unix_init(TALLOC_CTX *mem_ctx); 
+#define static_init_auth(mem_ctx) { auth_builtin_init((mem_ctx));  auth_sam_init((mem_ctx));  auth_unix_init((mem_ctx)); }
+#define auth_script_init samba_init_module
+#define static_decl_nss_info 
+#define static_init_nss_info(mem_ctx) {}
+#define static_decl_charset 
+#define static_init_charset(mem_ctx) {}
+#define static_decl_idmap 
+#define static_init_idmap(mem_ctx) {}
+#define static_decl_gpext 
+#define static_init_gpext(mem_ctx) {}
+#define HAVE_PTY_H 1
+#define HAVE_OPENPTY 1
+#define HAVE_TCP_USER_TIMEOUT 1
+#define HAVE_LINUX_SOCKIOS_H 1
+#define HAVE_LINUX_ETHTOOL_H 1
+#define HAVE_ETHTOOL 1
+#define HAVE_LIBTASN1 1
+/* #undef HAVE_DECL_KRB5_PAC_GET_BUFFER */
+#define SUMMARY_PASSES 1
+#define WITH_SMB1SERVER 1
+
+
+                                #include <stdio.h>
+
+                                int main(void)
+                                {
+                                    char t[100000];
+                                    while (fgets(t, sizeof(t), stdin));
+                                    return 0;
+                                }
+                                
+<==
+[1/2] Compiling bin/.conf_check_92ac14805aea52f13acfe8b37527846f/test.c
+
+['ccache', 'aarch64-openwrt-linux-musl-gcc', '-D_SAMBA_BUILD_=4', '-DHAVE_CONFIG_H=1', '-Os', '-pipe', '-mcpu=cortex-a53', '-fno-caller-saves', '-fno-plt', '-fhonour-copts', '-fmacro-prefix-map=/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5=samba-4.24.5', '-fmacro-prefix-map=/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl=staging_dir/target-aarch64_cortex-a53_musl', '-ffunction-sections', '-fdata-sections', '-Wl,-z,max-page-size=4096', '-Wformat', '-Werror=format-security', '-fstack-protector', '-D_FORTIFY_SOURCE=1', '-Wl,-z,now', '-Wl,-z,relro', '-Wl,-z,pack-relative-relocs', '-DPIC', '-fPIC', '-std=gnu17', '-MMD', '-D_GNU_SOURCE=1', '-D_XOPEN_SOURCE_EXTENDED=1', '-Werror', '-fstack-clash-protection', '../../test.c', '-c', '-o/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5/bin/.conf_check_92ac14805aea52f13acfe8b37527846f/testbuild/default/test.c.1.o', '-I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/include', '-I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include', '-I/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/include/fortify']
+[2/2] Linking bin/.conf_check_92ac14805aea52f13acfe8b37527846f/testbuild/default/testprog
+
+['ccache', 'aarch64-openwrt-linux-musl-gcc', '-Wl,--as-needed', 'test.c.1.o', '-o/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/samba-4.24.5/bin/.conf_check_92ac14805aea52f13acfe8b37527846f/testbuild/default/testprog', '-Wl,-Bstatic', '-Wl,-Bdynamic', '-L/usr/local/lib', '-L/usr/local/lib', '-L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib', '-L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib', '-fuse-ld=bfd', '-Wl,--gc-sections', '-zmax-page-size=4096', '-znow', '-zrelro', '-zpack-relative-relocs', '-Wl,--as-needed']
+yes
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/btrfs-progs-v6.11/config.log ===
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+pkgconfigdir='${libdir}/pkgconfig'
+pkgpyexecdir=''
+pkgpythondir=''
+prefix='/usr'
+program_transform_name='s,x,x,'
+psdir='${docdir}'
+pyexecdir=''
+pythondir=''
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target='aarch64-openwrt-linux-gnu'
+target_alias='aarch64-openwrt-linux'
+target_cpu='aarch64'
+target_os='linux-gnu'
+target_vendor='openwrt'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "btrfs-progs"
+#define PACKAGE_TARNAME "btrfs-progs"
+#define PACKAGE_VERSION "v6.11"
+#define PACKAGE_STRING "btrfs-progs v6.11"
+#define PACKAGE_BUGREPORT "linux-btrfs@vger.kernel.org"
+#define PACKAGE_URL "https://btrfs.readthedocs.io"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_WCHAR_H 1
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define HAVE_OPENAT 1
+#define HAVE_REALLOCARRAY 1
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE___BUILTIN_ADD_OVERFLOW 1
+#define HAVE___BUILTIN_SUB_OVERFLOW 1
+#define HAVE___BUILTIN_MUL_OVERFLOW 1
+#define HAVE_LINUX_PERF_EVENT_H 1
+#define HAVE_LINUX_HW_BREAKPOINT_H 1
+#define HAVE_LINUX_FSVERITY_H 1
+#define BTRFS_DISABLE_BACKTRACE 1
+#define CRYPTOPROVIDER_BUILTIN 1
+#define CRYPTOPROVIDER_LIBGCRYPT 0
+#define CRYPTOPROVIDER_LIBSODIUM 0
+#define CRYPTOPROVIDER_LIBKCAPI 0
+#define CRYPTOPROVIDER_BOTAN 0
+#define CRYPTOPROVIDER_OPENSSL 0
+#define CRYPTOPROVIDER "builtin"
+#define HAVE_EXT4_EPOCH_MASK_DEFINE 1
+#define BTRFS_ZONED 1
+#define EXPERIMENTAL 0
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libimobiledevice-2025.07.29~c269d7e3/config.log ===
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libimobiledevice-2025.07.29~c269d7e3/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+libgcrypt_LIBS=''
+libgnutls_CFLAGS=''
+libgnutls_LIBS=''
+libplist_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libplist_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lplist-2.0'
+libtasn1_CFLAGS=''
+libtasn1_LIBS=''
+libtatsu_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libtatsu_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -ltatsu -lplist-2.0'
+libusbmuxd_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libusbmuxd_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lusbmuxd-2.0'
+limd_glue_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+limd_glue_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -limobiledevice-glue-1.0 -lplist-2.0'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+openssl_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+openssl_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lssl -lcrypto'
+pdfdir='${docdir}'
+pkgpyexecdir=''
+pkgpythondir=''
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+pyexecdir=''
+pythondir=''
+readline_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include -DNCURSES_WIDECHAR'
+readline_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lreadline'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+ssl_lib_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+ssl_lib_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lssl -lcrypto'
+ssl_requires='openssl >= 0.9.8'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libimobiledevice"
+#define PACKAGE_TARNAME "libimobiledevice"
+#define PACKAGE_VERSION "2025.07.29~c269d7e3"
+#define PACKAGE_STRING "libimobiledevice "
+#define PACKAGE_BUGREPORT "https://github.com/libimobiledevice/libimobiledevice/issues"
+#define PACKAGE_URL "https://libimobiledevice.org"
+#define PACKAGE "libimobiledevice"
+#define VERSION ""
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_READLINE 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_ASPRINTF 1
+#define HAVE_STRCASECMP 1
+#define HAVE_STRDUP 1
+#define HAVE_STRERROR 1
+#define HAVE_STRNDUP 1
+#define HAVE_STPCPY 1
+#define HAVE_VASPRINTF 1
+#define HAVE_GETIFADDRS 1
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_LOCALTIME_R 1
+#define HAVE_PLIST_JSON 1
+#define HAVE_PLIST_UNIX_DATE 1
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+#define HAVE_LIBPTHREAD 1
+#define HAVE_DIRENT_D_TYPE 1
+#define HAVE_OPENSSL 1
+#define HAVE_WIRELESS_PAIRING 1
+#define STRIP_DEBUG_CODE 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/ethtool-tiny/ethtool-7.1/config.log ===
+INSTALL_DATA='${INSTALL} -m 644'
+INSTALL_PROGRAM='${INSTALL}'
+INSTALL_SCRIPT='${INSTALL}'
+INSTALL_STRIP_PROGRAM='$(install_sh) -c -s'
+LDFLAGS='-L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/usr/lib -L/mnt/build_wrt/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.4.0_musl/lib -fuse-ld=bfd -zmax-page-size=4096 -znow -zrelro -zpack-relative-relocs '
+LIBOBJS=''
+LIBS=''
+LTLIBOBJS=''
+MAINT='#'
+MAINTAINER_MODE_FALSE=''
+MAINTAINER_MODE_TRUE='#'
+MAKEINFO='${SHELL} '\''/mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/ethtool-tiny/ethtool-7.1/missing'\'' makeinfo'
+MKDIR_P='/usr/bin/mkdir -p'
+MNL_CFLAGS=''
+MNL_LIBS=''
+OBJEXT='o'
+PACKAGE='ethtool'
+PACKAGE_BUGREPORT='netdev@vger.kernel.org'
+PACKAGE_NAME='ethtool'
+PACKAGE_STRING='ethtool 7.1'
+PACKAGE_TARNAME='ethtool'
+PACKAGE_URL=''
+PACKAGE_VERSION='7.1'
+PATH_SEPARATOR=':'
+PKG_CONFIG='/mnt/build_wrt/staging_dir/host/bin/pkg-config'
+PKG_CONFIG_LIBDIR='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+PKG_CONFIG_PATH='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='7.1'
+ac_ct_CC=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+bindir='/usr/bin'
+build_alias='x86_64-pc-linux-gnu'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host_alias='aarch64-openwrt-linux'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/ethtool-tiny/ethtool-7.1/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "ethtool"
+#define PACKAGE_TARNAME "ethtool"
+#define PACKAGE_VERSION "7.1"
+#define PACKAGE_STRING "ethtool 7.1"
+#define PACKAGE_BUGREPORT "netdev@vger.kernel.org"
+#define PACKAGE_URL ""
+#define PACKAGE "ethtool"
+#define VERSION "7.1"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_SOCKET 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/attr-2.5.2/config.log ===
+XGETTEXT_EXTRA_OPTIONS=''
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/attr-2.5.2/build-aux/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "attr"
+#define PACKAGE_TARNAME "attr"
+#define PACKAGE_VERSION "2.5.2"
+#define PACKAGE_STRING "attr 2.5.2"
+#define PACKAGE_BUGREPORT "acl-devel@nongnu.org"
+#define PACKAGE_URL ""
+#define PACKAGE "attr"
+#define VERSION "2.5.2"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_WCHAR_H 1
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define HAVE_ALLOCA_H 1
+#define HAVE_ALLOCA 1
+#define HAVE_VISIBILITY_ATTRIBUTE /**/
+#define EXPORT __attribute__ ((visibility ("default"))) extern
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libdaemon-0.14/config.log ===
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libdaemon-0.14/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libdaemon"
+#define PACKAGE_TARNAME "libdaemon"
+#define PACKAGE_VERSION "0.14"
+#define PACKAGE_STRING "libdaemon 0.14"
+#define PACKAGE_BUGREPORT "mzqnrzba (at) 0pointer (dot) de"
+#define PACKAGE_URL ""
+#define PACKAGE "libdaemon"
+#define VERSION "0.14"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_WCHAR_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_SELECT_H 1
+#define HAVE_SYS_SOCKET_H 1
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_FCNTL_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYSLOG_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_SYS_IOCTL_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_WAIT_H 1
+#define TIME_WITH_SYS_TIME 1
+#define HAVE_FORK 1
+#define HAVE_VFORK 1
+#define HAVE_VPRINTF 1
+#define HAVE_WORKING_VFORK 1
+#define HAVE_WORKING_FORK 1
+#define SELECT_TYPE_ARG1 int
+#define SELECT_TYPE_ARG234 (fd_set *)
+#define SELECT_TYPE_ARG5 (struct timeval *)
+#define HAVE_SELECT 1
+#define HAVE_STRERROR 1
+#define HAVE_DUP2 1
+#define HAVE_MEMSET 1
+#define HAVE_STRRCHR 1
+#define HAVE_ASPRINTF 1
+#define SETPGRP_VOID 1
+#define RETSIGTYPE void
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/readline-8.3/config.log ===
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define PROTOTYPES 1
+#define __PROTOTYPES 1
+#define __CHAR_UNSIGNED__ 1
+#define HAVE_DIRENT_H 1
+#define HAVE_FCNTL 1
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_KILL 1
+#define HAVE_LSTAT 1
+#define HAVE_PSELECT 1
+#define HAVE_READLINK 1
+#define HAVE_SELECT 1
+#define HAVE_SETITIMER 1
+#define HAVE_FNMATCH 1
+#define HAVE_MEMMOVE 1
+#define HAVE_PUTENV 1
+#define HAVE_SETENV 1
+#define HAVE_SETLOCALE 1
+#define HAVE_STRCASECMP 1
+#define HAVE_STRPBRK 1
+#define HAVE_SYSCONF 1
+#define HAVE_TCGETATTR 1
+#define HAVE_TCGETWINSIZE 1
+#define HAVE_TCSETWINSIZE 1
+#define HAVE_VSNPRINTF 1
+#define HAVE_ISASCII 1
+#define HAVE_ISXDIGIT 1
+#define HAVE_GETPWENT 1
+#define HAVE_GETPWNAM 1
+#define HAVE_GETPWUID 1
+#define HAVE_CHOWN 1
+#define HAVE_STRCOLL 1
+#define HAVE_FCNTL_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STDARG_H 1
+#define HAVE_STDBOOL_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_LOCALE_H 1
+#define HAVE_PWD_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_TERMCAP_H 1
+#define HAVE_TERMIOS_H 1
+#define HAVE_SYS_IOCTL_H 1
+#define HAVE_SYS_SELECT_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_FILE_H 1
+#define HAVE_POSIX_SIGNALS 1
+#define HAVE_LSTAT 1
+#define HAVE_GETPW_DECLS 1
+#define GWINSZ_IN_SYS_IOCTL 1
+#define HAVE_INTTYPES_H 1
+#define FIONREAD_IN_SYS_IOCTL 1
+#define STRUCT_WINSIZE_IN_SYS_IOCTL 1
+#define HAVE_STRUCT_DIRENT_D_INO 1
+#define HAVE_STRUCT_DIRENT_D_FILENO 1
+#define HAVE_TIMEVAL 1
+#define HAVE_DECL_AUDIT_USER_TTY 1
+#define HAVE_NL_LANGINFO 1
+#define HAVE_LANGINFO_CODESET 1
+#define HAVE_WCTYPE_H 1
+#define HAVE_WCHAR_H 1
+#define HAVE_LANGINFO_H 1
+#define HAVE_MBRLEN 1
+#define HAVE_MBSNRTOWCS 1
+#define HAVE_MBSRTOWCS 1
+#define HAVE_WCRTOMB 1
+#define HAVE_WCSCOLL 1
+#define HAVE_WCSDUP 1
+#define HAVE_WCWIDTH 1
+#define HAVE_WCTYPE 1
+#define HAVE_WCSNRTOMBS 1
+#define HAVE_WCSWIDTH 1
+#define HAVE_MBRTOWC 1
+#define HAVE_MBSTATE_T 1
+#define HAVE_ISWLOWER 1
+#define HAVE_ISWUPPER 1
+#define HAVE_TOWLOWER 1
+#define HAVE_TOWUPPER 1
+#define HAVE_ISWCTYPE 1
+#define HAVE_WCHAR_T 1
+#define HAVE_WCTYPE_T 1
+#define HAVE_WINT_T 1
+#define SIZEOF_WCHAR_T 4
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/gdbm-1.25/config.log ===
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/gdbm-1.25/build-aux/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "gdbm"
+#define PACKAGE_TARNAME "gdbm"
+#define PACKAGE_VERSION "1.25"
+#define PACKAGE_STRING "gdbm 1.25"
+#define PACKAGE_BUGREPORT "bug-gdbm@gnu.org"
+#define PACKAGE_URL "http://www.gnu.org/software/gdbm"
+#define PACKAGE "gdbm"
+#define VERSION "1.25"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_SYS_PARAM_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
+#define GDBM_THREAD_LOCAL __thread
+#define HAVE_SYS_FILE_H 1
+#define HAVE_STRING_H 1
+#define HAVE_LOCALE_H 1
+#define HAVE_GETOPT_H 1
+#define HAVE_FTRUNCATE 1
+#define HAVE_FLOCK 1
+#define HAVE_LOCKF 1
+#define HAVE_FSYNC 1
+#define HAVE_SETLOCALE 1
+#define HAVE_GETOPT_LONG 1
+#define HAVE_GETLINE 1
+#define HAVE_TIMER_SETTIME 1
+#define HAVE_GETPAGESIZE 1
+#define HAVE_MMAP 1
+#define HAVE_MSYNC 1
+#define SIZEOF_OFF_T 8
+#define HAVE_STRUCT_STAT_ST_BLKSIZE 1
+#define HAVE_STRUCT_STAT_ST_MTIM 1
+#define GDBM_FAILURE_ATOMIC 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libimobiledevice-glue-1.3.2/config.log ===
+WIN32_TRUE='#'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+ax_pthread_config=''
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libimobiledevice-glue-1.3.2/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+libplist_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libplist_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lplist-2.0'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libimobiledevice-glue"
+#define PACKAGE_TARNAME "libimobiledevice-glue"
+#define PACKAGE_VERSION "1.3.2"
+#define PACKAGE_STRING "libimobiledevice-glue 1.3.2"
+#define PACKAGE_BUGREPORT "https://github.com/libimobiledevice/libimobiledevice-glue/issues"
+#define PACKAGE_URL "https://libimobiledevice.org"
+#define PACKAGE "libimobiledevice-glue"
+#define VERSION "1.3.2"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_ASPRINTF 1
+#define HAVE_STRCASECMP 1
+#define HAVE_STRDUP 1
+#define HAVE_STRERROR 1
+#define HAVE_STRNDUP 1
+#define HAVE_STPCPY 1
+#define HAVE_VASPRINTF 1
+#define HAVE_GETIFADDRS 1
+#define HAVE_POLL 1
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+#define HAVE_PTHREAD_CANCEL 1
+#define HAVE_PTHREAD_ONCE 1
+#define HAVE_DIRENT_D_TYPE 1
+#define HAVE_PLIST_UNIX_DATE 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libcap-ng-0.8.4/config.log ===
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libcap-ng-0.8.4/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+py3execdir=''
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+swig_found='no'
+sysconfdir='/etc'
+target='aarch64-openwrt-linux-gnu'
+target_alias='aarch64-openwrt-linux'
+target_cpu='aarch64'
+target_os='linux-gnu'
+target_vendor='openwrt'
+use_python3='no'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libcap-ng"
+#define PACKAGE_TARNAME "libcap-ng"
+#define PACKAGE_VERSION "0.8.4"
+#define PACKAGE_STRING "libcap-ng 0.8.4"
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_URL ""
+#define PACKAGE "libcap-ng"
+#define VERSION "0.8.4"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_LINUX_CAPABILITY_H 1
+#define HAVE_SYS_XATTR_H 1
+#define HAVE_LINUX_SECUREBITS_H 1
+#define HAVE_PTHREAD_H 1
+#define HAVE_SYS_VFS_H 1
+#define HAVE_LINUX_MAGIC_H 1
+#define HAVE_SYSCALL_H 1
+#define HAVE_DECL_PR_CAP_AMBIENT 1
+#define HAVE_DECL_VFS_CAP_REVISION_2 1
+#define HAVE_DECL_VFS_CAP_REVISION_3 1
+#define HAVE_DECL_CAP_EPOLLWAKEUP 0
+#define HAVE_DECL_CAP_WAKE_ALARM 1
+#define HAVE_DECL_CAP_BLOCK_SUSPEND 1
+#define HAVE_DECL_CAP_AUDIT_READ 1
+#define HAVE_DECL_CAP_PERFMON 1
+#define HAVE_DECL_CAP_BPF 1
+#define HAVE_DECL_CAP_CHECKPOINT_RESTORE 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libmnl-1.0.5/config.log ===
+OBJEXT='o'
+OTOOL64=''
+OTOOL=''
+PACKAGE='libmnl'
+PACKAGE_BUGREPORT=''
+PACKAGE_NAME='libmnl'
+PACKAGE_STRING='libmnl 1.0.5'
+PACKAGE_TARNAME='libmnl'
+PACKAGE_URL=''
+PACKAGE_VERSION='1.0.5'
+PATH_SEPARATOR=':'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.0.5'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=posix -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libmnl-1.0.5/build-aux/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+regular_CFLAGS='-Wall -Waggregate-return -Wmissing-declarations 	-Wmissing-prototypes -Wshadow -Wstrict-prototypes 	-Wformat=2 -pipe'
+regular_CPPFLAGS='-D_FILE_OFFSET_BITS=64 -D_REENTRANT'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libmnl"
+#define PACKAGE_TARNAME "libmnl"
+#define PACKAGE_VERSION "1.0.5"
+#define PACKAGE_STRING "libmnl 1.0.5"
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_URL ""
+#define PACKAGE "libmnl"
+#define VERSION "1.0.5"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_VISIBILITY_HIDDEN 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/gmp-6.3.0/config.log ===
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_and_n 1
+#define HAVE_NATIVE_mpn_andn_n 1
+#define HAVE_NATIVE_mpn_nand_n 1
+#define HAVE_NATIVE_mpn_ior_n 1
+#define HAVE_NATIVE_mpn_iorn_n 1
+#define HAVE_NATIVE_mpn_nior_n 1
+#define HAVE_NATIVE_mpn_xor_n 1
+#define HAVE_NATIVE_mpn_xnor_n 1
+#define HAVE_NATIVE_func 1
+#define HAVE_NATIVE_mpn_copyi 1
+#define HAVE_NATIVE_mpn_copyd 1
+#define HAVE_NATIVE_mpn_sec_tabselect 1
+#define HAVE_NATIVE_mpn_invert_limb 1
+#define HAVE_NATIVE_mpn_sqr_diag_addlsh1 1
+#define HAVE_NATIVE_mpn_addlsh1_n 1
+#define HAVE_NATIVE_mpn_sublsh1_n 1
+#define HAVE_NATIVE_mpn_rsblsh1_n 1
+#define HAVE_NATIVE_mpn_addlsh1_n 1
+#define HAVE_NATIVE_mpn_sublsh1_n 1
+#define HAVE_NATIVE_mpn_rsblsh1_n 1
+#define HAVE_NATIVE_mpn_addlsh1_n 1
+#define HAVE_NATIVE_mpn_sublsh1_n 1
+#define HAVE_NATIVE_mpn_rsblsh1_n 1
+#define HAVE_NATIVE_mpn_rsh1add_n 1
+#define HAVE_NATIVE_mpn_rsh1sub_n 1
+#define HAVE_NATIVE_func_n 1
+#define HAVE_NATIVE_mpn_rsh1add_n 1
+#define HAVE_NATIVE_mpn_rsh1sub_n 1
+#define HAVE_NATIVE_func_n 1
+#define HAVE_NATIVE_mpn_addlsh2_n 1
+#define HAVE_NATIVE_mpn_sublsh2_n 1
+#define HAVE_NATIVE_mpn_rsblsh2_n 1
+#define HAVE_NATIVE_mpn_addlsh2_n 1
+#define HAVE_NATIVE_mpn_sublsh2_n 1
+#define HAVE_NATIVE_mpn_rsblsh2_n 1
+#define HAVE_NATIVE_mpn_addlsh2_n 1
+#define HAVE_NATIVE_mpn_sublsh2_n 1
+#define HAVE_NATIVE_mpn_rsblsh2_n 1
+#define LSYM_PREFIX ".L"
+#define GMP_MPARAM_H_SUGGEST "./mpn/arm64/gmp-mparam.h"
+#define SIZEOF_VOID_P 8
+#define SIZEOF_UNSIGNED_SHORT 2
+#define SIZEOF_UNSIGNED 4
+#define SIZEOF_UNSIGNED_LONG 8
+#define SIZEOF_MP_LIMB_T 8
+#define TUNE_SQR_TOOM2_MAX SQR_TOOM2_MAX_GENERIC
+#define HAVE_STACK_T 1
+#define YYTEXT_POINTER 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libtirpc-1.3.7/config.log ===
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+am__xargs_n='xargs -n'
+ax_pthread_config=''
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libtirpc-1.3.7/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libtirpc"
+#define PACKAGE_TARNAME "libtirpc"
+#define PACKAGE_VERSION "1.3.7"
+#define PACKAGE_STRING "libtirpc 1.3.7"
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_URL ""
+#define PACKAGE "libtirpc"
+#define VERSION "1.3.7"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define INET6 1
+#define HAVE_SOL_IP 1
+#define HAVE_SOL_IPV6 1
+#define HAVE_IPPROTO_IP 1
+#define HAVE_IPPROTO_IPV6 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_DIRENT_H 1
+#define HAVE_ARPA_INET_H 1
+#define HAVE_FCNTL_H 1
+#define HAVE_LIBINTL_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_LOCALE_H 1
+#define HAVE_NETDB_H 1
+#define HAVE_NETINET_IN_H 1
+#define HAVE_STDDEF_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_IOCTL_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_SOCKET_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYSLOG_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_FEATURES_H 1
+#define HAVE_ENDIAN_H 1
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/iperf-nossl/iperf-3.22/config.log ===
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+ax_pthread_config=''
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/iperf-nossl/iperf-3.22/config/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "iperf"
+#define PACKAGE_TARNAME "iperf"
+#define PACKAGE_VERSION "3.22"
+#define PACKAGE_STRING "iperf 3.22"
+#define PACKAGE_BUGREPORT "https://github.com/esnet/iperf"
+#define PACKAGE_URL "https://software.es.net/iperf/"
+#define PACKAGE "iperf"
+#define VERSION "3.22"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+#define HAVE_STDATOMIC_H 1
+#define HAVE_POLL_H 1
+#define HAVE_LINUX_TCP_H 1
+#define HAVE_ENDIAN_H 1
+#define HAVE_TCP_CONGESTION 1
+#define HAVE_TCP_USER_TIMEOUT 1
+#define HAVE_TCP_KEEPALIVE 1
+#define HAVE_FLOWLABEL 1
+#define HAVE_SCHED_SETAFFINITY 1
+#define HAVE_CPU_AFFINITY 1
+#define HAVE_DAEMON 1
+#define HAVE_SENDFILE 1
+#define HAVE_GETLINE 1
+#define HAVE_SO_MAX_PACING_RATE 1
+#define HAVE_SO_BINDTODEVICE 1
+#define CAN_BIND_TO_DEVICE 1
+#define HAVE_IP_MTU_DISCOVER 1
+#define HAVE_DONT_FRAGMENT 1
+#define HAVE_TCP_INFO_SND_WND 1
+#define HAVE_MSG_TRUNC 1
+#define HAVE_IPPROTO_MPTCP 1
+#define HAVE_UDP_SEGMENT 1
+#define HAVE_UDP_GRO 1
+#define HAVE_SOCKET_SHUTDOWN_SHUT_WR 1
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_NANOSLEEP 1
+#define HAVE_CLOCK_NANOSLEEP 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libnetfilter_conntrack-1.1.0/config.log ===
+OTOOL64=''
+OTOOL=''
+PACKAGE='libnetfilter_conntrack'
+PACKAGE_BUGREPORT=''
+PACKAGE_NAME='libnetfilter_conntrack'
+PACKAGE_STRING='libnetfilter_conntrack 1.1.0'
+PACKAGE_TARNAME='libnetfilter_conntrack'
+PACKAGE_URL=''
+PACKAGE_VERSION='1.1.0'
+PATH_SEPARATOR=':'
+PKG_CONFIG='/mnt/build_wrt/staging_dir/host/bin/pkg-config'
+PKG_CONFIG_LIBDIR='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+PKG_CONFIG_PATH='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.1.0'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='tar --format=posix -chf - "$$tardir"'
+am__untar='tar -xf -'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libnetfilter_conntrack-1.1.0/build-aux/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libnetfilter_conntrack"
+#define PACKAGE_TARNAME "libnetfilter_conntrack"
+#define PACKAGE_VERSION "1.1.0"
+#define PACKAGE_STRING "libnetfilter_conntrack 1.1.0"
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_URL ""
+#define PACKAGE "libnetfilter_conntrack"
+#define VERSION "1.1.0"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_ARPA_INET_H 1
+#define HAVE_INET_NTOP 1
+#define HAVE_SETNS 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/libtatsu-1.0.5/config.log ===
+PACKAGE_TARNAME='libtatsu'
+PACKAGE_URL='https://github.com/libimobiledevice/libtatsu'
+PACKAGE_VERSION='1.0.5'
+PATH_SEPARATOR=':'
+PKG_CONFIG='/mnt/build_wrt/staging_dir/host/bin/pkg-config'
+PKG_CONFIG_LIBDIR='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+PKG_CONFIG_PATH='/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib/pkgconfig:/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/share/pkgconfig'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.0.5'
+WIN32_FALSE=''
+WIN32_TRUE='#'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__tar='$${TAR-tar} chof - "$$tardir"'
+am__untar='$${TAR-tar} xf -'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/libtatsu-1.0.5/install-sh'
+libcurl_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libcurl_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lcurl'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+libplist_CFLAGS='-I/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/include'
+libplist_LIBS='-L/mnt/build_wrt/staging_dir/target-aarch64_cortex-a53_musl/usr/lib -lplist-2.0'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "libtatsu"
+#define PACKAGE_TARNAME "libtatsu"
+#define PACKAGE_VERSION "1.0.5"
+#define PACKAGE_STRING "libtatsu 1.0.5"
+#define PACKAGE_BUGREPORT "https://github.com/libimobiledevice/libtatsu/issues"
+#define PACKAGE_URL "https://github.com/libimobiledevice/libtatsu"
+#define PACKAGE "libtatsu"
+#define VERSION "1.0.5"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/musl-fts-1.2.7/config.log ===
+PATH_SEPARATOR=':'
+RANLIB='aarch64-openwrt-linux-musl-gcc-ranlib'
+SED='/mnt/build_wrt/staging_dir/host/bin/sed'
+SET_MAKE=''
+SHELL='/bin/bash'
+STRIP='aarch64-openwrt-linux-musl-strip'
+VERSION='1.2.7'
+ac_ct_AR=''
+ac_ct_CC=''
+ac_ct_DUMPBIN=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/musl-fts-1.2.7/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+pkgconfigdir='${libdir}/pkgconfig'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "fts"
+#define PACKAGE_TARNAME "fts"
+#define PACKAGE_VERSION "1.2.7"
+#define PACKAGE_STRING "fts 1.2.7"
+#define PACKAGE_BUGREPORT "pullmoll@t-online.de"
+#define PACKAGE_URL ""
+#define PACKAGE "fts"
+#define VERSION "1.2.7"
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_DLFCN_H 1
+#define LT_OBJDIR ".libs/"
+#define HAVE_ASSERT_H 1
+#define HAVE_DIRENT_H 1
+#define HAVE_ERRNO_H 1
+#define HAVE_FCNTL_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_DECL_MAX 1
+#define HAVE_DECL_UINTMAX_MAX 0
+#define HAVE_DIRFD 1
+
+configure: exit 0
+=== File: ./wrt/build_dir/target-aarch64_cortex-a53_musl/mtd-utils-2.3.1/config.log ===
+WITH_SELINUX_FALSE='#'
+WITH_SELINUX_TRUE=''
+WITH_UBIHEALTHD_FALSE='#'
+WITH_UBIHEALTHD_TRUE=''
+WITH_XATTR_FALSE=''
+WITH_XATTR_TRUE='#'
+WITH_ZLIB_FALSE=''
+WITH_ZLIB_TRUE='#'
+WITH_ZSTD_FALSE=''
+WITH_ZSTD_TRUE='#'
+ZLIB_CFLAGS=''
+ZLIB_LIBS=''
+ZSTD_CFLAGS=''
+ZSTD_LIBS=''
+ac_ct_CC=''
+am__EXEEXT_FALSE=''
+am__EXEEXT_TRUE='#'
+am__fastdepCC_FALSE=''
+am__fastdepCC_TRUE='#'
+am__include='include'
+am__isrc=''
+am__leading_dot='.'
+am__nodep=''
+am__quote=''
+am__rm_f_notfound=''
+am__tar='tar --format=ustar -chf - "$$tardir"'
+am__untar='tar -xf -'
+am__xargs_n='xargs -n'
+ax_pthread_config=''
+bindir='/usr/bin'
+build='x86_64-pc-linux-gnu'
+build_alias='x86_64-pc-linux-gnu'
+build_cpu='x86_64'
+build_os='linux-gnu'
+build_vendor='pc'
+datadir='/usr/share'
+datarootdir='${prefix}/share'
+docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+dvidir='${docdir}'
+exec_prefix='/usr'
+host='aarch64-openwrt-linux-gnu'
+host_alias='aarch64-openwrt-linux'
+host_cpu='aarch64'
+host_os='linux-gnu'
+host_vendor='openwrt'
+htmldir='${docdir}'
+includedir='${prefix}/include'
+infodir='/usr/info'
+install_sh='${SHELL} /mnt/build_wrt/build_dir/target-aarch64_cortex-a53_musl/mtd-utils-2.3.1/install-sh'
+libdir='${exec_prefix}/lib'
+libexecdir='/usr/lib'
+localedir='${datarootdir}/locale'
+localstatedir='/var'
+mandir='/usr/man'
+mkdir_p='$(MKDIR_P)'
+oldincludedir='/usr/include'
+pdfdir='${docdir}'
+prefix='/usr'
+program_transform_name='s&$$&&;s&^&&'
+psdir='${docdir}'
+runstatedir='${localstatedir}/run'
+sbindir='/usr/sbin'
+sharedstatedir='${prefix}/com'
+sysconfdir='/etc'
+target_alias='aarch64-openwrt-linux'
+
+## ----------- ##
+## confdefs.h. ##
+## ----------- ##
+
+/* confdefs.h */
+#define PACKAGE_NAME "mtd-utils"
+#define PACKAGE_TARNAME "mtd-utils"
+#define PACKAGE_VERSION "2.3.1"
+#define PACKAGE_STRING "mtd-utils 2.3.1"
+#define PACKAGE_BUGREPORT "linux-mtd@lists.infradead.org"
+#define PACKAGE_URL ""
+#define PACKAGE "mtd-utils"
+#define VERSION "2.3.1"
+#define TESTBINDIR "/usr/lib/mtd-utils"
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_PTHREAD_PRIO_INHERIT 1
+#define HAVE_PTHREAD 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define STDC_HEADERS 1
+#define HAVE_SELINUX_SELINUX_H 1
+#define HAVE_SELINUX_LABEL_H 1
+#define HAVE_SYS_RANDOM_H 1
+#define SIZEOF_OFF_T 8
+#define SIZEOF_LOFF_T 0
+
+configure: exit 0
